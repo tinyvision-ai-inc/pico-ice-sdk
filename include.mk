@@ -11,7 +11,11 @@ CC = arm-none-eabi-gcc -mthumb -mcpu=cortex-m0plus -msoft-float
 LD = arm-none-eabi-ld
 PICO_ICE_LDFLAGS = -Map=firmware.map --gc-sections -T$(PICO_ICE_SDK)/script.ld -nostdlib
 PICO_ICE_CFLAGS = -I$(PICO_ICE_SDK)/include -ffunction-sections -fdata-sections
-PICO_ICE_LIB = $(PICO_ICE_SDK)/src/init.o $(PICO_ICE_SDK)/src/gpio.o
+PICO_ICE_LIB = \
+$(PICO_ICE_SDK)/src/init.o \
+$(PICO_ICE_SDK)/src/gpio.o \
+$(PICO_ICE_SDK)/src/spi.o \
+$(PICO_ICE_SDK)/src/libc.o
 
 firmware.uf2: firmware.elf $(ELF2UF2)
 	$(ELF2UF2) firmware.elf $@
