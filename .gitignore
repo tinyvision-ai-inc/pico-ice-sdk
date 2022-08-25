@@ -1,6 +1,0 @@
-/pico-sdk
-/elf2uf2
-*.o
-*.map
-*.elf
-*.uf2
