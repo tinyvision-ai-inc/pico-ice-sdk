@@ -12,4 +12,4 @@ target_include_directories(pico_ice_sdk PUBLIC include)
 
 # This is in order to access the headers of the raspberrypi/pico-sdk, which
 # will add the -I flags.
-target_link_libraries(pico_ice_sdk pico_stdlib hardware_spi)
+target_link_libraries(pico_ice_sdk pico_stdio_uart pico_stdlib hardware_spi)
