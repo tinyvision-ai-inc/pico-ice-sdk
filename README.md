@@ -5,7 +5,7 @@ The firmware library for the [pico-ice](https://pico-ice.readthedocs.io/),
 a board combining a Raspberry Pi RP2040 and an Lattice iCE40.
 
 To use this SDK, you do not need to download it, but only to drop the
-`cmake/pico_ice_sdk_import.cmake` into your project, and add this Makefile:
+`pico_ice_sdk_import.cmake` into your project, and add this Makefile:
 
 ```
 cmake_minimum_required(VERSION 3.13)
