@@ -1,4 +1,6 @@
+#include <stdint.h>
 #include "pico/stdlib.h"
+#include "hardware/structs/spi.h"
 #include "hardware/spi.h"
 #include "pico-ice/flash.h"
 
@@ -81,7 +83,7 @@ flash_read(spi_inst_t *spi, uint32_t addr, uint8_t *buf, size_t sz)
 }
 
 void
-flash_sector_erase(spi_inst_t *spi_default, uint8_t addr)
+flash_sector_erase(spi_inst_t *spi, uint8_t addr)
 {
 
 }
