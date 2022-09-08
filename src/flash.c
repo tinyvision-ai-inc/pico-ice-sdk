@@ -78,7 +78,7 @@ flash_read(spi_inst_t *spi, uint8_t pin, uint32_t addr, uint8_t *buf, size_t sz)
 }
 
 void
-flash_chip_erase(spi_inst_t *spi, uint8_t pin)
+flash_erase_chip(spi_inst_t *spi, uint8_t pin)
 {
 	uint8_t cmds[] = { FLASH_CMD_CHIP_ERASE };
 

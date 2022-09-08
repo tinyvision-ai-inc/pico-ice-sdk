@@ -46,7 +46,7 @@ void flash_program_page(spi_inst_t *spi, uint8_t pin, uint32_t addr, uint8_t con
  * :param page: The buffer holding the data to be sent to the flash chip, of size ``FLASH_PAGE_SIZE``.
  */
 
-void flash_erase_chip(spi_inst_t *spi);
+void flash_erase_chip(spi_inst_t *spi, uint8_t pin);
 /*
  * Send a command to erase the whole chip.
  *
