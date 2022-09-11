@@ -23,8 +23,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef TUSB_CONFIG_H
-#define TUSB_CONFIG_H
+#pragma once
 
 //--------------------------------------------------------------------
 // COMMON CONFIGURATION
@@ -103,5 +102,3 @@
 
 // CDC Endpoint transfer buffer size, more is faster
 #define CFG_TUD_CDC_EP_BUFSIZE   64
-
-#endif
