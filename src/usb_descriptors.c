@@ -25,8 +25,14 @@
 
 #include "tusb.h"
 
+#ifndef USB_VID
 #define USB_VID     0x1209  // InterBiometrics - https://pid.codes/
+#endif
+
+#ifndef USB_PID
 #define USB_PID     0x0001  // TEST ONLY, DO NOT USE IN PRODUCTION
+#endif
+
 #define USB_BCD     0x0200  // USB 2.0
 
 //--------------------------------------------------------------------+
@@ -156,13 +162,23 @@ tud_descriptor_configuration_cb(uint8_t index)
 // String Descriptors
 //--------------------------------------------------------------------+
 
+#ifndef USB_MANUFACTURER
+#define USB_MANUFACTURER "TinyVision.ai Inc."
+#endif
+
+#ifndef USB_PRODUCT
+#define USB_PRODUCT "pico-ice"
+#endif
+
+#ifndef USB_SERIAL_NUMBER
+#define USB_SERIAL_NUMBER "123456"
+#endif
+
 // array of pointer to string descriptors
-char const *string_desc_arr [] = {
+char const *string_desc_arr[] = {
     (const char[]) { 0x09, 0x04 }, // 0: Supported language is English (0x0409)
-    "TinyVision.ai Inc.",          // 1: Manufacturer
-    "pico-ice",                    // 2: Product
-    "123456",                      // 3: Serials, should use chip ID
-    "TinyUSB CDC",                 // 4: CDC Interface
+    USB_MANUFACTURER, USB_PRODUCT, USB_SERIAL_NUMBER,
+    "FPGA UART to USB adapter",    // 4: CDC Interface
 };
 
 // Invoked when received GET STRING DESCRIPTOR request
