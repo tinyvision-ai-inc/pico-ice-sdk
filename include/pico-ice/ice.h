@@ -1,5 +1,4 @@
 #include <assert.h>
-#include "pico-ice/ice.h"
 
 /*
  * High-level API for driving the board.

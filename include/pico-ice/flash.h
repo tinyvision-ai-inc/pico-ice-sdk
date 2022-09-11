@@ -12,10 +12,10 @@
  * The flash peripheral instance that is connected to the FGPA's flash chip.
  */
 
-#define FLASH_FPGA_SPI_SCK_PIN  2
-#define FLASH_FPGA_SPI_TX_PIN   3
-#define FLASH_FPGA_SPI_RX_PIN   0
-#define FLASH_FPGA_SPI_CSN_PIN  1
+#define ICE_FPGA_FLASH_SPI_SCK_PIN  2
+#define ICE_FPGA_FLASH_SPI_TX_PIN   3
+#define ICE_FPGA_FLASH_SPI_RX_PIN   0
+#define ICE_FPGA_FLASH_SPI_CSN_PIN  1
 /*
  * Pinout between the RP2040 and the FPGA's flash chip.
  * These pins must be set at high-impedance/floating whenever not in use to program the flash chip,
