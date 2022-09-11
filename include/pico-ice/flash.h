@@ -5,17 +5,17 @@
  * API for communicating with flash chips: reading and writing.
  */
 
-#define FLASH_PAGE_SIZE		256
+#define FLASH_PAGE_SIZE         256
 
-#define spi_fpga_flash		spi1
+#define spi_fpga_flash          spi1
 /*
  * The flash peripheral instance that is connected to the FGPA's flash chip.
  */
 
-#define FLASH_FPGA_SPI_SCK_PIN	2
-#define FLASH_FPGA_SPI_TX_PIN	3
-#define FLASH_FPGA_SPI_RX_PIN	0
-#define FLASH_FPGA_SPI_CSN_PIN	1
+#define FLASH_FPGA_SPI_SCK_PIN  2
+#define FLASH_FPGA_SPI_TX_PIN   3
+#define FLASH_FPGA_SPI_RX_PIN   0
+#define FLASH_FPGA_SPI_CSN_PIN  1
 /*
  * Pinout between the RP2040 and the FPGA's flash chip.
  * These pins must be set at high-impedance/floating whenever not in use to program the flash chip,
