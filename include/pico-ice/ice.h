@@ -5,7 +5,10 @@
  * It is under heavy development and subject to change at any time!
  */
 
-#define PICO_ICE_FPGA_CLOCK_PIN		25
+#define ICE_FPGA_CLOCK_PIN		25
+/*
+ * The RP2040 pin at which a clock signal is sent, as a source for the ICE40 system clock.
+ */
 
 void ice_init_flash(void);
 /*
