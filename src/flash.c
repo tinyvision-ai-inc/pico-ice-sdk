@@ -2,7 +2,7 @@
 #include "pico/stdlib.h"
 #include "hardware/structs/spi.h"
 #include "hardware/spi.h"
-#include "pico-ice/flash.h"
+#include "pico_ice/flash.h"
 
 #define FLASH_CMD_PROGRAM_PAGE    0x02
 #define FLASH_CMD_READ            0x03

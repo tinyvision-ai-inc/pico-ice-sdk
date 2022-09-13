@@ -2,8 +2,8 @@
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
 #include "hardware/clocks.h"
-#include "pico-ice/ice.h"
-#include "pico-ice/flash.h"
+#include "pico_ice/ice.h"
+#include "pico_ice/flash.h"
 
 static int ice_flash_init_done;
 
