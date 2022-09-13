@@ -1,13 +1,10 @@
+#pragma once
 #include <assert.h>
+#include "boards/pico_ice.h"
 
 /*
  * High-level API for driving the board.
  * It is under heavy development and subject to change at any time!
- */
-
-#define ICE_FPGA_CLOCK_PIN		25
-/*
- * The RP2040 pin at which a clock signal is sent, as a source for the ICE40 system clock.
  */
 
 void ice_init_flash(void);
