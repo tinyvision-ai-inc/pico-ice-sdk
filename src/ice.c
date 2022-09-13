@@ -1,7 +1,5 @@
-#include <assert.h>
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
-#include "hardware/clocks.h"
 #include "pico_ice/ice.h"
 #include "pico_ice/flash.h"
 
@@ -23,12 +21,6 @@ ice_init_flash(void)
     gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_OUT);
     gpio_put(ICE_FLASH_SPI_CSN_PIN, 1);
 
-    // For assert()s below
+    // For assert()s elsewhere
     ice_flash_init_done = 1;
-}
-
-void
-ice_init_fpga_clock(uint8_t mhz)
-{
-	clock_gpio_init(ICE_FPGA_CLOCK_PIN, CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_VALUE_CLK_USB, 48 / mhz);
 }

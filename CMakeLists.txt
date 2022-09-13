@@ -6,6 +6,7 @@ enable_language(C CXX)
 # the raspberrypi/pico-sdk twice
 add_library(pico_ice_sdk STATIC
     src/flash.c
+    src/fpga.c
     src/ice.c
     src/usb_descriptors.c
 )
