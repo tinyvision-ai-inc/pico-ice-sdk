@@ -1,13 +1,14 @@
 #include <assert.h>
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
+#include "hardware/clocks.h"
 #include "pico-ice/ice.h"
 #include "pico-ice/flash.h"
 
 static int ice_flash_init_done;
 
 void
-ice_flash_init(void)
+ice_init_flash(void)
 {
     // Init the SPI dedicated to flashing the FPGA
     spi_init(spi_fpga_flash, 1000 * 1000);
@@ -27,8 +28,7 @@ ice_flash_init(void)
 }
 
 void
-ice_flash_erase(void)
+ice_init_fpga_clock(uint8_t mhz)
 {
-    assert(ice_flash_init_done);
-    flash_erase_chip(spi_fpga_flash, ICE_FPGA_FLASH_SPI_CSN_PIN);
+	clock_gpio_init(PICO_ICE_FPGA_CLOCK_PIN, CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_VALUE_CLK_USB, 48 / mhz);
 }
