@@ -34,27 +34,13 @@
 #error CFG_TUSB_MCU must be defined
 #endif
 
-// RHPort number used for device can be defined by board.mk, default to port 0
-#ifndef BOARD_DEVICE_RHPORT_NUM
+// RHPort number used for device can be defined by board.mk, port 0 for pico-ice
 #define BOARD_DEVICE_RHPORT_NUM   0
-#endif
-
-#ifndef BOARD_DEVICE_RHPORT_SPEED
-#define BOARD_DEVICE_RHPORT_SPEED OPT_MODE_FULL_SPEED
-#endif
 
 // Device mode with rhport and speed defined by board.mk
-#if BOARD_DEVICE_RHPORT_NUM == 0
-#define CFG_TUSB_RHPORT0_MODE       (OPT_MODE_DEVICE | BOARD_DEVICE_RHPORT_SPEED)
-#elif BOARD_DEVICE_RHPORT_NUM == 1
-#define CFG_TUSB_RHPORT1_MODE       (OPT_MODE_DEVICE | BOARD_DEVICE_RHPORT_SPEED)
-#else
-#error "Incorrect RHPort configuration"
-#endif
+#define CFG_TUSB_RHPORT0_MODE     (OPT_MODE_DEVICE | BOARD_DEVICE_RHPORT_SPEED)
 
-#ifndef CFG_TUSB_OS
-#define CFG_TUSB_OS               OPT_OS_NONE
-#endif
+#define BOARD_DEVICE_RHPORT_SPEED OPT_MODE_FULL_SPEED
 
 #ifndef CFG_TUSB_DEBUG
 #define CFG_TUSB_DEBUG            0
@@ -64,7 +50,7 @@
 #define CFG_TUD_ENABLED           1
 
 // Default is max speed that hardware controller could support with on-chip PHY
-#define CFG_TUD_MAX_SPEED           BOARD_TUD_MAX_SPEED
+#define CFG_TUD_MAX_SPEED         BOARD_TUD_MAX_SPEED
 
 /* USB DMA on some MCUs can only access a specific SRAM region with restriction on alignment.
  * Tinyusb use follows macros to declare transferring memory so that they can be put
@@ -91,7 +77,7 @@
 
 //------------- CLASS -------------//
 #define CFG_TUD_CDC               1
-#define CFG_TUD_MSC               0
+#define CFG_TUD_MSC               1
 #define CFG_TUD_HID               0
 #define CFG_TUD_MIDI              0
 #define CFG_TUD_VENDOR            0
@@ -102,3 +88,6 @@
 
 // CDC Endpoint transfer buffer size, more is faster
 #define CFG_TUD_CDC_EP_BUFSIZE   64
+
+// MSC Buffer size of Device Mass storage
+#define CFG_TUD_MSC_EP_BUFSIZE	64

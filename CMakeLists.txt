@@ -9,6 +9,7 @@ add_library(pico_ice_sdk STATIC
     src/fpga.c
     src/ice.c
     src/usb_descriptors.c
+    src/usb_msc.c
 )
 
 target_include_directories(pico_ice_sdk PUBLIC include)

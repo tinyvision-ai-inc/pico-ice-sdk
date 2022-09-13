@@ -33,6 +33,18 @@
 #define USB_PID     0x0001  // TEST ONLY, DO NOT USE IN PRODUCTION
 #endif
 
+#ifndef USB_MANUFACTURER
+#define USB_MANUFACTURER "TinyVision.ai Inc."
+#endif
+
+#ifndef USB_PRODUCT
+#define USB_PRODUCT "pico-ice"
+#endif
+
+#ifndef USB_SERIAL_NUMBER
+#define USB_SERIAL_NUMBER "123456"
+#endif
+
 #define USB_BCD     0x0200  // USB 2.0
 
 //--------------------------------------------------------------------+
@@ -73,34 +85,47 @@ tud_descriptor_device_cb(void)
 // Configuration Descriptor
 //--------------------------------------------------------------------+
 enum {
+    // CDC UART
     ITF_NUM_CDC = 0,
     ITF_NUM_CDC_DATA,
+
+    // MSC FAT filesystem
+    ITF_NUM_MSC,
+
     ITF_NUM_TOTAL
 };
 
-#define CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + CFG_TUD_CDC * TUD_CDC_DESC_LEN)
+#define CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
 
 #define EPNUM_CDC_NOTIF     0x81
 #define EPNUM_CDC_OUT       0x02
 #define EPNUM_CDC_IN        0x82
 
+#define EPNUM_MSC_OUT       0x03
+#define EPNUM_MSC_IN        0x83
+
 uint8_t const desc_fs_configuration[] = {
     // Config number, interface count, string index, total length, attribute, power in mA
     TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, 100),
 
-    // CDC: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
+    // CDC UART: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
     TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, 4, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, 64),
+
+    // MSC FAT filesystem: Interface number, string index, EP Out & EP In address, EP size
+    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, 5, EPNUM_MSC_OUT, EPNUM_MSC_IN, 64),
 };
 
-#if TUD_OPT_HIGH_SPEED
 // Per USB specs: high speed capable device must report device_qualifier and other_speed_configuration
 
 uint8_t const desc_hs_configuration[] = {
     // Config number, interface count, string index, total length, attribute, power in mA
     TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, 100),
 
-    // CDC: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
+    // CDC UART: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
     TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, 4, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, 512),
+
+    // MSC FAT filesystem: Interface number, string index, EP Out & EP In address, EP size
+    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, 5, EPNUM_MSC_OUT, EPNUM_MSC_IN, 512),
 };
 
 // device qualifier is mostly similar to device descriptor since we don't change configuration based on speed
@@ -140,8 +165,6 @@ tud_descriptor_other_speed_configuration_cb(uint8_t index)
     return (tud_speed_get() == TUSB_SPEED_HIGH) ?  desc_fs_configuration : desc_hs_configuration;
 }
 
-#endif // highspeed
-
 // Invoked when received GET CONFIGURATION DESCRIPTOR
 // Application return pointer to descriptor
 // Descriptor contents must exist long enough for transfer to complete
@@ -150,35 +173,20 @@ tud_descriptor_configuration_cb(uint8_t index)
 {
     (void) index; // for multiple configurations
 
-#if TUD_OPT_HIGH_SPEED
     // Although we are highspeed, host may be fullspeed.
     return (tud_speed_get() == TUSB_SPEED_HIGH) ?  desc_hs_configuration : desc_fs_configuration;
-#else
-    return desc_fs_configuration;
-#endif
 }
 
 //--------------------------------------------------------------------+
 // String Descriptors
 //--------------------------------------------------------------------+
 
-#ifndef USB_MANUFACTURER
-#define USB_MANUFACTURER "TinyVision.ai Inc."
-#endif
-
-#ifndef USB_PRODUCT
-#define USB_PRODUCT "pico-ice"
-#endif
-
-#ifndef USB_SERIAL_NUMBER
-#define USB_SERIAL_NUMBER "123456"
-#endif
-
 // array of pointer to string descriptors
 char const *string_desc_arr[] = {
     (const char[]) { 0x09, 0x04 }, // 0: Supported language is English (0x0409)
     USB_MANUFACTURER, USB_PRODUCT, USB_SERIAL_NUMBER,
     "FPGA UART to USB adapter",    // 4: CDC Interface
+    "TinyUSB MSC",                 // 5: MSC Interface
 };
 
 // Invoked when received GET STRING DESCRIPTOR request
@@ -210,11 +218,11 @@ tud_descriptor_string_cb(uint8_t index, uint16_t langid)
             len = 31;
 
         for (uint8_t i = 0; i < len; i++)
-            utf16[1 + i] = str[i];
+            utf16[i + 1] = str[i];
     }
 
     // first byte is length (including header), second byte is string type
-    utf16[0] = (TUSB_DESC_STRING << 8 ) | (2 * len + 2);
+    utf16[0] = (TUSB_DESC_STRING << 8) | (2 * len + 2);
 
     return utf16;
 }
