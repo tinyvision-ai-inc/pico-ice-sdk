@@ -3,7 +3,7 @@
 #include "hardware/spi.h"
 
 /*
- * API for communicating with flash chips: reading and writing.
+ * Low-level API for communicating with flash chips: reading and writing.
  */
 
 #define FLASH_PAGE_SIZE         256
