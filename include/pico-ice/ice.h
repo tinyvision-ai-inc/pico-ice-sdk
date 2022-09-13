@@ -2,14 +2,19 @@
 
 /*
  * High-level API for driving the board.
+ * It is under heavy development and subject to change at any time!
  */
 
-void ice_flash_init(void);
+#define PICO_ICE_FPGA_CLOCK_PIN		25
+
+void ice_init_flash(void);
 /*
  * Initialise the SPI1 peripheral, dedicated to flashing the FPGA.
  */
 
-void ice_flash_erase(void);
+void ice_init_fpga_clock(uint8_t mhz);
 /*
- * Erase the whole FPGA flash memory. Must be called after ice_flash_init().
+ * Initialise the FPGA clock at the given frequency.
+ *
+ * :param mhz: the clock speed in MHz. Valid values: 48MHz, 24MHz, 16MHz 12MHz, 8MHz, 6MHz, 4MHz, 3MHz, 2MHz, 1MHz.
  */
