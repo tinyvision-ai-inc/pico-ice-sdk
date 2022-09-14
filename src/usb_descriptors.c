@@ -26,11 +26,11 @@
 #include "tusb.h"
 
 #ifndef USB_VID
-#define USB_VID     0x1209  // InterBiometrics - https://pid.codes/
+#define USB_VID 0x1209  // InterBiometrics - https://pid.codes/
 #endif
 
 #ifndef USB_PID
-#define USB_PID     0x0001  // TEST ONLY, DO NOT USE IN PRODUCTION
+#define USB_PID 0x0001  // TEST ONLY, DO NOT USE IN PRODUCTION
 #endif
 
 #ifndef USB_MANUFACTURER
@@ -45,7 +45,17 @@
 #define USB_SERIAL_NUMBER "123456"
 #endif
 
-#define USB_BCD     0x0200  // USB 2.0
+#define USB_BCD 0x0200  // USB 2.0
+
+enum string_desc {
+    STRID_LANGID = 0,
+    STRID_MANUFACTURER,
+    STRID_PRODUCT,
+    STRID_SERIAL_NUMBER,
+    STRID_CDC,
+    STRID_MSC,
+    STRID_VENDOR,
+};
 
 //--------------------------------------------------------------------+
 // Device Descriptors
@@ -55,8 +65,7 @@ tusb_desc_device_t const desc_device = {
     .bDescriptorType    = TUSB_DESC_DEVICE,
     .bcdUSB             = USB_BCD,
 
-    // Use Interface Association Descriptor (IAD) for CDC
-    // As required by USB Specs IAD's subclass must be common class (2) and protocol must be IAD (1)
+    // The class 0xEF means to lookup the class of the Interface instead.
     .bDeviceClass       = TUSB_CLASS_MISC,
     .bDeviceSubClass    = MISC_SUBCLASS_COMMON,
     .bDeviceProtocol    = MISC_PROTOCOL_IAD,
@@ -66,9 +75,9 @@ tusb_desc_device_t const desc_device = {
     .idProduct          = USB_PID,
     .bcdDevice          = 0x0100,
 
-    .iManufacturer      = 0x01,
-    .iProduct           = 0x02,
-    .iSerialNumber      = 0x03,
+    .iManufacturer      = STRID_MANUFACTURER,
+    .iProduct           = STRID_PRODUCT,
+    .iSerialNumber      = STRID_SERIAL_NUMBER,
 
     .bNumConfigurations = 0x01
 };
@@ -89,7 +98,7 @@ enum {
     ITF_NUM_CDC = 0,
     ITF_NUM_CDC_DATA,
 
-    // MSC FAT filesystem
+    // MSC FAT virtual filesystem for UF2
     ITF_NUM_MSC,
 
     ITF_NUM_TOTAL
@@ -97,22 +106,22 @@ enum {
 
 #define CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
 
-#define EPNUM_CDC_NOTIF     0x81
-#define EPNUM_CDC_OUT       0x02
-#define EPNUM_CDC_IN        0x82
+#define EPNUM_CDC_NOTIF 0x81
+#define EPNUM_CDC_OUT 0x02
+#define EPNUM_CDC_IN 0x82
 
-#define EPNUM_MSC_OUT       0x03
-#define EPNUM_MSC_IN        0x83
+#define EPNUM_MSC_OUT 0x03
+#define EPNUM_MSC_IN 0x83
 
 uint8_t const desc_fs_configuration[] = {
     // Config number, interface count, string index, total length, attribute, power in mA
-    TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, 100),
+    TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, 500),
 
     // CDC UART: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, 4, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, 64),
+    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, STRID_MSC, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, 64),
 
     // MSC FAT filesystem: Interface number, string index, EP Out & EP In address, EP size
-    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, 5, EPNUM_MSC_OUT, EPNUM_MSC_IN, 64),
+    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, STRID_MSC, EPNUM_MSC_OUT, EPNUM_MSC_IN, 64),
 };
 
 // Per USB specs: high speed capable device must report device_qualifier and other_speed_configuration
@@ -162,7 +171,7 @@ tud_descriptor_other_speed_configuration_cb(uint8_t index)
     (void) index; // for multiple configurations
 
     // if link speed is high return fullspeed config, and vice versa
-    return (tud_speed_get() == TUSB_SPEED_HIGH) ?  desc_fs_configuration : desc_hs_configuration;
+    return (tud_speed_get() == TUSB_SPEED_HIGH) ? desc_fs_configuration : desc_hs_configuration;
 }
 
 // Invoked when received GET CONFIGURATION DESCRIPTOR
@@ -174,7 +183,7 @@ tud_descriptor_configuration_cb(uint8_t index)
     (void) index; // for multiple configurations
 
     // Although we are highspeed, host may be fullspeed.
-    return (tud_speed_get() == TUSB_SPEED_HIGH) ?  desc_hs_configuration : desc_fs_configuration;
+    return (tud_speed_get() == TUSB_SPEED_HIGH) ? desc_hs_configuration : desc_fs_configuration;
 }
 
 //--------------------------------------------------------------------+
@@ -183,10 +192,13 @@ tud_descriptor_configuration_cb(uint8_t index)
 
 // array of pointer to string descriptors
 char const *string_desc_arr[] = {
-    (const char[]) { 0x09, 0x04 }, // 0: Supported language is English (0x0409)
-    USB_MANUFACTURER, USB_PRODUCT, USB_SERIAL_NUMBER,
-    "FPGA UART to USB adapter",    // 4: CDC Interface
-    "TinyUSB MSC",                 // 5: MSC Interface
+    [STRID_LANGID]        = (const char[]) { 0x09, 0x04 }, // 0: Supported language is English (0x0409)
+    [STRID_MANUFACTURER]  = USB_MANUFACTURER,
+    [STRID_PRODUCT]       = USB_PRODUCT,
+    [STRID_SERIAL_NUMBER] = USB_SERIAL_NUMBER,
+    [STRID_CDC]           = "UART to USB adapter to access the FPGA",
+    [STRID_MSC]           = "UF2 FAT filesystem to upload the FPGA bitstream",
+    [STRID_VENDOR]        = "TinyVision.ai Inc",
 };
 
 // Invoked when received GET STRING DESCRIPTOR request
@@ -207,7 +219,6 @@ tud_descriptor_string_cb(uint8_t index, uint16_t langid)
 
         // Note: the 0xEE index string is a Microsoft OS 1.0 Descriptors.
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/usbcon/microsoft-defined-usb-descriptors
-
         if (index >= sizeof(string_desc_arr) / sizeof(*string_desc_arr))
             return NULL;
 
