@@ -9,9 +9,10 @@ add_library(pico_ice_sdk STATIC
     src/fpga.c
     src/ice.c
     src/usb_descriptors.c
-)
-add_subdirectory(
-    src/tinyuf2
+    src/tinyuf2/main.c
+    src/tinyuf2/ghostfat.c
+    src/tinyuf2/msc.c
+    src/tinyuf2/board_pico_ice.c
 )
 target_include_directories(pico_ice_sdk PUBLIC include)
 
