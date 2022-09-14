@@ -9,9 +9,10 @@ add_library(pico_ice_sdk STATIC
     src/fpga.c
     src/ice.c
     src/usb_descriptors.c
-    src/usb_msc.c
 )
-
+add_subdirectory(
+    src/tinyuf2
+)
 target_include_directories(pico_ice_sdk PUBLIC include)
 
 # This is in order to access the headers of the raspberrypi/pico-sdk, which
