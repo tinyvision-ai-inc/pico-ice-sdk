@@ -78,13 +78,13 @@
  */
 #endif
 #ifndef PICO_DEFAULT_UART_TX_PIN
-#define PICO_DEFAULT_UART_TX_PIN 16
+#define PICO_DEFAULT_UART_TX_PIN 12
 /*
  * Different than boards/pico.h: same physical location, different GPIO pin.
  */
 #endif
 #ifndef PICO_DEFAULT_UART_RX_PIN
-#define PICO_DEFAULT_UART_RX_PIN 17
+#define PICO_DEFAULT_UART_RX_PIN 13
 /*
  * Different than boards/pico.h: same physical location, different GPIO pin.
  */
