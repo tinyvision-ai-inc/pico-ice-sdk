@@ -24,3 +24,11 @@ ice_init_flash(void)
     // For assert()s elsewhere
     ice_flash_init_done = 1;
 }
+
+void
+ice_init_usb(void)
+{
+    board_init();
+    uf2_init();
+    tusb_init();
+}
