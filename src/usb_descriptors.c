@@ -45,8 +45,6 @@
 #define USB_SERIAL_NUMBER "123456"
 #endif
 
-#define USB_BCD 0x0200  // USB 2.0
-
 enum string_desc {
     STRID_LANGID = 0,
     STRID_MANUFACTURER,
@@ -63,7 +61,7 @@ enum string_desc {
 tusb_desc_device_t const desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
     .bDescriptorType    = TUSB_DESC_DEVICE,
-    .bcdUSB             = USB_BCD,
+    .bcdUSB             = 0x0200,
 
     // The class 0xEF means to lookup the class of the Interface instead.
     .bDeviceClass       = TUSB_CLASS_MISC,
@@ -88,6 +86,51 @@ uint8_t const *
 tud_descriptor_device_cb(void)
 {
     return (uint8_t const *) &desc_device;
+}
+
+//--------------------------------------------------------------------+
+// USB HID
+//--------------------------------------------------------------------+
+
+uint8_t const desc_hid_report[] =
+{
+  TUD_HID_REPORT_DESC_GENERIC_INOUT(CFG_TUD_HID_BUFSIZE)
+};
+
+// Invoked when received GET HID REPORT DESCRIPTOR
+// Application return pointer to descriptor
+// Descriptor contents must exist long enough for transfer to complete
+uint8_t const * tud_hid_descriptor_report_cb(uint8_t itf)
+{
+  (void) itf;
+  return desc_hid_report;
+}
+
+// Invoked when received GET_REPORT control request
+// Application must fill buffer report's content and return its length.
+// Return zero will cause the stack to STALL request
+uint16_t tud_hid_get_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_type, uint8_t* buffer, uint16_t reqlen)
+{
+    // TODO not Implemented
+    (void) itf;
+    (void) report_id;
+    (void) report_type;
+    (void) buffer;
+    (void) reqlen;
+
+    return 0;
+}
+
+// Invoked when received SET_REPORT control request or
+// received data on OUT endpoint ( Report ID = 0, Type = 0 )
+void tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_type, uint8_t const* buffer, uint16_t bufsize)
+{
+    // This example doesn't use multiple report and report ID
+    (void) itf;
+    (void) report_id;
+    (void) report_type;
+    (void) buffer;
+    (void) bufsize;
 }
 
 //--------------------------------------------------------------------+
@@ -141,7 +184,7 @@ uint8_t const desc_hs_configuration[] = {
 tusb_desc_device_qualifier_t const desc_device_qualifier = {
     .bLength            = sizeof(tusb_desc_device_t),
     .bDescriptorType    = TUSB_DESC_DEVICE,
-    .bcdUSB             = USB_BCD,
+    .bcdUSB             = 0x0200,
 
     .bDeviceClass       = TUSB_CLASS_MISC,
     .bDeviceSubClass    = MISC_SUBCLASS_COMMON,
