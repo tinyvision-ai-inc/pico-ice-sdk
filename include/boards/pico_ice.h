@@ -31,6 +31,12 @@
  */
 
 /*
+ * Pinout between the RP2040 and the FPGA's UART port.
+ */
+#define ICE_FPGA_UART_TX_PIN 4
+#define ICE_FPGA_UART_RX_PIN 5
+
+/*
  * Pinout between the RP2040 and the FPGA's flash chip.
  * These pins must be set at high-impedance/floating whenever not in use to program the flash chip,
  * to not distrub the FPGA operation, in particular when the FPGA is under initialisation.
@@ -62,6 +68,11 @@
  * The RP2040 pin at which a clock signal is sent, as a source for the ICE40 system clock.
  */
 
+#define ICE_FPGA_FLASH_SIZE_BYTES (4 * 1024 * 1024)
+/*
+ * The size of the W25Q32JVSSIQ flash chip also connected to the FPGA.
+ */
+
 #define TINYVISION_AI_INC_PICO_ICE
 /*
  * To use for board-detection.
@@ -71,18 +82,25 @@
  * UART
  * ~~~~
  */
+#define uart_fpga uart1
+/*
+ * UART interface transferring everything received over an USB UART interface (USB CDC ACM).
+ */
+
 #ifndef PICO_DEFAULT_UART
 #define PICO_DEFAULT_UART 0
 /*
  * Same as the pico-sdk: stdio_init_all() will enable this UART0.
  */
 #endif
+
 #ifndef PICO_DEFAULT_UART_TX_PIN
 #define PICO_DEFAULT_UART_TX_PIN 12
 /*
  * Different than boards/pico.h: same physical location, different GPIO pin.
  */
 #endif
+
 #ifndef PICO_DEFAULT_UART_RX_PIN
 #define PICO_DEFAULT_UART_RX_PIN 13
 /*
@@ -101,18 +119,22 @@
  * There are three LED pins (RGB): GPIO22 (red), GPIO23 (green), GPIO24 (blue).
  */
 #endif
+
 // no PICO_DEFAULT_WS2812_PIN
 
 /*
  * I2C
  * ~~~
  */
+
 #ifndef PICO_DEFAULT_I2C
 #define PICO_DEFAULT_I2C 0
 #endif
+
 #ifndef PICO_DEFAULT_I2C_SDA_PIN
 #define PICO_DEFAULT_I2C_SDA_PIN 4
 #endif
+
 #ifndef PICO_DEFAULT_I2C_SCL_PIN
 #define PICO_DEFAULT_I2C_SCL_PIN 5
 #endif
@@ -128,17 +150,20 @@
  * letting SPI0 for the user like in the pico-sdk.
  * The pinout is unchanged.
  */
-
 #endif
+
 #ifndef PICO_DEFAULT_SPI_SCK_PIN
 #define PICO_DEFAULT_SPI_SCK_PIN 18
 #endif
+
 #ifndef PICO_DEFAULT_SPI_TX_PIN
 #define PICO_DEFAULT_SPI_TX_PIN 19
 #endif
+
 #ifndef PICO_DEFAULT_SPI_RX_PIN
 #define PICO_DEFAULT_SPI_RX_PIN 16
 #endif
+
 #ifndef PICO_DEFAULT_SPI_CSN_PIN
 #define PICO_DEFAULT_SPI_CSN_PIN 17
 #endif
@@ -149,6 +174,11 @@
  *
  * This is the internal flash used by the RP2040 chip,
  * not the flash used by the ICE40 FPGA.
+ */
+
+#define spi_fpga_flash          spi1
+/*
+ * The flash peripheral instance that is connected to the FGPA's flash chip.
  */
 
 #define PICO_BOOT_STAGE2_CHOOSE_W25Q080 1
