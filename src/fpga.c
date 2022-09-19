@@ -12,7 +12,7 @@ fpga_init_clock(uint8_t mhz)
 void
 fpga_init_uart(uint32_t mhz)
 {
-	uart_init(uart_fpga, mhz);
-	gpio_set_function(ICE_FPGA_UART_TX_PIN, GPIO_FUNC_UART);
-	gpio_set_function(ICE_FPGA_UART_RX_PIN, GPIO_FUNC_UART);
+    uart_init(uart_fpga, mhz);
+    gpio_set_function(ICE_FPGA_UART_TX_PIN, GPIO_FUNC_UART);
+    gpio_set_function(ICE_FPGA_UART_RX_PIN, GPIO_FUNC_UART);
 }

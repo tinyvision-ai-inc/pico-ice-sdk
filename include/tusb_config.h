@@ -71,6 +71,21 @@
 // DEVICE CONFIGURATION
 //--------------------------------------------------------------------
 
+enum {
+    // CDC UART for Pico
+    ITF_NUM_CDC_PICO = 0,
+    ITF_NUM_CDC_PICO_DATA,
+
+    // CDC UART for FPGA
+    ITF_NUM_CDC_FPGA,
+    ITF_NUM_CDC_FPGA_DATA,
+
+    // MSC virtual FAT for UF2
+    ITF_NUM_MSC,
+
+    ITF_NUM_TOTAL
+};
+
 #ifndef CFG_TUD_ENDPOINT0_SIZE
 #define CFG_TUD_ENDPOINT0_SIZE    64
 #endif
@@ -86,7 +101,7 @@
 #define CFG_TUD_CDC_RX_BUFSIZE   64
 #define CFG_TUD_CDC_TX_BUFSIZE   64
 
-// CDC Endpoint transfer buffer size, more is faster
+// HID Endpoint transfer buffer size, more is faster
 #define CFG_TUD_HID_BUFSIZE      64
 
 // CDC Endpoint transfer buffer size, more is faster

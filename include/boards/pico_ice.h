@@ -82,6 +82,7 @@
  * UART
  * ~~~~
  */
+
 #define uart_fpga uart1
 /*
  * UART interface transferring everything received over an USB UART interface (USB CDC ACM).
@@ -144,7 +145,7 @@
  * ~~~
  */
 #ifndef PICO_DEFAULT_SPI
-#define PICO_DEFAULT_SPI 0
+#define PICO_DEFAULT_SPI 1
 /*
  * The communication with the flash is done via SPI1,
  * letting SPI0 for the user like in the pico-sdk.
@@ -176,7 +177,7 @@
  * not the flash used by the ICE40 FPGA.
  */
 
-#define spi_fpga_flash          spi1
+#define spi_fpga_flash          spi0
 /*
  * The flash peripheral instance that is connected to the FGPA's flash chip.
  */
