@@ -50,7 +50,8 @@ enum string_desc {
     STRID_MANUFACTURER,
     STRID_PRODUCT,
     STRID_SERIAL_NUMBER,
-    STRID_CDC,
+    STRID_CDC_PICO,
+    STRID_CDC_FPGA,
     STRID_MSC,
     STRID_VENDOR,
 };
@@ -92,9 +93,8 @@ tud_descriptor_device_cb(void)
 // USB HID
 //--------------------------------------------------------------------+
 
-uint8_t const desc_hid_report[] =
-{
-  TUD_HID_REPORT_DESC_GENERIC_INOUT(CFG_TUD_HID_BUFSIZE)
+uint8_t const desc_hid_report[] = {
+    TUD_HID_REPORT_DESC_GENERIC_INOUT(CFG_TUD_HID_BUFSIZE)
 };
 
 // Invoked when received GET HID REPORT DESCRIPTOR
@@ -102,8 +102,8 @@ uint8_t const desc_hid_report[] =
 // Descriptor contents must exist long enough for transfer to complete
 uint8_t const * tud_hid_descriptor_report_cb(uint8_t itf)
 {
-  (void) itf;
-  return desc_hid_report;
+    (void) itf;
+    return desc_hid_report;
 }
 
 // Invoked when received GET_REPORT control request
@@ -137,31 +137,44 @@ void tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t rep
 // Configuration Descriptor
 //--------------------------------------------------------------------+
 enum {
-    // CDC UART
-    ITF_NUM_CDC = 0,
-    ITF_NUM_CDC_DATA,
+    // CDC UART for Pico
+    ITF_NUM_CDC_PICO = 0,
+    ITF_NUM_CDC_PICO_DATA,
 
-    // MSC FAT virtual filesystem for UF2
+    // CDC UART for FPGA
+    ITF_NUM_CDC_FPGA,
+    ITF_NUM_CDC_FPGA_DATA,
+
+    // MSC virtual FAT for UF2
     ITF_NUM_MSC,
 
     ITF_NUM_TOTAL
 };
 
-#define CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
+#define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
 
-#define EPNUM_CDC_NOTIF 0x81
-#define EPNUM_CDC_OUT 0x02
-#define EPNUM_CDC_IN 0x82
+// [7] Direction (0=Out 1=In) [6:4] Reserved [3:0] Endpoint Number
 
-#define EPNUM_MSC_OUT 0x03
-#define EPNUM_MSC_IN 0x83
+#define EPNUM_CDC_PICO_NOTIF 0x81
+#define EPNUM_CDC_PICO_OUT 0x02
+#define EPNUM_CDC_PICO_IN 0x82
+
+#define EPNUM_CDC_FPGA_NOTIF 0x83
+#define EPNUM_CDC_FPGA_OUT 0x04
+#define EPNUM_CDC_FPGA_IN 0x84
+
+#define EPNUM_MSC_OUT 0x05
+#define EPNUM_MSC_IN 0x85
 
 uint8_t const desc_fs_configuration[] = {
     // Config number, interface count, string index, total length, attribute, power in mA
     TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, 500),
 
-    // CDC UART: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, STRID_MSC, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, 64),
+    // CDC UART PICO: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
+    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_PICO, STRID_CDC_PICO, EPNUM_CDC_PICO_NOTIF, 8, EPNUM_CDC_PICO_OUT, EPNUM_CDC_PICO_IN, 64),
+
+    // CDC UART FPGA: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
+    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_FPGA, STRID_CDC_FPGA, EPNUM_CDC_FPGA_NOTIF, 8, EPNUM_CDC_FPGA_OUT, EPNUM_CDC_FPGA_IN, 64),
 
     // MSC FAT filesystem: Interface number, string index, EP Out & EP In address, EP size
     TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, STRID_MSC, EPNUM_MSC_OUT, EPNUM_MSC_IN, 64),
@@ -173,8 +186,11 @@ uint8_t const desc_hs_configuration[] = {
     // Config number, interface count, string index, total length, attribute, power in mA
     TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, 100),
 
-    // CDC UART: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, 4, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, 512),
+    // CDC UART PICO: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
+    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_PICO, 4, EPNUM_CDC_PICO_NOTIF, 8, EPNUM_CDC_PICO_OUT, EPNUM_CDC_PICO_IN, 512),
+
+    // CDC UART FPGA: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
+    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_FPGA, 4, EPNUM_CDC_FPGA_NOTIF, 8, EPNUM_CDC_FPGA_OUT, EPNUM_CDC_FPGA_IN, 512),
 
     // MSC FAT filesystem: Interface number, string index, EP Out & EP In address, EP size
     TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, 5, EPNUM_MSC_OUT, EPNUM_MSC_IN, 512),
@@ -239,8 +255,9 @@ char const *string_desc_arr[] = {
     [STRID_MANUFACTURER]  = USB_MANUFACTURER,
     [STRID_PRODUCT]       = USB_PRODUCT,
     [STRID_SERIAL_NUMBER] = USB_SERIAL_NUMBER,
-    [STRID_CDC]           = "UART to USB adapter to access the FPGA",
-    [STRID_MSC]           = "UF2 FAT filesystem to upload the FPGA bitstream",
+    [STRID_CDC_PICO]      = "UART serial (Pico)",
+    [STRID_CDC_FPGA]      = "UART serial (FPGA)",
+    [STRID_MSC]           = "UF2 flashing (FPGA)",
     [STRID_VENDOR]        = "TinyVision.ai Inc",
 };
 
