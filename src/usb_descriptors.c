@@ -136,20 +136,6 @@ void tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t rep
 //--------------------------------------------------------------------+
 // Configuration Descriptor
 //--------------------------------------------------------------------+
-enum {
-    // CDC UART for Pico
-    ITF_NUM_CDC_PICO = 0,
-    ITF_NUM_CDC_PICO_DATA,
-
-    // CDC UART for FPGA
-    ITF_NUM_CDC_FPGA,
-    ITF_NUM_CDC_FPGA_DATA,
-
-    // MSC virtual FAT for UF2
-    ITF_NUM_MSC,
-
-    ITF_NUM_TOTAL
-};
 
 #define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
 
@@ -255,9 +241,9 @@ char const *string_desc_arr[] = {
     [STRID_MANUFACTURER]  = USB_MANUFACTURER,
     [STRID_PRODUCT]       = USB_PRODUCT,
     [STRID_SERIAL_NUMBER] = USB_SERIAL_NUMBER,
-    [STRID_CDC_PICO]      = "UART serial (Pico)",
-    [STRID_CDC_FPGA]      = "UART serial (FPGA)",
-    [STRID_MSC]           = "UF2 flashing (FPGA)",
+    [STRID_CDC_PICO]      = "UART serial (rp2040)",
+    [STRID_CDC_FPGA]      = "UART serial (ice40)",
+    [STRID_MSC]           = "UF2 flashing (ice40)",
     [STRID_VENDOR]        = "TinyVision.ai Inc",
 };
 

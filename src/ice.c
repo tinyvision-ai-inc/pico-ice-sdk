@@ -18,7 +18,7 @@ void
 ice_init_flash(void)
 {
     // Init the SPI dedicated to flashing the FPGA
-    spi_init(spi_fpga_flash, 1000 * 1000);
+    spi_init(spi_fpga_flash, 10 * 1000 * 1000);
 
     // Setup the associated GPIO pins except CSN
     gpio_set_function(ICE_FLASH_SPI_SCK_PIN, GPIO_FUNC_SPI);
