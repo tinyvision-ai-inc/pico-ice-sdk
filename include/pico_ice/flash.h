@@ -8,11 +8,6 @@
 
 #define FLASH_PAGE_SIZE         256
 
-#define spi_fpga_flash          spi1
-/*
- * The flash peripheral instance that is connected to the FGPA's flash chip.
- */
-
 void flash_read(spi_inst_t *spi, uint8_t pin, uint32_t addr, uint8_t *buf, size_t sz);
 /*
  * Communicate to the chip over SPI and read multiple bytes at chosen address onto onto a buffer.
