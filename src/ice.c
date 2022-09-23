@@ -66,5 +66,4 @@ void ice_init_fpga(void)
 void ice_usb_task(void)
 {
     tud_task();
-    tud_task_cdc();
 }

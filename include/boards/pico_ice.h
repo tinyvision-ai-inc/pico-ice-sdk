@@ -26,6 +26,21 @@
 #define ICE_FPGA_UART_TX_PIN 4
 #define ICE_FPGA_UART_RX_PIN 5
 
+/** The RP2040 pin at which a clock signal is sent, as a source for the ICE40 system clock. */
+#define ICE_FPGA_CLOCK_PIN 25
+
+/** The size of the W25Q32JVSSIQ flash chip also connected to the FPGA. */
+#define ICE_FPGA_FLASH_SIZE_BYTES (4 * 1024 * 1024)
+
+/** Instance number of the UART connected to the FPGA */
+#define ICE_FPGA_UART 1
+
+/** IRQ number for the UART instace connected to the FPGA */
+#define ICE_FPGA_UART_IRQ __CONCAT(__CONCAT(UART, ICE_FPGA_UART), _IRQ)
+
+/** UART interface transferring everything received over an USB UART interface (USB CDC ACM). */
+#define uart_fpga __CONCAT(uart, ICE_FPGA_UART)
+
 // Pinout between the RP2040 and the FPGA's flash chip.
 // These pins must be set at high-impedance/floating whenever not in use to program the flash chip,
 // to not distrub the FPGA operation, in particular when the FPGA is under initialisation.
@@ -42,19 +57,10 @@
 /** Configured as GPIO FUNCSEL by ``ice_init_flash()``. Controlled by the flash library. */
 #define ICE_FLASH_SPI_CSN_PIN 1
 
-/** The RP2040 pin at which a clock signal is sent, as a source for the ICE40 system clock. */
-#define ICE_FPGA_CLOCK_PIN 25
-
-/** The size of the W25Q32JVSSIQ flash chip also connected to the FPGA. */
-#define ICE_FPGA_FLASH_SIZE_BYTES (4 * 1024 * 1024)
-
 /** To use for board-detection. */
 #define TINYVISION_AI_INC_PICO_ICE
 
 // UART
-
-/** UART interface transferring everything received over an USB UART interface (USB CDC ACM). */
-#define uart_fpga uart1
 
 /** Same as the pico-sdk: stdio_init_all() will enable this UART0. */
 #ifndef PICO_DEFAULT_UART
