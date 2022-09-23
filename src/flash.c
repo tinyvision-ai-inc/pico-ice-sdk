@@ -12,24 +12,21 @@
 
 #define FLASH_STATUS_BUSY_MASK    0x01
 
-static void
-flash_chip_select(uint8_t pin)
+static void flash_chip_select(uint8_t pin)
 {
     sleep_us(1);
     gpio_put(pin, false);
     sleep_us(1);
 }
 
-static void
-flash_chip_deselect(uint8_t pin)
+static void flash_chip_deselect(uint8_t pin)
 {
     sleep_us(1);
     gpio_put(pin, true);
     sleep_us(1);
 }
 
-static void
-flash_wait(spi_inst_t *spi, uint8_t pin)
+static void flash_wait(spi_inst_t *spi, uint8_t pin)
 {
     uint8_t cmds[] = { FLASH_CMD_STATUS, 0 };
     uint8_t buf[2];
@@ -41,8 +38,7 @@ flash_wait(spi_inst_t *spi, uint8_t pin)
     } while (buf[0] & FLASH_STATUS_BUSY_MASK);
 }
 
-static void
-flash_enable_write(spi_inst_t *spi, uint8_t pin)
+static void flash_enable_write(spi_inst_t *spi, uint8_t pin)
 {
     uint8_t cmds[] = { FLASH_CMD_ENABLE_WRITE };
 
@@ -51,8 +47,14 @@ flash_enable_write(spi_inst_t *spi, uint8_t pin)
     flash_chip_deselect(pin);
 }
 
-void
-flash_program_page(spi_inst_t *spi, uint8_t pin, uint32_t addr, uint8_t const page[FLASH_PAGE_SIZE])
+/**
+ * Program a page of the flash chip at the given address.
+ * @param spi The SPI interface of the RP2040 to use.
+ * @param pin The CS GPIO pin of the RP2040 to use.
+ * @param addr The address at which the data is written.
+ * @param page The buffer holding the data to be sent to the flash chip, of size ``FLASH_PAGE_SIZE``.
+ */
+void flash_program_page(spi_inst_t *spi, uint8_t pin, uint32_t addr, uint8_t const page[FLASH_PAGE_SIZE])
 {
     uint8_t cmds[] = { FLASH_CMD_PROGRAM_PAGE, addr >> 16, addr >> 8, addr };
 
@@ -66,8 +68,15 @@ flash_program_page(spi_inst_t *spi, uint8_t pin, uint32_t addr, uint8_t const pa
     flash_wait(spi, pin);
 }
 
-void
-flash_read(spi_inst_t *spi, uint8_t pin, uint32_t addr, uint8_t *buf, size_t sz)
+/**
+ * Communicate to the chip over SPI and read multiple bytes at chosen address onto onto a buffer.
+ * @param spi The SPI interface of the RP2040 to use.
+ * @param pin The CS GPIO pin of the RP2040 to use.
+ * @param addr The address at which the data is read.
+ * @param buf The buffer onto which the data read is stored.
+ * @param sz The size of ``buf``.
+ */
+void flash_read(spi_inst_t *spi, uint8_t pin, uint32_t addr, uint8_t *buf, size_t sz)
 {
     uint8_t cmds[] = { FLASH_CMD_READ, addr >> 16, addr >> 8, addr };
 
@@ -77,8 +86,12 @@ flash_read(spi_inst_t *spi, uint8_t pin, uint32_t addr, uint8_t *buf, size_t sz)
     flash_chip_deselect(pin);
 }
 
-void
-flash_erase_chip(spi_inst_t *spi, uint8_t pin)
+/**
+ * Send a command to erase the whole chip.
+ * @param spi The SPI interface of the RP2040 to use.
+ * @param pin The CS GPIO pin of the RP2040 to use.
+ */
+void flash_erase_chip(spi_inst_t *spi, uint8_t pin)
 {
     uint8_t cmds[] = { FLASH_CMD_CHIP_ERASE };
 

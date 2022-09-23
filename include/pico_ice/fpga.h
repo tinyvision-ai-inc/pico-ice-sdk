@@ -1,18 +1,15 @@
-#pragma once
+#ifndef PICO_ICE_FPGA_H
+#define PICO_ICE_FPGA_H
 #include "boards/pico_ice.h"
 
 /**
  * Low-level API for interacting with the FPGA chip.
+ * @defgroup pico_ice_fpga
+ * @{
  */
 
-/**
- * @brief Initialise the FPGA clock at the given frequency.
- * @param mhz The clock speed in MHz. Valid values: 48MHz, 24MHz, 16MHz 12MHz, 8MHz, 6MHz, 4MHz, 3MHz, 2MHz, 1MHz.
- */
 void fpga_init_clock(uint8_t mhz);
-
-/**
- * @brief Initialise the UART peripheral for communication with the FPGA, at the given baudrate.
- * @param mhz The baud rate speed in MHz. Can be any value supported by the pico-sdk.
- */
 void fpga_init_uart(uint32_t mhz);
+
+/** @} */
+#endif

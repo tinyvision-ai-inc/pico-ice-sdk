@@ -9,8 +9,7 @@
 #include "pico_ice/ice.h"
 #include "tusb.h"
 
-void
-tud_task_cdc(void)
+void tud_task_cdc(void)
 {
     if (uart_is_readable(uart_fpga)) {
         tud_cdc_n_write_char(1, uart_getc(uart_fpga));

@@ -1,21 +1,26 @@
-#include "hardware/gpio.h"
-#include "hardware/uart.h"
-#include "hardware/spi.h"
 #include "pico_ice/ice.h"
 #include "pico_ice/priv.h"
 #include "pico_ice/flash.h"
 #include "pico_ice/fpga.h"
+#include "hardware/gpio.h"
+#include "hardware/uart.h"
+#include "hardware/spi.h"
 
-void
-ice_init_defaults(void)
+/**
+ * Call all functions below with default values.
+ * No need to call any other initialization function when this is called.
+ */
+void ice_init_defaults(void)
 {
     ice_init_flash();
     ice_init_usb();
     ice_init_fpga();
 }
 
-void
-ice_init_flash(void)
+/**
+ * Initialise the SPI1 peripheral, dedicated to flashing the FPGA.
+ */
+void ice_init_flash(void)
 {
     // Init the SPI dedicated to flashing the FPGA
     spi_init(spi_fpga_flash, 10 * 1000 * 1000);
@@ -31,8 +36,10 @@ ice_init_flash(void)
     gpio_put(ICE_FLASH_SPI_CSN_PIN, 1);
 }
 
-void
-ice_init_usb(void)
+/**
+ * Initialise the TinyUSB library, enabling the UART (CDC) and drag-and-drop (MSC) interfaces.
+ */
+void ice_init_usb(void)
 {
     // TinyUSB
     board_init();
@@ -42,15 +49,21 @@ ice_init_usb(void)
     uf2_init();
 }
 
-void
-ice_init_fpga(void)
+/**
+ * Initialise the FPGA chip and communication with it.
+ * This will start the FPGA clock and take it out of reset.
+ */
+void ice_init_fpga(void)
 {
     fpga_init_clock(48);
     fpga_init_uart(115200);
 }
 
-void
-ice_usb_task(void)
+/**
+ * Run all code related to USB in a non-blocking way.
+ * It is typically to be placed at the end of the main application loop.
+ */
+void ice_usb_task(void)
 {
     tud_task();
     tud_task_cdc();
