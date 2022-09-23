@@ -52,18 +52,18 @@ static void flash_enable_write(spi_inst_t *spi, uint8_t pin)
  * @param spi The SPI interface of the RP2040 to use.
  * @param pin The CS GPIO pin of the RP2040 to use.
  * @param addr The address at which the data is written.
- * @param page The buffer holding the data to be sent to the flash chip, of size ``FLASH_PAGE_SIZE``.
+ * @param page The buffer holding the data to be sent to the flash chip, of size @ref ICE_FLASH_PAGE_SIZE.
  */
-void flash_program_page(spi_inst_t *spi, uint8_t pin, uint32_t addr, uint8_t const page[FLASH_PAGE_SIZE])
+void flash_program_page(spi_inst_t *spi, uint8_t pin, uint32_t addr, uint8_t const page[ICE_FLASH_PAGE_SIZE])
 {
     uint8_t cmds[] = { FLASH_CMD_PROGRAM_PAGE, addr >> 16, addr >> 8, addr };
 
-    assert(addr % FLASH_PAGE_SIZE == 0);
+    assert(addr % ICE_FLASH_PAGE_SIZE == 0);
 
     flash_enable_write(spi, pin);
     flash_chip_select(pin);
     spi_write_blocking(spi, cmds, sizeof cmds);
-    spi_write_blocking(spi, page, FLASH_PAGE_SIZE);
+    spi_write_blocking(spi, page, ICE_FLASH_PAGE_SIZE);
     flash_chip_deselect(pin);
     flash_wait(spi, pin);
 }

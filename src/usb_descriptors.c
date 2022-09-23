@@ -52,13 +52,15 @@ enum string_desc {
     STRID_SERIAL_NUMBER,
     STRID_CDC_0,
     STRID_CDC_1,
-    STRID_MSC,
+    STRID_MSC_0,
+    STRID_MSC_1,
     STRID_VENDOR,
 };
 
 //--------------------------------------------------------------------+
 // Device Descriptors
 //--------------------------------------------------------------------+
+
 tusb_desc_device_t const desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
     .bDescriptorType    = TUSB_DESC_DEVICE,
@@ -90,53 +92,8 @@ tud_descriptor_device_cb(void)
 }
 
 //--------------------------------------------------------------------+
-// USB HID
-//--------------------------------------------------------------------+
-
-uint8_t const desc_hid_report[] = {
-    TUD_HID_REPORT_DESC_GENERIC_INOUT(CFG_TUD_HID_BUFSIZE)
-};
-
-// Invoked when received GET HID REPORT DESCRIPTOR
-// Application return pointer to descriptor
-// Descriptor contents must exist long enough for transfer to complete
-uint8_t const * tud_hid_descriptor_report_cb(uint8_t itf)
-{
-    (void) itf;
-    return desc_hid_report;
-}
-
-// Invoked when received GET_REPORT control request
-// Application must fill buffer report's content and return its length.
-// Return zero will cause the stack to STALL request
-uint16_t tud_hid_get_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_type, uint8_t* buffer, uint16_t reqlen)
-{
-    // TODO not Implemented
-    (void) itf;
-    (void) report_id;
-    (void) report_type;
-    (void) buffer;
-    (void) reqlen;
-
-    return 0;
-}
-
-// Invoked when received SET_REPORT control request or
-// received data on OUT endpoint ( Report ID = 0, Type = 0 )
-void tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_type, uint8_t const* buffer, uint16_t bufsize)
-{
-    // This example doesn't use multiple report and report ID
-    (void) itf;
-    (void) report_id;
-    (void) report_type;
-    (void) buffer;
-    (void) bufsize;
-}
-
-//--------------------------------------------------------------------+
 // Configuration Descriptor
 //--------------------------------------------------------------------+
-
 
 enum {
     // CDC UART for Pico
@@ -147,13 +104,18 @@ enum {
     ITF_NUM_CDC_1,
     ITF_NUM_CDC_1_DATA,
 
-    // MSC virtual FAT for UF2
-    ITF_NUM_MSC,
+    // MSC virtual FAT for UF2 (FPGA)
+    ITF_NUM_MSC_0,
+
+    // MSC virtual FAT for UF2 (Micropython)
+//    ITF_NUM_MSC_1,
 
     ITF_NUM_TOTAL
 };
 
-#define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
+#define CONFIG_BASE_LEN (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
+#define CONFIG_MICROPYTHON_LEN (CONFIG_BASE_LEN + TUD_MSC_DESC_LEN)
+#define CONFIG_TOTAL_LEN CONFIG_BASE_LEN
 
 // [7] Direction (0=Out 1=In) [6:4] Reserved [3:0] Endpoint Number
 
@@ -165,8 +127,11 @@ enum {
 #define EPNUM_CDC_1_OUT 0x04
 #define EPNUM_CDC_1_IN 0x84
 
-#define EPNUM_MSC_OUT 0x05
-#define EPNUM_MSC_IN 0x85
+#define EPNUM_MSC_0_OUT 0x05
+#define EPNUM_MSC_0_IN 0x85
+
+#define EPNUM_MSC_1_OUT 0x06
+#define EPNUM_MSC_1_IN 0x86
 
 uint8_t const desc_fs_configuration[] = {
     // Config number, interface count, string index, total length, attribute, power in mA
@@ -179,7 +144,7 @@ uint8_t const desc_fs_configuration[] = {
     TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_1, STRID_CDC_1, EPNUM_CDC_1_NOTIF, 8, EPNUM_CDC_1_OUT, EPNUM_CDC_1_IN, 64),
 
     // MSC FAT filesystem: Interface number, string index, EP Out & EP In address, EP size
-    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, STRID_MSC, EPNUM_MSC_OUT, EPNUM_MSC_IN, 64),
+    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC_0, STRID_MSC_0, EPNUM_MSC_0_OUT, EPNUM_MSC_0_IN, FLASH_SECTOR_SIZE),
 };
 
 // Per USB specs: high speed capable device must report device_qualifier and other_speed_configuration
@@ -189,13 +154,13 @@ uint8_t const desc_hs_configuration[] = {
     TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, 100),
 
     // CDC UART PICO: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_0, 4, EPNUM_CDC_0_NOTIF, 8, EPNUM_CDC_0_OUT, EPNUM_CDC_0_IN, 512),
+    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_0, STRID_CDC_0, EPNUM_CDC_0_NOTIF, 8, EPNUM_CDC_0_OUT, EPNUM_CDC_0_IN, 512),
 
     // CDC UART FPGA: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_1, 4, EPNUM_CDC_1_NOTIF, 8, EPNUM_CDC_1_OUT, EPNUM_CDC_1_IN, 512),
+    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_1, STRID_CDC_1, EPNUM_CDC_1_NOTIF, 8, EPNUM_CDC_1_OUT, EPNUM_CDC_1_IN, 512),
 
     // MSC FAT filesystem: Interface number, string index, EP Out & EP In address, EP size
-    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, 5, EPNUM_MSC_OUT, EPNUM_MSC_IN, 512),
+    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC_0, STRID_MSC_0, EPNUM_MSC_0_OUT, EPNUM_MSC_0_IN, FLASH_SECTOR_SIZE),
 };
 
 // device qualifier is mostly similar to device descriptor since we don't change configuration based on speed
@@ -259,7 +224,8 @@ char const *string_desc_arr[] = {
     [STRID_SERIAL_NUMBER] = USB_SERIAL_NUMBER,
     [STRID_CDC_0]         = "UART serial (rp2040)",
     [STRID_CDC_1]         = "UART serial (ice40)",
-    [STRID_MSC]           = "UF2 flashing (ice40)",
+    [STRID_MSC_0]         = "UF2 flashing (ice40)",
+    [STRID_MSC_1]         = "UF2 flashing (micropython)",
     [STRID_VENDOR]        = "TinyVision.ai Inc",
 };
 

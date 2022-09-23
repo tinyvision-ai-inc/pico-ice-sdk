@@ -25,4 +25,5 @@ target_link_libraries(pico_ice_sdk
     pico_stdlib
     hardware_spi
     hardware_uart
+    hardware_flash
 )

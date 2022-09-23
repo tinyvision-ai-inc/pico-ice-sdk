@@ -1,5 +1,6 @@
 #ifndef PICO_ICE_FPGA_H
 #define PICO_ICE_FPGA_H
+#include <stdint.h>
 #include "boards/pico_ice.h"
 
 /**

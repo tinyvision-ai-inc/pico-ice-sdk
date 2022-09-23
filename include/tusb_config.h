@@ -24,6 +24,7 @@
  */
 
 #pragma once
+#include "hardware/flash.h"
 
 //--------------------------------------------------------------------
 // COMMON CONFIGURATION
@@ -50,7 +51,7 @@
 #define CFG_TUD_ENABLED           1
 
 // Default is max speed that hardware controller could support with on-chip PHY
-#define CFG_TUD_MAX_SPEED         BOARD_TUD_MAX_SPEED
+#define CFG_TUD_MAX_SPEED         OPT_MODE_DEFAULT_SPEED
 
 /* USB DMA on some MCUs can only access a specific SRAM region with restriction on alignment.
  * Tinyusb use follows macros to declare transferring memory so that they can be put
@@ -78,19 +79,16 @@
 //------------- CLASS -------------//
 #define CFG_TUD_CDC               2
 #define CFG_TUD_MSC               1
-#define CFG_TUD_HID               1
+#define CFG_TUD_HID               0
 #define CFG_TUD_MIDI              0
 #define CFG_TUD_VENDOR            0
 
 // CDC FIFO size of TX and RX
-#define CFG_TUD_CDC_RX_BUFSIZE   512
-#define CFG_TUD_CDC_TX_BUFSIZE   512
+#define CFG_TUD_CDC_RX_BUFSIZE    512
+#define CFG_TUD_CDC_TX_BUFSIZE    512
 
 // CDC Endpoint transfer buffer size, more is faster
-#define CFG_TUD_CDC_EP_BUFSIZE   512
-
-// HID Endpoint transfer buffer size, more is faster
-#define CFG_TUD_HID_BUFSIZE      64
+#define CFG_TUD_CDC_EP_BUFSIZE    512
 
 // MSC Buffer size of Device Mass storage
-#define CFG_TUD_MSC_BUFSIZE      4096
+#define CFG_TUD_MSC_BUFSIZE       FLASH_SECTOR_SIZE

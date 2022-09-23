@@ -1,5 +1,6 @@
 #ifndef PICO_ICE_ICE_H
 #define PICO_ICE_ICE_H
+#include <stdint.h>
 #include <assert.h>
 #include "boards/pico_ice.h"
 #include "tusb.h"
