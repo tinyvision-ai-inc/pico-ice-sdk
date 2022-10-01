@@ -27,5 +27,6 @@ if (NOT PICO_ICE_SDK_PATH)
     set(PICO_ICE_SDK_PATH ${pico-ice-sdk_SOURCE_DIR} CACHE PATH "Path to the Pico-Ice SDK")
 endif()
 
+include(${PICO_ICE_SDK_PATH}/cmake/pico_ice_sdk_init.cmake)
 include(${PICO_SDK_PATH}/pico_sdk_init.cmake)
 add_subdirectory(${PICO_ICE_SDK_PATH})

@@ -1,29 +1,12 @@
 #pragma once
+#include "boards/pico_ice.h"
 #include "hardware/spi.h"
 
 /*
- * API for communicating with flash chips: reading and writing.
+ * Low-level API for communicating with flash chips: reading and writing.
  */
 
-#define FLASH_PAGE_SIZE		256
-
-#define spi_fpga_flash		spi1
-/*
- * The flash peripheral instance that is connected to the FGPA's flash chip.
- */
-
-#define FLASH_FPGA_SPI_SCK_PIN	2
-#define FLASH_FPGA_SPI_TX_PIN	3
-#define FLASH_FPGA_SPI_RX_PIN	0
-#define FLASH_FPGA_SPI_CSN_PIN	1
-/*
- * Pinout between the RP2040 and the FPGA's flash chip.
- * These pins must be set at high-impedance/floating whenever not in use to program the flash chip,
- * to not distrub the FPGA operation, in particular when the FPGA is under initialisation.
- * This is handled by ``ice_flash_program()``.
- *
- * Each pin must be configured as SPI, except the CSN pin, to be set as a GPIO pin.
- */
+#define FLASH_PAGE_SIZE         256
 
 void flash_read(spi_inst_t *spi, uint8_t pin, uint32_t addr, uint8_t *buf, size_t sz);
 /*
