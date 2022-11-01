@@ -1,33 +1,66 @@
 // Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
 // Copyright (c) 2022 tinyvision-ai-inc
-//
 // SPDX-License-Identifier: BSD-3-Clause
-//
-// -----------------------------------------------------
-// NOTE: THIS HEADER IS ALSO INCLUDED BY ASSEMBLER SO
-//       SHOULD ONLY CONSIST OF PREPROCESSOR DIRECTIVES
-// -----------------------------------------------------
-
 #ifndef BOARDS_PICO_ICE_H
 #define BOARDS_PICO_ICE_H
 
-// Specific to pico-ice
+/** For board-detection. */
+#define TINYVISION_AI_INC_PICO_ICE
+
+
+// LED
+
+/** The default led pin is Blue, as Green and Red can be used for I²C. */
+#ifndef PICO_DEFAULT_LED_PIN
+#define PICO_DEFAULT_LED_PIN ICE_LED_BLUE_PIN
+#endif
 
 /** Red LED control pin of the RGB led. */
-#define ICE_LED_RED_PIN 22
+#define ICE_LED_RED_PIN 13
 
 /** Green LED control pin of the RGB led. */
-#define ICE_LED_GREEN_PIN 23
+#define ICE_LED_GREEN_PIN 12
 
 /** Blue LED control pin of the RGB led. */
-#define ICE_LED_BLUE_PIN 24
+#define ICE_LED_BLUE_PIN 15
+
+
+// FPGA
+
+// Pinout between the RP2040 and the FPGA's flash chip.
+// These pins must be set at high-impedance/floating whenever not in use to program the flash chip,
+// to not distrub the FPGA operation, in particular when the FPGA is under initialisation.
+
+/** The flash peripheral instance that is connected to the FGPA's flash chip. */
+#define spi_fpga_flash          spi0
+
+/** Configured as SPI FUNCSEL by ``ice_init_flash()``. */
+#define ICE_FLASH_SPI_SCK_PIN 10
+
+/** Configured as SPI FUNCSEL by ``ice_init_flash()``. */
+#define ICE_FLASH_SPI_TX_PIN 11
+
+/** Configured as SPI FUNCSEL by ``ice_init_flash()``. */
+#define ICE_FLASH_SPI_RX_PIN 8
+
+/** Configured as GPIO FUNCSEL by ``ice_init_flash()``. Controlled by the flash library. */
+#define ICE_FLASH_SPI_CSN_PIN 9
+
+/** iCE40 configuration done status pin. */
+#define ICE_FPGA_CDONE_PIN 26
+
+/** iCE40 configuration reset pin. */
+#define ICE_FPGA_CRESET_PIN 27
 
 /** Pinout between the RP2040 and the FPGA's UART port. */
-#define ICE_FPGA_UART_TX_PIN 4
-#define ICE_FPGA_UART_RX_PIN 5
+#define ICE_FPGA_UART_TX_PIN 0
+#define ICE_FPGA_UART_RX_PIN 1
 
-/** The RP2040 pin at which a clock signal is sent, as a source for the ICE40 system clock. */
-#define ICE_FPGA_CLOCK_PIN 25
+/** Pin where a clock signal is sent toward the iCE40. */
+#define ICE_FPGA_CLOCK_PIN 24
+
+/** Pin where a clock signal is sent to an external header. */
+#define ICE_FPGA_CLOCK_OUT_PIN 25
 
 /** The size of the W25Q32JVSSIQ flash chip also connected to the FPGA. */
 #define ICE_FPGA_FLASH_SIZE_BYTES (4 * 1024 * 1024)
@@ -41,24 +74,6 @@
 /** UART interface transferring everything received over an USB UART interface (USB CDC ACM). */
 #define uart_fpga __CONCAT(uart, ICE_FPGA_UART)
 
-// Pinout between the RP2040 and the FPGA's flash chip.
-// These pins must be set at high-impedance/floating whenever not in use to program the flash chip,
-// to not distrub the FPGA operation, in particular when the FPGA is under initialisation.
-
-/** Configured as SPI FUNCSEL by ``ice_init_flash()``. */
-#define ICE_FLASH_SPI_SCK_PIN 2
-
-/** Configured as SPI FUNCSEL by ``ice_init_flash()``. */
-#define ICE_FLASH_SPI_TX_PIN 3
-
-/** Configured as SPI FUNCSEL by ``ice_init_flash()``. */
-#define ICE_FLASH_SPI_RX_PIN 0
-
-/** Configured as GPIO FUNCSEL by ``ice_init_flash()``. Controlled by the flash library. */
-#define ICE_FLASH_SPI_CSN_PIN 1
-
-/** To use for board-detection. */
-#define TINYVISION_AI_INC_PICO_ICE
 
 // UART
 
@@ -67,25 +82,17 @@
 #define PICO_DEFAULT_UART 0
 #endif
 
-/** Different than boards/pico.h: same physical location, different GPIO pin. */
+/** Default UART output toward external header. */
 #ifndef PICO_DEFAULT_UART_TX_PIN
 #define PICO_DEFAULT_UART_TX_PIN 12
 #endif
 
-/** Different than boards/pico.h: same physical location, different GPIO pin. */
+/** Default UART input from external header. */
 #ifndef PICO_DEFAULT_UART_RX_PIN
 #define PICO_DEFAULT_UART_RX_PIN 13
 #endif
 
-// LED
 
-/** The GPIO25 used by pico-sdk is used for sending the clock over to the FPGA.
- * There are three LED pins (RGB): GPIO22 (red), GPIO23 (green), GPIO24 (blue). */
-#ifndef PICO_DEFAULT_LED_PIN
-#define PICO_DEFAULT_LED_PIN 23
-#endif
-
-// no PICO_DEFAULT_WS2812_PIN
 
 // I2C
 
@@ -94,19 +101,20 @@
 #endif
 
 #ifndef PICO_DEFAULT_I2C_SDA_PIN
-#define PICO_DEFAULT_I2C_SDA_PIN 4
+#define PICO_DEFAULT_I2C_SDA_PIN 12
 #endif
 
 #ifndef PICO_DEFAULT_I2C_SCL_PIN
-#define PICO_DEFAULT_I2C_SCL_PIN 5
+#define PICO_DEFAULT_I2C_SCL_PIN 13
 #endif
+
 
 // SPI
 
 /** Communication with flash is done via SPI1, SPI0 kept for the user like in the pico-sdk.
  * The pinout is unchanged. */
 #ifndef PICO_DEFAULT_SPI
-#define PICO_DEFAULT_SPI 1
+#define PICO_DEFAULT_SPI 0
 #endif
 
 #ifndef PICO_DEFAULT_SPI_SCK_PIN
@@ -125,12 +133,8 @@
 #define PICO_DEFAULT_SPI_CSN_PIN 17
 #endif
 
-// FLASH
-// This is the internal flash used by the RP2040 chip,
-// not the flash used by the ICE40 FPGA.
 
-/** The flash peripheral instance that is connected to the FGPA's flash chip. */
-#define spi_fpga_flash          spi0
+// Pico-SDK internals
 
 /** The pico-ice uses the same chip except with a larger size, and it also supports QSPI:
  * https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/boot_stage2/boot2_w25q080.S */
@@ -155,5 +159,7 @@
 #ifndef PICO_RP2040_B0_SUPPORTED
 #define PICO_RP2040_B0_SUPPORTED 1
 #endif
+
+// no PICO_DEFAULT_WS2812_PIN
 
 #endif

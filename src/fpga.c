@@ -5,12 +5,23 @@
 #include "tusb.h"
 
 /**
+ * Run the startup sequence for the FPGA configuration to take effect..
+ * Must be called
+ */
+static void ice_fpga_boot(void)
+{
+    gpio_set_dir(ICE_FPGA_CRESET_PIN, GPIO_OUT);
+    gpio_set_dir(ICE_FPGA_CDONE_PIN, GPIO_IN);
+}
+
+/**
  * Initialise the FPGA chip and communication with it.
  * This will start the FPGA clock and take it out of reset.
  */
 void ice_fpga_init(void)
 {
     ice_fpga_init_clock(48);
+    ice_fpga_boot();
     ice_fpga_init_uart(115200);
 }
 

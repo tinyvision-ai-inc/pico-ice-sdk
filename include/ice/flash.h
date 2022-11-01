@@ -1,14 +1,13 @@
 #ifndef ICE_FLASH_H
 #define ICE_FLASH_H
-#include <stdint.h>
-#include "boards/pico_ice.h"
-#include "hardware/spi.h"
-
 /**
  * Low-level API for communicating with flash chips: reading and writing.
  * @defgroup pico_ice_flash
  * @{
  */
+#include <stdint.h>
+#include "boards/pico_ice.h"
+#include "hardware/spi.h"
 
 /** The size of the flash */
 #define ICE_FLASH_PAGE_SIZE         256
