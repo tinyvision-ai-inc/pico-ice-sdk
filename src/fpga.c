@@ -1,18 +1,10 @@
-#include "ice/fpga.h"
 #include "hardware/clocks.h"
-#include "hardware/uart.h"
 #include "hardware/gpio.h"
+#include "hardware/uart.h"
+#include "ice/flash.h"
+#include "ice/fpga.h"
+#include "pico/stdlib.h"
 #include "tusb.h"
-
-/**
- * Run the startup sequence for the FPGA configuration to take effect..
- * Must be called
- */
-static void ice_fpga_boot(void)
-{
-    gpio_set_dir(ICE_FPGA_CRESET_PIN, GPIO_OUT);
-    gpio_set_dir(ICE_FPGA_CDONE_PIN, GPIO_IN);
-}
 
 /**
  * Initialise the FPGA chip and communication with it.
@@ -20,9 +12,41 @@ static void ice_fpga_boot(void)
  */
 void ice_fpga_init(void)
 {
+    // Output a clock by default.
     ice_fpga_init_clock(48);
-    ice_fpga_boot();
+
+    // Enable the UART by default, allowing early init.
     ice_fpga_init_uart(115200);
+
+    // Input pin for sensing configuration status.
+    gpio_init(ICE_FPGA_CDONE_PIN);
+    gpio_set_dir(ICE_FPGA_CDONE_PIN, GPIO_IN);
+
+    // Set the pin mode to output, defaulting to logic high level.
+    gpio_put(ICE_FPGA_CRESET_PIN, true);
+    gpio_init(ICE_FPGA_CRESET_PIN);
+    gpio_set_dir(ICE_FPGA_CRESET_PIN, GPIO_OUT);
+
+    // Issue a reset to the FPGA.
+    ice_fpga_reset();
+}
+
+/**
+ * Send a reset pulse to the FPGA re-reading its configuration then re-starting.
+ * It must be called before ice_flash_init();
+ */
+void ice_fpga_reset(void)
+{
+    // Issue a reset pulse.
+    gpio_put(ICE_FPGA_CRESET_PIN, false);
+    sleep_ms(1);
+    gpio_put(ICE_FPGA_CRESET_PIN, true);
+
+    // Wait that the configuration is finished before interferring.
+    // This makes sure the SPI bus is not driven by both the FPGA
+    // (reading from flash) and the RP2040 (configuring the flash).
+    while (!gpio_get(ICE_FPGA_CDONE_PIN));
+
 }
 
 /**
