@@ -32,6 +32,15 @@ void ice_fpga_init(void)
 }
 
 /**
+ * Hold the FPGA in reset mode until ice_fpga_reset() is called.
+ * Useful for programming the flash chip without disturbing the FPGA.
+ */
+void ice_fpga_halt(void)
+{
+    gpio_put(ICE_FPGA_CRESET_PIN, false);
+}
+
+/**
  * Send a reset pulse to the FPGA re-reading its configuration then re-starting.
  * It must be called before ice_flash_init();
  */
@@ -46,7 +55,6 @@ void ice_fpga_reset(void)
     // This makes sure the SPI bus is not driven by both the FPGA
     // (reading from flash) and the RP2040 (configuring the flash).
     while (!gpio_get(ICE_FPGA_CDONE_PIN));
-
 }
 
 /**
