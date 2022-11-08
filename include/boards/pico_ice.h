@@ -49,16 +49,16 @@
 // to not distrub the FPGA operation, in particular when the FPGA is under initialisation.
 
 /** Configured as SPI FUNCSEL by ``ice_init_flash()``. */
-#define ICE_FLASH_SPI_SCK_PIN 2
+#define ICE_FLASH_SPI_SCK_PIN 14
 
 /** Configured as SPI FUNCSEL by ``ice_init_flash()``. */
-#define ICE_FLASH_SPI_TX_PIN 3
+#define ICE_FLASH_SPI_TX_PIN 15
 
 /** Configured as SPI FUNCSEL by ``ice_init_flash()``. */
-#define ICE_FLASH_SPI_RX_PIN 0
+#define ICE_FLASH_SPI_RX_PIN 12
 
 /** Configured as GPIO FUNCSEL by ``ice_init_flash()``. Controlled by the flash library. */
-#define ICE_FLASH_SPI_CSN_PIN 1
+#define ICE_FLASH_SPI_CSN_PIN 13
 
 /** To use for board-detection. */
 #define TINYVISION_AI_INC_PICO_ICE
@@ -133,7 +133,7 @@
 // not the flash used by the ICE40 FPGA.
 
 /** The flash peripheral instance that is connected to the FGPA's flash chip. */
-#define spi_fpga_flash          spi0
+#define spi_fpga_flash          spi1
 
 /** The pico-ice uses the same chip except with a larger size, and it also supports QSPI:
  * https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/boot_stage2/boot2_w25q080.S */
