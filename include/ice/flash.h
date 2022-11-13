@@ -6,16 +6,17 @@
  * @{
  */
 #include <stdint.h>
+#include <stddef.h>
 #include "boards/pico_ice.h"
-#include "hardware/spi.h"
+//#include "hardware/spi.h"
 
 /** The size of the flash */
 #define ICE_FLASH_PAGE_SIZE         256
 
 void ice_flash_init(void);
-void ice_flash_read(spi_inst_t *spi, uint8_t pin, uint32_t addr, uint8_t *buf, size_t sz);
-void ice_flash_program_page(spi_inst_t *spi, uint8_t pin, uint32_t addr, uint8_t const page[ICE_FLASH_PAGE_SIZE]);
-void ice_flash_erase_chip(spi_inst_t *spi, uint8_t pin);
+void ice_flash_read(void *spi, uint8_t pin, uint32_t addr, uint8_t *buf, size_t sz);
+void ice_flash_program_page(void *spi, uint8_t pin, uint32_t addr, uint8_t const page[ICE_FLASH_PAGE_SIZE]);
+void ice_flash_erase_chip(void *spi, uint8_t pin);
 
 /** @} */
 #endif

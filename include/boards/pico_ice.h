@@ -133,7 +133,7 @@
 // not the flash used by the ICE40 FPGA.
 
 /** The flash peripheral instance that is connected to the FGPA's flash chip. */
-#define spi_fpga_flash          spi1
+#define spi_fpga_flash          NULL // spi1
 
 /** The pico-ice uses the same chip except with a larger size, and it also supports QSPI:
  * https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/boot_stage2/boot2_w25q080.S */

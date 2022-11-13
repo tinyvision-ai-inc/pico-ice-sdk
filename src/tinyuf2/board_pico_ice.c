@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "ice/flash.h"
+#include "pico/time.h"
 #include "hardware/watchdog.h"
 #include "hardware/timer.h"
 #include "board_api.h"
