@@ -25,3 +25,5 @@ This pico-ice-sdk and the Raspberry Pi pico-sdk will both be fetched
 from git.
 
 See the complete documentation at https://pico-ice.readthedocs.io/
+
+See the project examples on the `examples` directory.
