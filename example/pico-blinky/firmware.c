@@ -11,9 +11,9 @@ main(void)
 
     for (;;) {
         gpio_put(ICE_LED_RED_PIN, false);
-        sleep_ms(1000);
+        sleep_ms(500);
         gpio_put(ICE_LED_RED_PIN, true);
-        sleep_ms(1000);
+        sleep_ms(500);
     }
     return 0;
 }
