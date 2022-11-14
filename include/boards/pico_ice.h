@@ -49,16 +49,16 @@
 // to not distrub the FPGA operation, in particular when the FPGA is under initialisation.
 
 /** Configured as SPI FUNCSEL by ``ice_init_flash()``. */
-#define ICE_FLASH_SPI_SCK_PIN 14
+#define ICE_FLASH_SPI_SCK_PIN 2
 
 /** Configured as SPI FUNCSEL by ``ice_init_flash()``. */
-#define ICE_FLASH_SPI_TX_PIN 15
+#define ICE_FLASH_SPI_TX_PIN 0
 
 /** Configured as SPI FUNCSEL by ``ice_init_flash()``. */
-#define ICE_FLASH_SPI_RX_PIN 12
+#define ICE_FLASH_SPI_RX_PIN 3
 
 /** Configured as GPIO FUNCSEL by ``ice_init_flash()``. Controlled by the flash library. */
-#define ICE_FLASH_SPI_CSN_PIN 13
+#define ICE_FLASH_SPI_CSN_PIN 1
 
 /** To use for board-detection. */
 #define TINYVISION_AI_INC_PICO_ICE

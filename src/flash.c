@@ -22,16 +22,16 @@ static uint8_t spi_xfer_byte(uint8_t tx)
     uint8_t rx;
 
     for (uint8_t i = 0; i < 8; i++) {
-        // Sample RX and immediately set positive edge.
-        rx <<= 1;
-        rx |= gpio_get(ICE_FLASH_SPI_RX_PIN);
+        // Update TX and immediately set positive edge.
+        gpio_put(ICE_FLASH_SPI_TX_PIN, tx >> 7);
         gpio_put(ICE_FLASH_SPI_SCK_PIN, false);
+        tx <<= 1;
         sleep_us(10);
 
-        // Update TX and immediately set negative edge.
-        gpio_put(ICE_FLASH_SPI_TX_PIN, tx >> 7);
+        // Sample RX and immediately set negative edge.
+        rx <<= 1;
+        rx |= gpio_get(ICE_FLASH_SPI_RX_PIN);
         gpio_put(ICE_FLASH_SPI_SCK_PIN, true);
-        tx <<= 1;
         sleep_us(10);
     }
     return rx;
@@ -39,42 +39,36 @@ static uint8_t spi_xfer_byte(uint8_t tx)
 
 static inline void spi_chip_select(void)
 {
-    gpio_put(ICE_FLASH_SPI_CSN_PIN, true);
+    gpio_put(ICE_FLASH_SPI_CSN_PIN, false);
 }
 
 static inline void spi_chip_deselect(void)
 {
-    gpio_put(ICE_FLASH_SPI_CSN_PIN, false);
+    gpio_put(ICE_FLASH_SPI_CSN_PIN, true);
 }
 
 static void spi_write_read_blocking(void *spi, uint8_t *buf_w, uint8_t *buf_r, size_t len)
 {
     (void)spi;
 
-    spi_chip_select();
     for (; len > 0; len--, buf_r++, buf_w++)
         *buf_r = spi_xfer_byte(*buf_w);
-    spi_chip_deselect();
 }
 
 static void spi_read_blocking(void *spi, uint8_t tx, uint8_t *buf, size_t len)
 {
     (void)spi;
 
-    spi_chip_select();
     for (; len > 0; len--, buf++)
         *buf = spi_xfer_byte(tx);
-    spi_chip_deselect();
 }
 
 static void spi_write_blocking(void *spi, uint8_t const *buf, size_t len)
 {
     (void)spi;
 
-    spi_chip_select();
     for (; len > 0; len--, buf++)
         spi_xfer_byte(*buf);
-    spi_chip_deselect();
 }
 
 /**
@@ -88,12 +82,12 @@ void ice_flash_init(void)
     // Setup the associated GPIO pins except CSN
 
     gpio_init(ICE_FLASH_SPI_SCK_PIN);
-    gpio_set_dir(ICE_FLASH_SPI_SCK_PIN, GPIO_OUT);
     gpio_put(ICE_FLASH_SPI_SCK_PIN, true);
+    gpio_set_dir(ICE_FLASH_SPI_SCK_PIN, GPIO_OUT);
 
     gpio_init(ICE_FLASH_SPI_TX_PIN);
-    gpio_set_dir(ICE_FLASH_SPI_TX_PIN, GPIO_OUT);
     gpio_put(ICE_FLASH_SPI_TX_PIN, true);
+    gpio_set_dir(ICE_FLASH_SPI_TX_PIN, GPIO_OUT);
 
     gpio_init(ICE_FLASH_SPI_RX_PIN);
     gpio_set_dir(ICE_FLASH_SPI_RX_PIN, GPIO_IN);
@@ -101,8 +95,8 @@ void ice_flash_init(void)
     // Setup the CSN pin to GPIO mode for manual control
 
     gpio_init(ICE_FLASH_SPI_CSN_PIN);
-    gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_OUT);
     gpio_put(ICE_FLASH_SPI_CSN_PIN, true);
+    gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_OUT);
 }
 
 static void ice_flash_chip_select(uint8_t pin)

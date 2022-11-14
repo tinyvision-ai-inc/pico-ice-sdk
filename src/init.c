@@ -24,5 +24,6 @@ void ice_init(void)
 
     ice_usb_init();
     ice_fpga_init();
+    sleep_ms(100);
     ice_flash_init();
 }
