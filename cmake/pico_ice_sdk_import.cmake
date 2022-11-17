@@ -1,7 +1,7 @@
 # This is a copy of {PICO_ICE_SDK_PATH}/pico_ice_sdk_import.cmake
 include(FetchContent)
 
-if (NOT DEFINED ENV{PICO_ICE_SDK_PATH})
+if (NOT DEFINED ENV{PICO_SDK_PATH} OR ${PICO_ICE_SDK_PATH} STREQUAL "")
     message("Downloading Raspberry Pi Pico SDK")
     FetchContent_Declare(
         pico-sdk
@@ -14,7 +14,7 @@ if (NOT DEFINED ENV{PICO_ICE_SDK_PATH})
     set(PICO_SDK_PATH ${pico-sdk_SOURCE_DIR} CACHE PATH "Path to the Raspberry Pi Pico SDK")
 endif()
 
-if (NOT DEFINED ENV{PICO_ICE_SDK_PATH})
+if (NOT DEFINED ENV{PICO_ICE_SDK_PATH} OR ${PICO_ICE_SDK_PATH} STREQUAL "")
     message("Downloading Pico-Ice SDK")
     FetchContent_Declare(
         pico-ice-sdk
