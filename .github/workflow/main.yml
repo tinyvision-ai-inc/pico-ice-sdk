@@ -1,0 +1,20 @@
+name: build_on_push
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  firmware_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build the Hello World example
+        run: |
+          mkdir -p example/pico-hello-world/build/
+          cd example/pico-hello-world/
+          cmake ..
+          make

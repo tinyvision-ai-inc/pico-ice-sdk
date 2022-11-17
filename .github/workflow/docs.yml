@@ -2,7 +2,7 @@ name: doxygen_on_push
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -11,22 +11,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-#        with:
-#          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Build the documentation
         run: |
           doxygen
-
-      - name: Insert the new documentation onto the github page
-        run: |
-          mv html ..
-          git checkout -b gh-pages
-          rm -rf *
-          cp -r ../html/* .
-
-       - name: Push the changes
-        run: |
-          git add .
-          git commit -m "update documentation to ${{ github.ref }}"
-          git push -f
