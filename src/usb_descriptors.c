@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License (MIT)
  *
  * Copyright (c) 2019 Ha Thach (tinyusb.org)
@@ -33,6 +33,10 @@
 #define USB_PID 0x0001  // TEST ONLY, DO NOT USE IN PRODUCTION
 #endif
 
+#ifndef USB_CURRENT_MA
+#define USB_CURRENT_MA 500
+#endif
+
 #ifndef USB_MANUFACTURER
 #define USB_MANUFACTURER "TinyVision.ai Inc."
 #endif
@@ -44,114 +48,6 @@
 #ifndef USB_SERIAL_NUMBER
 #define USB_SERIAL_NUMBER "123456"
 #endif
-
-enum string_desc {
-    STRID_LANGID = 0,
-    STRID_MANUFACTURER,
-    STRID_PRODUCT,
-    STRID_SERIAL_NUMBER,
-    STRID_CDC_0,
-    STRID_CDC_1,
-    STRID_MSC,
-    STRID_VENDOR,
-};
-
-//--------------------------------------------------------------------+
-// Device Descriptors
-//--------------------------------------------------------------------+
-tusb_desc_device_t const desc_device = {
-    .bLength            = sizeof(tusb_desc_device_t),
-    .bDescriptorType    = TUSB_DESC_DEVICE,
-    .bcdUSB             = 0x0200,
-
-    // The class 0xEF means to lookup the class of the Interface instead.
-    .bDeviceClass       = TUSB_CLASS_MISC,
-    .bDeviceSubClass    = MISC_SUBCLASS_COMMON,
-    .bDeviceProtocol    = MISC_PROTOCOL_IAD,
-    .bMaxPacketSize0    = CFG_TUD_ENDPOINT0_SIZE,
-
-    .idVendor           = USB_VID,
-    .idProduct          = USB_PID,
-    .bcdDevice          = 0x0100,
-
-    .iManufacturer      = STRID_MANUFACTURER,
-    .iProduct           = STRID_PRODUCT,
-    .iSerialNumber      = STRID_SERIAL_NUMBER,
-
-    .bNumConfigurations = 0x01
-};
-
-// Invoked when received GET DEVICE DESCRIPTOR
-// Application return pointer to descriptor
-uint8_t const *
-tud_descriptor_device_cb(void)
-{
-    return (uint8_t const *) &desc_device;
-}
-
-//--------------------------------------------------------------------+
-// USB HID
-//--------------------------------------------------------------------+
-
-uint8_t const desc_hid_report[] = {
-    TUD_HID_REPORT_DESC_GENERIC_INOUT(CFG_TUD_HID_BUFSIZE)
-};
-
-// Invoked when received GET HID REPORT DESCRIPTOR
-// Application return pointer to descriptor
-// Descriptor contents must exist long enough for transfer to complete
-uint8_t const * tud_hid_descriptor_report_cb(uint8_t itf)
-{
-    (void) itf;
-    return desc_hid_report;
-}
-
-// Invoked when received GET_REPORT control request
-// Application must fill buffer report's content and return its length.
-// Return zero will cause the stack to STALL request
-uint16_t tud_hid_get_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_type, uint8_t* buffer, uint16_t reqlen)
-{
-    // TODO not Implemented
-    (void) itf;
-    (void) report_id;
-    (void) report_type;
-    (void) buffer;
-    (void) reqlen;
-
-    return 0;
-}
-
-// Invoked when received SET_REPORT control request or
-// received data on OUT endpoint ( Report ID = 0, Type = 0 )
-void tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_type, uint8_t const* buffer, uint16_t bufsize)
-{
-    // This example doesn't use multiple report and report ID
-    (void) itf;
-    (void) report_id;
-    (void) report_type;
-    (void) buffer;
-    (void) bufsize;
-}
-
-//--------------------------------------------------------------------+
-// Configuration Descriptor
-//--------------------------------------------------------------------+
-
-
-enum {
-    // CDC UART for Pico
-    ITF_NUM_CDC_0 = 0,
-    ITF_NUM_CDC_0_DATA,
-
-    // CDC UART for FPGA
-    ITF_NUM_CDC_1,
-    ITF_NUM_CDC_1_DATA,
-
-    // MSC virtual FAT for UF2
-    ITF_NUM_MSC,
-
-    ITF_NUM_TOTAL
-};
 
 #define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
 
@@ -165,91 +61,55 @@ enum {
 #define EPNUM_CDC_1_OUT 0x04
 #define EPNUM_CDC_1_IN 0x84
 
-#define EPNUM_MSC_OUT 0x05
-#define EPNUM_MSC_IN 0x85
+#define EPNUM_MSC_0_OUT 0x05
+#define EPNUM_MSC_0_IN 0x85
 
-uint8_t const desc_fs_configuration[] = {
-    // Config number, interface count, string index, total length, attribute, power in mA
-    TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, 500),
+#define EPNUM_MSC_1_OUT 0x06
+#define EPNUM_MSC_1_IN 0x86
 
-    // CDC UART PICO: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_0, STRID_CDC_0, EPNUM_CDC_0_NOTIF, 8, EPNUM_CDC_0_OUT, EPNUM_CDC_0_IN, 64),
-
-    // CDC UART FPGA: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_1, STRID_CDC_1, EPNUM_CDC_1_NOTIF, 8, EPNUM_CDC_1_OUT, EPNUM_CDC_1_IN, 64),
-
-    // MSC FAT filesystem: Interface number, string index, EP Out & EP In address, EP size
-    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, STRID_MSC, EPNUM_MSC_OUT, EPNUM_MSC_IN, 64),
+enum {
+    ITF_NUM_CDC_0,
+    ITF_NUM_CDC_0_DATA,
+    ITF_NUM_CDC_1,
+    ITF_NUM_CDC_1_DATA,
+    ITF_NUM_MSC_0,
+    ITF_NUM_TOTAL
 };
 
-// Per USB specs: high speed capable device must report device_qualifier and other_speed_configuration
-
-uint8_t const desc_hs_configuration[] = {
-    // Config number, interface count, string index, total length, attribute, power in mA
-    TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, 100),
-
-    // CDC UART PICO: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_0, 4, EPNUM_CDC_0_NOTIF, 8, EPNUM_CDC_0_OUT, EPNUM_CDC_0_IN, 512),
-
-    // CDC UART FPGA: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_1, 4, EPNUM_CDC_1_NOTIF, 8, EPNUM_CDC_1_OUT, EPNUM_CDC_1_IN, 512),
-
-    // MSC FAT filesystem: Interface number, string index, EP Out & EP In address, EP size
-    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, 5, EPNUM_MSC_OUT, EPNUM_MSC_IN, 512),
+enum string_desc {
+    STRID_LANGID,
+    STRID_MANUFACTURER,
+    STRID_PRODUCT,
+    STRID_SERIAL_NUMBER,
+    STRID_CDC_0,
+    STRID_CDC_1,
+    STRID_MSC_0,
+    STRID_VENDOR,
 };
 
-// device qualifier is mostly similar to device descriptor since we don't change configuration based on speed
-tusb_desc_device_qualifier_t const desc_device_qualifier = {
+static const tusb_desc_device_t desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
     .bDescriptorType    = TUSB_DESC_DEVICE,
     .bcdUSB             = 0x0200,
-
     .bDeviceClass       = TUSB_CLASS_MISC,
     .bDeviceSubClass    = MISC_SUBCLASS_COMMON,
     .bDeviceProtocol    = MISC_PROTOCOL_IAD,
-
     .bMaxPacketSize0    = CFG_TUD_ENDPOINT0_SIZE,
-    .bNumConfigurations = 0x01,
-    .bReserved          = 0x00
+    .idVendor           = USB_VID,
+    .idProduct          = USB_PID,
+    .bcdDevice          = 0x0100,
+    .iManufacturer      = STRID_MANUFACTURER,
+    .iProduct           = STRID_PRODUCT,
+    .iSerialNumber      = STRID_SERIAL_NUMBER,
+    .bNumConfigurations = 1
 };
 
-// Invoked when received GET DEVICE QUALIFIER DESCRIPTOR request
-// Application return pointer to descriptor, whose contents must exist long enough for transfer to complete.
-// device_qualifier descriptor describes information about a high-speed capable device that would
-// change if the device were operating at the other speed. If not highspeed capable stall this request.
-uint8_t const *
-tud_descriptor_device_qualifier_cb(void)
-{
-    return (uint8_t const*) &desc_device_qualifier;
-}
-
-// Invoked when received GET OTHER SEED CONFIGURATION DESCRIPTOR request
-// Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
-// Configuration descriptor in the other speed e.g if high speed then this is for full speed and vice versa
-uint8_t const *
-tud_descriptor_other_speed_configuration_cb(uint8_t index)
-{
-    (void) index; // for multiple configurations
-
-    // if link speed is high return fullspeed config, and vice versa
-    return (tud_speed_get() == TUSB_SPEED_HIGH) ? desc_fs_configuration : desc_hs_configuration;
-}
-
-// Invoked when received GET CONFIGURATION DESCRIPTOR
-// Application return pointer to descriptor
-// Descriptor contents must exist long enough for transfer to complete
-uint8_t const *
-tud_descriptor_configuration_cb(uint8_t index)
-{
-    (void) index; // for multiple configurations
-
-    // Although we are highspeed, host may be fullspeed.
-    return (tud_speed_get() == TUSB_SPEED_HIGH) ? desc_hs_configuration : desc_fs_configuration;
-}
-
-//--------------------------------------------------------------------+
-// String Descriptors
-//--------------------------------------------------------------------+
+uint8_t const desc_configuration[] = {
+    TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, USB_CURRENT_MA),
+    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_0, STRID_CDC_0, EPNUM_CDC_0_NOTIF, 8, EPNUM_CDC_0_OUT, EPNUM_CDC_0_IN, 64),
+    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_1, STRID_CDC_1, EPNUM_CDC_1_NOTIF, 8, EPNUM_CDC_1_OUT, EPNUM_CDC_1_IN, 64),
+    TUD_MSC_DESCRIPTOR(ITF_NUM_MSC_0, STRID_MSC_0, EPNUM_MSC_0_OUT, EPNUM_MSC_0_IN, 64),
+};
 
 // array of pointer to string descriptors
 char const *string_desc_arr[] = {
@@ -259,9 +119,21 @@ char const *string_desc_arr[] = {
     [STRID_SERIAL_NUMBER] = USB_SERIAL_NUMBER,
     [STRID_CDC_0]         = "UART serial (rp2040)",
     [STRID_CDC_1]         = "UART serial (ice40)",
-    [STRID_MSC]           = "UF2 flashing (ice40)",
+    [STRID_MSC_0]         = "UF2 flashing (ice40)",
     [STRID_VENDOR]        = "TinyVision.ai Inc",
 };
+
+// Invoked when received GET DEVICE DESCRIPTOR
+// Application return pointer to descriptor
+uint8_t const *tud_descriptor_device_cb(void)
+{
+    return (uint8_t const *) &desc_device;
+}
+
+const uint8_t *tud_descriptor_configuration_cb(uint8_t index) {
+    (void)index;
+    return desc_configuration;
+}
 
 // Invoked when received GET STRING DESCRIPTOR request
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
@@ -277,10 +149,8 @@ tud_descriptor_string_cb(uint8_t index, uint16_t langid)
         memcpy(&utf16[1], string_desc_arr[0], 2);
         len = 1;
     } else {
-	const char *str;
+        const char *str;
 
-        // Note: the 0xEE index string is a Microsoft OS 1.0 Descriptors.
-        // https://docs.microsoft.com/en-us/windows-hardware/drivers/usbcon/microsoft-defined-usb-descriptors
         if (index >= sizeof(string_desc_arr) / sizeof(*string_desc_arr))
             return NULL;
 

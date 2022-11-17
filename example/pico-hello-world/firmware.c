@@ -15,8 +15,7 @@ main(void)
     for (;;) {
         ice_usb_task();
 
-        // Application code here.
-
+        printf("hello world\r\n");
     }
     return 0;
 }

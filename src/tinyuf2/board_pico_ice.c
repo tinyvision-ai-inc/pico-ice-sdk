@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include "pico_ice/flash.h"
+#include "ice/flash.h"
+#include "pico/time.h"
 #include "hardware/watchdog.h"
 #include "hardware/timer.h"
 #include "board_api.h"
@@ -9,16 +10,16 @@ alarm_id_t alarm_id;
 void
 board_flash_read(uint32_t addr, void *buffer, uint32_t len)
 {
-    flash_read(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, addr, buffer, len);
+    ice_flash_read(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, addr, buffer, len);
 }
 
 void
 board_flash_write(uint32_t addr, void const *data, uint32_t len)
 {
-    if (len != FLASH_PAGE_SIZE) {
-        printf("%s: expected len=%u got len=%ld\r\n", __func__, FLASH_PAGE_SIZE, len);
+    if (len != ICE_FLASH_PAGE_SIZE) {
+        printf("%s: expected len=%u got len=%ld\r\n", __func__, ICE_FLASH_PAGE_SIZE, len);
     } else {
-        flash_program_page(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, addr, data);
+        ice_flash_program_page(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, addr, data);
     }
 }
 
