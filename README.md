@@ -25,3 +25,25 @@ This pico-ice-sdk and the Raspberry Pi pico-sdk will both be fetched
 from git.
 
 See the complete documentation at https://pico-ice.readthedocs.io/
+
+See the project examples on the `examples` directory.
+
+
+Flash a RP2040 firmware image
+-----------------------------
+To upload a new firmware image on the PR2040 (the "pico" part of "pico-ice"):
+
+**Step 1:** Press and hold the "BOOT" button.
+
+**Step 2:** Press and release the "RESET" button.
+
+**Step 3:** Release the "BOOT" button.
+
+**Step 4:** Look for an USB drive and mount it, open it, and check that there are only 2 files in it: `INFO.HTML` and `INFO_UF2.TXT`.
+If you also have an `CURRENT.UF2`, this means you found the FPGA flashing interface, and need to retry steps 1, 2, 3.
+
+**Step 5:** Copy the `firmware.uf2` file you just built onto the USB drive.
+
+**Step 6:** Eject the memory drive.
+
+At this step, the firmware should be uploaded.
