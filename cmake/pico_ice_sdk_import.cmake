@@ -27,7 +27,7 @@ if (NOT DEFINED PICO_ICE_SDK_PATH)
     FetchContent_Declare(
         pico-ice-sdk
         GIT_REPOSITORY https://github.com/tinyvision-ai-inc/pico-ice-sdk
-        GIT_TAG develop
+        GIT_TAG main
         GIT_SHALLOW true
         GIT_SUBMODULES_RECURSE false
     )
