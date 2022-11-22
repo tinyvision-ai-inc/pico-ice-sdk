@@ -6,11 +6,7 @@
 #include "hardware/uart.h"
 #include "hardware/spi.h"
 
-/**
- * Call all functions below with default values.
- * No need to call any other initialization function when this is called.
- */
-void ice_init(void)
+static void init_rgb_led(void)
 {
     gpio_init(ICE_LED_RED_PIN);
     gpio_init(ICE_LED_GREEN_PIN);
@@ -21,9 +17,17 @@ void ice_init(void)
     gpio_put(ICE_LED_RED_PIN, false);
     gpio_put(ICE_LED_GREEN_PIN, true);
     gpio_put(ICE_LED_BLUE_PIN, true);
+}
 
+/**
+ * Call all functions below with default values.
+ * No need to call any other initialization function when this is called.
+ */
+void ice_init(void)
+{
+    init_rgb_led();
     ice_usb_init();
-    ice_fpga_init();
+    //ice_fpga_init();
     sleep_ms(100);
     ice_flash_init();
 }

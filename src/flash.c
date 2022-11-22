@@ -76,6 +76,9 @@ static void spi_write_blocking(void *spi, uint8_t const *buf, size_t len)
  */
 void ice_flash_init(void)
 {
+    // Hold the FPGA in reset while flashing so that it does not interfer.
+    ice_fpga_halt();
+
     // Init the SPI dedicated to flashing the FPGA
     spi_init(spi_fpga_flash, 10 * 1000 * 1000);
 
