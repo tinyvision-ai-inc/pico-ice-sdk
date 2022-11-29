@@ -40,4 +40,4 @@ message("PICO_ICE_SDK_PATH=$PICO_ICE_SDK_PATH")
 
 include(${PICO_ICE_SDK_PATH}/cmake/pico_ice_sdk_init.cmake)
 include(${PICO_SDK_PATH}/pico_sdk_init.cmake)
-add_subdirectory(${PICO_ICE_SDK_PATH})
+add_subdirectory(${PICO_ICE_SDK_PATH} pico-ice-sdk)
