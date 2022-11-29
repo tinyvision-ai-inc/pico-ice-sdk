@@ -28,6 +28,6 @@ void ice_init(void)
     init_rgb_led();
     ice_usb_init();
     ice_fpga_init();
-    sleep_ms(100);
+    sleep_ms(100); // @TBD: Why is there a delay here?
     ice_flash_init();
 }

@@ -55,10 +55,10 @@
 #define ICE_FLASH_SPI_SCK_PIN 10
 
 /** Configured as SPI FUNCSEL by ``ice_init_flash()``. */
-#define ICE_FLASH_SPI_TX_PIN 11
+#define ICE_FLASH_SPI_TX_PIN 8
 
 /** Configured as SPI FUNCSEL by ``ice_init_flash()``. */
-#define ICE_FLASH_SPI_RX_PIN 8
+#define ICE_FLASH_SPI_RX_PIN 11
 
 /** Configured as GPIO FUNCSEL by ``ice_init_flash()``. Controlled by the flash library. */
 #define ICE_FLASH_SPI_CSN_PIN 9

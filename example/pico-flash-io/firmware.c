@@ -23,18 +23,33 @@ int
 main(void)
 {
     uint8_t buf_r[ICE_FLASH_PAGE_SIZE] = {0}, buf_w[ICE_FLASH_PAGE_SIZE] = {0};
+    
+    const uint32_t MY_BASE_ADDRESS = 0x20000;
 
     ice_init();
-    gpio_set_input_hysteresis_enabled(ICE_FLASH_SPI_RX_PIN, false);
 
+    // Let the FPGA boot up from flash
+    //ice_flash_deinit();
+    //ice_fpga_reset();
+
+    // Booted up, now take control of the Flash:
+    ice_flash_init();
+    
+    // Flash might be asleep as a successful FPGA boot will put it to sleep as the last command!
+    ice_flash_wakeup(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN);
+
+    // Write data: known pattern, not very random!
     for (size_t i = 0; i < sizeof buf_w; i++)
-        buf_w[i] = 3;
+        buf_w[i] = i;
 
     for (uint16_t i = 0;; i++) {
         ice_usb_task(); 
 
-        //ice_flash_program_page(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, 0x0000, buf_w);
-        ice_flash_read(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, i, buf_r, sizeof buf_r);
+        // Erase a sector, program the page and then read it back.
+        // Note that we're using MY_BASE_ADDRESS to avoid erasing the FPGA bitfile which is at 0x0
+        ice_flash_erase_sector(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, MY_BASE_ADDRESS);
+        ice_flash_program_page(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, MY_BASE_ADDRESS, buf_w);
+        ice_flash_read(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, MY_BASE_ADDRESS, buf_r, sizeof buf_r);
         memdump(buf_r, sizeof buf_r);
     }
 

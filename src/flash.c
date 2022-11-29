@@ -5,13 +5,16 @@
 #include "hardware/structs/spi.h"
 //#include "hardware/spi.h"
 
-#define FLASH_CMD_PROGRAM_PAGE    0x02
-#define FLASH_CMD_READ            0x03
-#define FLASH_CMD_ENABLE_WRITE    0x06
-#define FLASH_CMD_STATUS          0x05
-#define FLASH_CMD_CHIP_ERASE      0xC7
+#define FLASH_CMD_PROGRAM_PAGE       0x02
+#define FLASH_CMD_READ               0x03
+#define FLASH_CMD_ENABLE_WRITE       0x06
+#define FLASH_CMD_STATUS             0x05
+#define FLASH_CMD_SECTOR_ERASE       0x20
+#define FLASH_CMD_CHIP_ERASE         0xC7
+#define FLASH_CMD_RELEASE_POWERDOWN  0xAB
+#define FLASH_CMD_POWERDOWN          0xB9
 
-#define FLASH_STATUS_BUSY_MASK    0x01
+#define FLASH_STATUS_BUSY_MASK       0x01
 
 static void spi_init(void *spi, uint64_t freq)
 {
@@ -26,15 +29,19 @@ static uint8_t spi_xfer_byte(uint8_t tx)
     for (uint8_t i = 0; i < 8; i++) {
         // Update TX and immediately set positive edge.
         gpio_put(ICE_FLASH_SPI_TX_PIN, tx >> 7);
-        gpio_put(ICE_FLASH_SPI_SCK_PIN, false);
+        gpio_put(ICE_FLASH_SPI_SCK_PIN, true);
         tx <<= 1;
-        sleep_us(10);
+        //sleep_us(1);
+        __asm volatile ("nop\n");
+
 
         // Sample RX and immediately set negative edge.
         rx <<= 1;
         rx |= gpio_get(ICE_FLASH_SPI_RX_PIN);
-        gpio_put(ICE_FLASH_SPI_SCK_PIN, true);
-        sleep_us(10);
+        gpio_put(ICE_FLASH_SPI_SCK_PIN, false);
+        //sleep_us(1);
+        __asm volatile ("nop\n");
+
     }
     return rx;
 }
@@ -77,7 +84,7 @@ void ice_flash_init(void)
     // Setup the associated GPIO pins except CSN
 
     gpio_init(ICE_FLASH_SPI_SCK_PIN);
-    gpio_put(ICE_FLASH_SPI_SCK_PIN, true);
+    gpio_put(ICE_FLASH_SPI_SCK_PIN, false); // SCK should start low
     gpio_set_dir(ICE_FLASH_SPI_SCK_PIN, GPIO_OUT);
 
     gpio_init(ICE_FLASH_SPI_TX_PIN);
@@ -93,6 +100,29 @@ void ice_flash_init(void)
     gpio_put(ICE_FLASH_SPI_CSN_PIN, true);
     gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_OUT);
 }
+/**
+ * Release the GPIO used for the FPGA flash so the FPGA can use them
+ */
+void ice_flash_deinit(void)
+{
+    // Init the SPI dedicated to flashing the FPGA
+    spi_init(spi_fpga_flash, 10 * 1000 * 1000);
+
+    // Setup the associated GPIO pins except CSN
+
+    gpio_init(ICE_FLASH_SPI_SCK_PIN);
+    gpio_set_dir(ICE_FLASH_SPI_SCK_PIN, GPIO_IN);
+
+    gpio_init(ICE_FLASH_SPI_TX_PIN);
+    gpio_set_dir(ICE_FLASH_SPI_TX_PIN, GPIO_IN);
+
+    gpio_init(ICE_FLASH_SPI_RX_PIN);
+    gpio_set_dir(ICE_FLASH_SPI_RX_PIN, GPIO_IN);
+
+    gpio_init(ICE_FLASH_SPI_CSN_PIN);
+    gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_IN);
+}
+
 static void ice_flash_chip_select(uint8_t pin)
 {
     gpio_put(pin, false);
@@ -114,7 +144,7 @@ static void ice_flash_wait(void *spi, uint8_t pin)
         ice_flash_chip_select(pin);
         spi_write_read_blocking(spi, cmds, buf, 2);
         ice_flash_chip_deselect(pin);
-    } while (buf[0] & FLASH_STATUS_BUSY_MASK);
+    } while (buf[1] & FLASH_STATUS_BUSY_MASK);
 }
 
 static void ice_flash_enable_write(void *spi, uint8_t pin)
@@ -124,6 +154,27 @@ static void ice_flash_enable_write(void *spi, uint8_t pin)
     ice_flash_chip_select(pin);
     spi_write_blocking(spi, cmds, sizeof cmds);
     ice_flash_chip_deselect(pin);
+}
+
+/**
+ * Erase a sector of the flash chip at the given address.
+ * @param spi The SPI interface of the RP2040 to use.
+ * @param pin The CS GPIO pin of the RP2040 to use.
+ * @param addr The beginning of the sector
+ */
+void ice_flash_erase_sector(void *spi, uint8_t pin, uint32_t addr)
+{
+    uint8_t cmds[] = { FLASH_CMD_SECTOR_ERASE, addr >> 16, addr >> 8, addr };
+
+    assert(addr % ICE_FLASH_PAGE_SIZE == 0);
+
+    ice_flash_enable_write(spi, pin);
+
+    ice_flash_chip_select(pin);
+    spi_write_blocking(spi, cmds, sizeof cmds);
+    ice_flash_chip_deselect(pin);
+
+    ice_flash_wait(spi, pin);
 }
 
 /**
@@ -175,6 +226,40 @@ void ice_flash_read(void *spi, uint8_t pin, uint32_t addr, uint8_t *buf, size_t 
 void ice_flash_erase_chip(void *spi, uint8_t pin)
 {
     uint8_t cmds[] = { FLASH_CMD_CHIP_ERASE };
+
+    ice_flash_chip_select(pin);
+    spi_write_blocking(spi, cmds, sizeof cmds);
+    ice_flash_chip_deselect(pin);
+
+    ice_flash_wait(spi, pin);
+}
+
+/**
+ * Send a command to wakeup the chip.
+ * @param spi The SPI interface of the RP2040 to use.
+ * @param pin The CS GPIO pin of the RP2040 to use.
+ */
+void ice_flash_wakeup(void *spi, uint8_t pin)
+{
+    uint8_t cmds[] = { FLASH_CMD_RELEASE_POWERDOWN };
+
+    ice_flash_chip_select(pin);
+    spi_write_blocking(spi, cmds, sizeof cmds);
+    ice_flash_chip_deselect(pin);
+
+    ice_flash_wait(spi, pin);
+
+    sleep_us(5); // Command takes 3us per datasheet to take effect
+}
+
+/**
+ * Send a command to wakeup the chip.
+ * @param spi The SPI interface of the RP2040 to use.
+ * @param pin The CS GPIO pin of the RP2040 to use.
+ */
+void ice_flash_sleep(void *spi, uint8_t pin)
+{
+    uint8_t cmds[] = { FLASH_CMD_POWERDOWN };
 
     ice_flash_chip_select(pin);
     spi_write_blocking(spi, cmds, sizeof cmds);
