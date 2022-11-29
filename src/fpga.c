@@ -12,23 +12,20 @@
  */
 void ice_fpga_init(void)
 {
-    // Output a clock by default.
-    ice_fpga_init_clock(48);
-
-    // Enable the UART by default, allowing early init.
-    ice_fpga_init_uart(115200);
+    // Keep the FPGA in reset until ice_fpga_reset() is called.
+    gpio_put(ICE_FPGA_CRESET_PIN, false);
+    gpio_init(ICE_FPGA_CRESET_PIN);
+    gpio_set_dir(ICE_FPGA_CRESET_PIN, GPIO_OUT);
 
     // Input pin for sensing configuration status.
     gpio_init(ICE_FPGA_CDONE_PIN);
     gpio_set_dir(ICE_FPGA_CDONE_PIN, GPIO_IN);
 
-    // Set the pin mode to output, defaulting to logic high level.
-    gpio_put(ICE_FPGA_CRESET_PIN, true);
-    gpio_init(ICE_FPGA_CRESET_PIN);
-    gpio_set_dir(ICE_FPGA_CRESET_PIN, GPIO_OUT);
+    // Output a clock by default.
+    ice_fpga_init_clock(48);
 
-    // Issue a reset to the FPGA.
-    ice_fpga_reset();
+    // Enable the UART by default, allowing early init.
+    ice_fpga_init_uart(115200);
 }
 
 /**

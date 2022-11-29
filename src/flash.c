@@ -1,4 +1,6 @@
+#include <stdlib.h>
 #include "ice/flash.h"
+#include "ice/fpga.h"
 #include "pico/stdlib.h"
 #include "hardware/structs/spi.h"
 //#include "hardware/spi.h"
@@ -37,16 +39,6 @@ static uint8_t spi_xfer_byte(uint8_t tx)
     return rx;
 }
 
-static inline void spi_chip_select(void)
-{
-    gpio_put(ICE_FLASH_SPI_CSN_PIN, false);
-}
-
-static inline void spi_chip_deselect(void)
-{
-    gpio_put(ICE_FLASH_SPI_CSN_PIN, true);
-}
-
 static void spi_write_read_blocking(void *spi, uint8_t *buf_w, uint8_t *buf_r, size_t len)
 {
     (void)spi;
@@ -76,6 +68,9 @@ static void spi_write_blocking(void *spi, uint8_t const *buf, size_t len)
  */
 void ice_flash_init(void)
 {
+    // Hold the FPGA in reset while flashing so that it does not interfer.
+    ice_fpga_halt();
+
     // Init the SPI dedicated to flashing the FPGA
     spi_init(spi_fpga_flash, 10 * 1000 * 1000);
 
@@ -98,19 +93,16 @@ void ice_flash_init(void)
     gpio_put(ICE_FLASH_SPI_CSN_PIN, true);
     gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_OUT);
 }
-
 static void ice_flash_chip_select(uint8_t pin)
 {
-    sleep_us(1);
     gpio_put(pin, false);
-    sleep_us(1);
+    sleep_us(10);
 }
 
 static void ice_flash_chip_deselect(uint8_t pin)
 {
-    sleep_us(1);
     gpio_put(pin, true);
-    sleep_us(1);
+    sleep_us(10);
 }
 
 static void ice_flash_wait(void *spi, uint8_t pin)
@@ -148,10 +140,12 @@ void ice_flash_program_page(void *spi, uint8_t pin, uint32_t addr, uint8_t const
     assert(addr % ICE_FLASH_PAGE_SIZE == 0);
 
     ice_flash_enable_write(spi, pin);
+
     ice_flash_chip_select(pin);
     spi_write_blocking(spi, cmds, sizeof cmds);
     spi_write_blocking(spi, page, ICE_FLASH_PAGE_SIZE);
     ice_flash_chip_deselect(pin);
+
     ice_flash_wait(spi, pin);
 }
 
@@ -185,5 +179,6 @@ void ice_flash_erase_chip(void *spi, uint8_t pin)
     ice_flash_chip_select(pin);
     spi_write_blocking(spi, cmds, sizeof cmds);
     ice_flash_chip_deselect(pin);
+
     ice_flash_wait(spi, pin);
 }

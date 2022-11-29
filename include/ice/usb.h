@@ -10,14 +10,14 @@
 #include "boards/pico_ice.h"
 #include "tusb.h"
 
-// in src/usb_cdc.c
-void tud_cdc_task(void);
+/** TinyUSB CDC interface number for the USB-UART link. */
+#define ICE_USB_UART_FPGA_ITF 1
+
 // in src/tinyuf2/uf2.h
 void uf2_init(void);
 // in src/tinyuf2/board_api.h
 void board_init(void);
 
-void ice_usb_cdc_rx_cb(void);
 void ice_usb_init(void);
 void ice_usb_task(void);
 
