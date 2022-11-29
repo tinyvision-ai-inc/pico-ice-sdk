@@ -27,7 +27,7 @@ void ice_init(void)
 {
     init_rgb_led();
     ice_usb_init();
-    //ice_fpga_init();
+    ice_fpga_init();
     sleep_ms(100);
     ice_flash_init();
 }

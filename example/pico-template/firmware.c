@@ -7,7 +7,6 @@
 int
 main(void)
 {
-    stdio_init_all();
     ice_init();
 
     // Setup code here.
