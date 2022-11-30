@@ -23,6 +23,9 @@ main(void)
 {
     uint8_t buf_r[ICE_FLASH_PAGE_SIZE] = {0}, buf_w[ICE_FLASH_PAGE_SIZE] = {0};
 
+    // Enable USB-UART #0 output
+    stdio_init_all();
+
     // Let the FPGA boot up from flash
     ice_init();
 

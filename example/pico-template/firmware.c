@@ -7,6 +7,10 @@
 int
 main(void)
 {
+    // Enable USB-UART #0 output
+    stdio_init_all();
+
+    // Init the pico-ice-sdk library
     ice_init();
 
     // Setup code here.
