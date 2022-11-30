@@ -4,7 +4,7 @@ pico-ice-sdk
 This is the firmware library for the [pico-ice](https://pico-ice.readthedocs.io/),
 a board combining a Raspberry Pi RP2040 and an Lattice iCE40.
 
-Before starting any work with this repo, it is suggested that you read through the installation instructions for the Raspberry Pico processor [here](https://github.com/raspberrypi/pico-sdk). Specifically, you will need to install the ARM development environment using something similar to this:
+You will need an ARM development environment as described by the [pico-sdk](https://github.com/raspberrypi/pico-sdk):
 
 ```
 sudo apt install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
