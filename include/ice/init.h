@@ -7,7 +7,6 @@
  */
 #include <stdint.h>
 #include <assert.h>
-#include "boards/pico_ice.h"
 #include "bsp/board.h"
 
 void ice_init(void);

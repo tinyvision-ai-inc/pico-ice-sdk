@@ -31,6 +31,8 @@ void ice_usb_init(void)
 /**
  * Run all code related to USB in a non-blocking way.
  * It is typically to be placed at the end of the main application loop.
+ * It must be called frequently in order to USB to work.
+ * This is due to how the TinyUSB library works.
  */
 void ice_usb_task(void)
 {

@@ -7,7 +7,6 @@
  * @defgroup usb
  * @{
  */
-#include "boards/pico_ice.h"
 #include "tusb.h"
 
 /** TinyUSB CDC interface number for the USB-UART link. */

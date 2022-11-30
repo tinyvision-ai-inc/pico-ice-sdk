@@ -2,6 +2,9 @@
 # raspberrypi/pico-sdk. This also enable C++ support.
 enable_language(C CXX)
 
+set(PICO_ICE_SDK_PATH ${CMAKE_CURRENT_LIST_DIR})
+list(APPEND PICO_BOARD_HEADER_DIRS ${PICO_ICE_SDK_PATH}/include/boards)
+
 # Add the pico-ice-sdk as a CMake STATIC library, otherwise it will link
 # the raspberrypi/pico-sdk twice
 add_library(pico_ice_sdk STATIC
