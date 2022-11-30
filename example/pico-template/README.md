@@ -1,9 +1,9 @@
-"tempalte" example
-==================
+Project template
+================
 This example content is meant to be copied into your own git repository, along with two git submodules:
 From a new
 
-```
+```sh
 # create a new repository
 git init your-project
 cd your-project
@@ -11,9 +11,10 @@ cd your-project
 # add the dependencies as submodules
 git submodule add https://github.com/tinyvision-ai-inc/pico-ice-sdk
 git submodule add https://github.com/raspberrypi/pico-sdk
+git -C pico-sdk submodule update --recursive
 
 # import this empty project template
-cp -r pico-ice-sdk/examples/pico-template/* .
+cp -r pico-ice-sdk/example/pico-template/* .
 ```
 
 You can then build your own project as a normal CMake project:
