@@ -12,6 +12,12 @@ sudo apt install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-n
 
 See the [`pico-template`](example/pico-template) to setup this SDK into your project.
 
+Make sure to update all submodules before trying the [examples](example):
+
+```
+git submodule update --init
+git -C pico-sdk submodule update --init
+```
 
 Flash a RP2040 firmware image
 -----------------------------
