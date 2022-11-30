@@ -3,14 +3,15 @@
 This example is built as a CMake project:
 
 ```
-mkdir -p examples/pico-template/build
-cd examples/pico-template/build
+mkdir -p build
+cd build
 cmake ..
 make
 ```
 
 This should produce a `firmware.uf2` file to flash onto the pico-ice RP2040 chip.
+See the [main `README.md`](../../README.md) for how to do this.
 
-It is purposely not doing anything but the base USB features: the two UART interfaces
-(one for the Pico, one for the iCE40) and the storage device (for uploading the FPGA
-bitstream).
+It will program a register of the flash chip, read it back, and dump its content over USB-UART #0.
+
+It will also have all the USB features enabled (flashing a bitfile, forwarding the FPGA UART over USB-UART #1).
