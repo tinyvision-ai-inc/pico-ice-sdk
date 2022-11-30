@@ -3,7 +3,6 @@
 #include "ice/fpga.h"
 #include "pico/stdlib.h"
 #include "hardware/structs/spi.h"
-//#include "hardware/spi.h"
 
 #define FLASH_CMD_PROGRAM_PAGE       0x02
 #define FLASH_CMD_READ               0x03
@@ -16,13 +15,13 @@
 
 #define FLASH_STATUS_BUSY_MASK       0x01
 
-static void spi_init(void *spi, uint64_t freq)
+static void soft_spi_init(void *spi, uint64_t freq)
 {
     (void)spi;
     (void)freq;
 }
 
-static uint8_t spi_xfer_byte(uint8_t tx)
+static uint8_t soft_spi_xfer_byte(uint8_t tx)
 {
     uint8_t rx;
 
@@ -31,43 +30,39 @@ static uint8_t spi_xfer_byte(uint8_t tx)
         gpio_put(ICE_FLASH_SPI_TX_PIN, tx >> 7);
         gpio_put(ICE_FLASH_SPI_SCK_PIN, true);
         tx <<= 1;
-        //sleep_us(1);
         __asm volatile ("nop\n");
-
 
         // Sample RX and immediately set negative edge.
         rx <<= 1;
         rx |= gpio_get(ICE_FLASH_SPI_RX_PIN);
         gpio_put(ICE_FLASH_SPI_SCK_PIN, false);
-        //sleep_us(1);
         __asm volatile ("nop\n");
-
     }
     return rx;
 }
 
-static void spi_write_read_blocking(void *spi, uint8_t *buf_w, uint8_t *buf_r, size_t len)
+static void soft_spi_write_read_blocking(void *spi, uint8_t *buf_w, uint8_t *buf_r, size_t len)
 {
     (void)spi;
 
     for (; len > 0; len--, buf_r++, buf_w++)
-        *buf_r = spi_xfer_byte(*buf_w);
+        *buf_r = soft_spi_xfer_byte(*buf_w);
 }
 
-static void spi_read_blocking(void *spi, uint8_t tx, uint8_t *buf, size_t len)
+static void soft_spi_read_blocking(void *spi, uint8_t tx, uint8_t *buf, size_t len)
 {
     (void)spi;
 
     for (; len > 0; len--, buf++)
-        *buf = spi_xfer_byte(tx);
+        *buf = soft_spi_xfer_byte(tx);
 }
 
-static void spi_write_blocking(void *spi, uint8_t const *buf, size_t len)
+static void soft_spi_write_blocking(void *spi, uint8_t const *buf, size_t len)
 {
     (void)spi;
 
     for (; len > 0; len--, buf++)
-        spi_xfer_byte(*buf);
+        soft_spi_xfer_byte(*buf);
 }
 
 /**
@@ -79,7 +74,7 @@ void ice_flash_init(void)
     ice_fpga_halt();
 
     // Init the SPI dedicated to flashing the FPGA
-    spi_init(spi_fpga_flash, 10 * 1000 * 1000);
+    soft_spi_init(spi_fpga_flash, 10 * 1000 * 1000);
 
     // Setup the associated GPIO pins except CSN
 
@@ -106,7 +101,7 @@ void ice_flash_init(void)
 void ice_flash_deinit(void)
 {
     // Init the SPI dedicated to flashing the FPGA
-    spi_init(spi_fpga_flash, 10 * 1000 * 1000);
+    soft_spi_init(spi_fpga_flash, 10 * 1000 * 1000);
 
     // Setup the associated GPIO pins except CSN
 
@@ -123,13 +118,13 @@ void ice_flash_deinit(void)
     gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_IN);
 }
 
-static void ice_flash_chip_select(uint8_t pin)
+static void soft_spi_chip_select(uint8_t pin)
 {
     gpio_put(pin, false);
     sleep_us(10);
 }
 
-static void ice_flash_chip_deselect(uint8_t pin)
+static void soft_spi_chip_deselect(uint8_t pin)
 {
     gpio_put(pin, true);
     sleep_us(10);
@@ -141,9 +136,9 @@ static void ice_flash_wait(void *spi, uint8_t pin)
     uint8_t buf[2];
 
     do {
-        ice_flash_chip_select(pin);
-        spi_write_read_blocking(spi, cmds, buf, 2);
-        ice_flash_chip_deselect(pin);
+        soft_spi_chip_select(pin);
+        soft_spi_write_read_blocking(spi, cmds, buf, 2);
+        soft_spi_chip_deselect(pin);
     } while (buf[1] & FLASH_STATUS_BUSY_MASK);
 }
 
@@ -151,9 +146,9 @@ static void ice_flash_enable_write(void *spi, uint8_t pin)
 {
     uint8_t cmds[] = { FLASH_CMD_ENABLE_WRITE };
 
-    ice_flash_chip_select(pin);
-    spi_write_blocking(spi, cmds, sizeof cmds);
-    ice_flash_chip_deselect(pin);
+    soft_spi_chip_select(pin);
+    soft_spi_write_blocking(spi, cmds, sizeof cmds);
+    soft_spi_chip_deselect(pin);
 }
 
 /**
@@ -170,9 +165,9 @@ void ice_flash_erase_sector(void *spi, uint8_t pin, uint32_t addr)
 
     ice_flash_enable_write(spi, pin);
 
-    ice_flash_chip_select(pin);
-    spi_write_blocking(spi, cmds, sizeof cmds);
-    ice_flash_chip_deselect(pin);
+    soft_spi_chip_select(pin);
+    soft_spi_write_blocking(spi, cmds, sizeof cmds);
+    soft_spi_chip_deselect(pin);
 
     ice_flash_wait(spi, pin);
 }
@@ -192,10 +187,10 @@ void ice_flash_program_page(void *spi, uint8_t pin, uint32_t addr, uint8_t const
 
     ice_flash_enable_write(spi, pin);
 
-    ice_flash_chip_select(pin);
-    spi_write_blocking(spi, cmds, sizeof cmds);
-    spi_write_blocking(spi, page, ICE_FLASH_PAGE_SIZE);
-    ice_flash_chip_deselect(pin);
+    soft_spi_chip_select(pin);
+    soft_spi_write_blocking(spi, cmds, sizeof cmds);
+    soft_spi_write_blocking(spi, page, ICE_FLASH_PAGE_SIZE);
+    soft_spi_chip_deselect(pin);
 
     ice_flash_wait(spi, pin);
 }
@@ -212,10 +207,10 @@ void ice_flash_read(void *spi, uint8_t pin, uint32_t addr, uint8_t *buf, size_t 
 {
     uint8_t cmds[] = { FLASH_CMD_READ, addr >> 16, addr >> 8, addr };
 
-    ice_flash_chip_select(pin);
-    spi_write_blocking(spi, cmds, sizeof cmds);
-    spi_read_blocking(spi, 0x00, buf, sz);
-    ice_flash_chip_deselect(pin);
+    soft_spi_chip_select(pin);
+    soft_spi_write_blocking(spi, cmds, sizeof cmds);
+    soft_spi_read_blocking(spi, 0x00, buf, sz);
+    soft_spi_chip_deselect(pin);
 }
 
 /**
@@ -227,9 +222,9 @@ void ice_flash_erase_chip(void *spi, uint8_t pin)
 {
     uint8_t cmds[] = { FLASH_CMD_CHIP_ERASE };
 
-    ice_flash_chip_select(pin);
-    spi_write_blocking(spi, cmds, sizeof cmds);
-    ice_flash_chip_deselect(pin);
+    soft_spi_chip_select(pin);
+    soft_spi_write_blocking(spi, cmds, sizeof cmds);
+    soft_spi_chip_deselect(pin);
 
     ice_flash_wait(spi, pin);
 }
@@ -243,9 +238,9 @@ void ice_flash_wakeup(void *spi, uint8_t pin)
 {
     uint8_t cmds[] = { FLASH_CMD_RELEASE_POWERDOWN };
 
-    ice_flash_chip_select(pin);
-    spi_write_blocking(spi, cmds, sizeof cmds);
-    ice_flash_chip_deselect(pin);
+    soft_spi_chip_select(pin);
+    soft_spi_write_blocking(spi, cmds, sizeof cmds);
+    soft_spi_chip_deselect(pin);
 
     ice_flash_wait(spi, pin);
 
@@ -253,7 +248,7 @@ void ice_flash_wakeup(void *spi, uint8_t pin)
 }
 
 /**
- * Send a command to wakeup the chip.
+ * Send a command to put the chip to sleep.
  * @param spi The SPI interface of the RP2040 to use.
  * @param pin The CS GPIO pin of the RP2040 to use.
  */
@@ -261,9 +256,9 @@ void ice_flash_sleep(void *spi, uint8_t pin)
 {
     uint8_t cmds[] = { FLASH_CMD_POWERDOWN };
 
-    ice_flash_chip_select(pin);
-    spi_write_blocking(spi, cmds, sizeof cmds);
-    ice_flash_chip_deselect(pin);
+    soft_spi_chip_select(pin);
+    soft_spi_write_blocking(spi, cmds, sizeof cmds);
+    soft_spi_chip_deselect(pin);
 
     ice_flash_wait(spi, pin);
 }

@@ -6,11 +6,10 @@
 #include "ice/fpga.h"
 #include "boards/pico_ice.h"
 
+#define MY_BASE_ADDRESS 0x20000
+
 static inline void memdump(uint8_t const *buf, size_t sz)
 {
-    printf("up=%d ", gpio_is_pulled_up(ICE_FLASH_SPI_RX_PIN));
-    printf("dn=%d ", gpio_is_pulled_down(ICE_FLASH_SPI_RX_PIN));
-    printf("hy=%d ", gpio_is_input_hysteresis_enabled(ICE_FLASH_SPI_RX_PIN));
     for (size_t i = 0; i < sz; i++) {
         printf(" %02X", buf[i]);
         if (i % 0x40 == (0x40 - 1))
@@ -23,18 +22,13 @@ int
 main(void)
 {
     uint8_t buf_r[ICE_FLASH_PAGE_SIZE] = {0}, buf_w[ICE_FLASH_PAGE_SIZE] = {0};
-    
-    const uint32_t MY_BASE_ADDRESS = 0x20000;
-
-    ice_init();
 
     // Let the FPGA boot up from flash
-    //ice_flash_deinit();
-    //ice_fpga_reset();
+    ice_init();
 
-    // Booted up, now take control of the Flash:
+    // Booted up, now take control of the Flash
     ice_flash_init();
-    
+
     // Flash might be asleep as a successful FPGA boot will put it to sleep as the last command!
     ice_flash_wakeup(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN);
 
