@@ -1,12 +1,10 @@
-/*
- * Most of the code in this example is contributed by z80. Thank you!
- */
-
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
 
 #include "boards/pico_ice.h"
+
+#include "ice/ssram.h"
 
 static uint8_t g_dummy;
 static int g_tx_dma_channel = -1;
@@ -14,7 +12,7 @@ static int g_rx_dma_channel = -1;
 
 // In a more complete application, this might invoke DMA complete callback or, if an RTOS were in use,
 // wake up a task blocked waiting for the DMA to finish.
-static void ssram_irq_handler() {
+static void serial_mem_irq_handler(void) {
   if (dma_channel_get_irq0_status(g_rx_dma_channel)) {
     dma_channel_acknowledge_irq0(g_rx_dma_channel);
 
@@ -33,7 +31,7 @@ static void ssram_irq_handler() {
   }
 }
 
-void init_serial_memory_interface() {
+void ice_serial_mem_init(void) {
   dma_channel_config cfg;
 
   spi_init(SPI_SSRAM, 10 * 1000 * 1000);
@@ -66,22 +64,22 @@ void init_serial_memory_interface() {
 
   // An interrupt that asserts when DMA transfers complete.
   dma_channel_set_irq0_enabled(g_rx_dma_channel, true);
-  irq_add_shared_handler(DMA_IRQ_0, ssram_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+  irq_add_shared_handler(DMA_IRQ_0, serial_mem_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
   irq_set_enabled(DMA_IRQ_0, true);
 }
 
-bool is_serial_memory_transfer_in_progress() {
+bool ice_serial_mem_is_busy(void) {
   return gpio_get(ICE_SSRAM_SPI_CS_PIN);
 }
 
-void wait_serial_memory_transfer_blocking() {
-  while (is_serial_memory_transfer_in_progress()) {
+void ice_serial_mem_wait(void) {
+  while (ice_serial_mem_is_busy()) {
     tight_loop_contents();
   }
 }
 
-void write_serial_memory(uint32_t dest_addr, const void* src, uint32_t size) {
-  wait_serial_memory_transfer_blocking();
+void ice_serial_mem_write(uint32_t dest_addr, const void* src, uint32_t size) {
+  ice_serial_mem_wait();
 
   // TODO: delay here to allow DRAM refresh?
 
@@ -100,8 +98,8 @@ void write_serial_memory(uint32_t dest_addr, const void* src, uint32_t size) {
   dma_channel_transfer_from_buffer_now(g_tx_dma_channel, src, size);
 }
 
-void read_serial_memory(void* dest, uint32_t src_addr, uint32_t size) {
-  wait_serial_memory_transfer_blocking();
+void ice_serial_mem_read(void* dest, uint32_t src_addr, uint32_t size) {
+  ice_serial_mem_wait();
 
   // TODO: delay here to allow DRAM refresh?
 

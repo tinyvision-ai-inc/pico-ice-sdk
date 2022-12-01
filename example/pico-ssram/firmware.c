@@ -16,26 +16,27 @@
 #define START_ADDR 0
 
 int main() {
-  stdio_init_all();
-  ice_init();
+    stdio_init_all();
+    ice_init();
+    ice_serial_mem_init();
 
-  // Dont let the FPGA on the bus so we get exclusive access
-  ice_fpga_halt();
+    // Dont let the FPGA on the bus so we get exclusive access
+    ice_fpga_halt();
 
-  init_serial_memory_interface();
-
-  static uint8_t write_data[DATA_LEN];
-  static uint8_t read_data[DATA_LEN];
-  for (uint16_t i = 0; i < DATA_LEN; i++)
+    static uint8_t write_data[DATA_LEN];
+    static uint8_t read_data[DATA_LEN];
+    for (uint16_t i = 0; i < DATA_LEN; i++)
         write_data[i] = i;
 
-  for (;;) {
-    write_serial_memory(START_ADDR, write_data, sizeof(write_data));
-    read_serial_memory(read_data, START_ADDR, sizeof(read_data));
-    for (size_t i = 0; i < DATA_LEN; i++)
-        if(read_data[i] != i)
-          printf("Error at 0x%x", i);
+    for (;;) {
+        ice_serial_mem_write(START_ADDR, write_data, sizeof(write_data));
+        ice_serial_mem_read(read_data, START_ADDR, sizeof(read_data));
+        ice_serial_mem_wait();
 
-    ice_usb_task();
-  }
+        for (size_t i = 0; i < DATA_LEN; i++)
+            if(read_data[i] != i)
+                printf("Error at 0x%x", i);
+        
+        ice_usb_task();
+    }
 }
