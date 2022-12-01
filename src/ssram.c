@@ -14,7 +14,7 @@ static int g_rx_dma_channel = -1;
 
 // In a more complete application, this might invoke DMA complete callback or, if an RTOS were in use,
 // wake up a task blocked waiting for the DMA to finish.
-static void irq_handler() {
+static void ssram_irq_handler() {
   if (dma_channel_get_irq0_status(g_rx_dma_channel)) {
     dma_channel_acknowledge_irq0(g_rx_dma_channel);
 
@@ -66,7 +66,7 @@ void init_serial_memory_interface() {
 
   // An interrupt that asserts when DMA transfers complete.
   dma_channel_set_irq0_enabled(g_rx_dma_channel, true);
-  irq_add_shared_handler(DMA_IRQ_0, irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+  irq_add_shared_handler(DMA_IRQ_0, ssram_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
   irq_set_enabled(DMA_IRQ_0, true);
 }
 
