@@ -63,6 +63,12 @@
 /** Configured as GPIO FUNCSEL by ``ice_init_flash()``. Controlled by the flash library. */
 #define ICE_FLASH_SPI_CSN_PIN 9
 
+/** Configured as GPIO FUNCSEL by ``ice_init_ssram()``. Controlled by the ssram library. */
+#define ICE_SSRAM_SPI_CS_PIN 14
+
+/** The SSRAM uses an instance of the SPI **/
+#define SPI_SSRAM spi1
+
 /** To use for board-detection. */
 #define TINYVISION_AI_INC_PICO_ICE
 

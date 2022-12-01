@@ -8,6 +8,7 @@ list(APPEND PICO_BOARD_HEADER_DIRS ${PICO_ICE_SDK_PATH}/include/boards)
 # Add the pico-ice-sdk as a CMake STATIC library, otherwise it will link
 # the raspberrypi/pico-sdk twice
 add_library(pico_ice_sdk STATIC
+    ${PICO_ICE_SDK_PATH}/src/ssram.c
     ${PICO_ICE_SDK_PATH}/src/flash.c
     ${PICO_ICE_SDK_PATH}/src/fpga.c
     ${PICO_ICE_SDK_PATH}/src/init.c
@@ -29,4 +30,5 @@ target_link_libraries(pico_ice_sdk
     hardware_spi
     hardware_uart
     hardware_flash
+    hardware_dma
 )
