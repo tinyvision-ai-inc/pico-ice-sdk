@@ -2,8 +2,12 @@
 #define ICE_SSRAM_H
 /**
  * Low-level API for communicating with flash chips: reading and writing.
- * @defgroup pico_ice_flash
+ * @defgroup pico_ice_ssram
  * @{
+ */
+
+/*
+ * Most of the code in this example is contributed by z80. Thank you!
  */
 #include <stdint.h>
 #include <stddef.h>

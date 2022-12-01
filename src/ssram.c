@@ -1,3 +1,7 @@
+/*
+ * Most of the code in this example is contributed by z80. Thank you!
+ */
+
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
