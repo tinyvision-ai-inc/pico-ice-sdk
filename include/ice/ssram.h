@@ -10,7 +10,8 @@
 #include <stddef.h>
 #include "boards/pico_ice.h"
 
-void ice_serial_mem_init(void);
+void ice_serial_mem_init(int irq);
+void ice_serial_mem_deinit(void);
 void ice_serial_mem_write(uint32_t dest_addr, const void* src, uint32_t size);
 void ice_serial_mem_read(void* dest, uint32_t src_addr, uint32_t size);
 bool ice_serial_mem_is_busy(void);

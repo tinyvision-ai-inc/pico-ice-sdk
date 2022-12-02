@@ -5,6 +5,7 @@
 
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
+#include "hardware/irq.h"
 #include "hardware/spi.h"
 #include "ice/init.h"
 #include "ice/fpga.h"
@@ -18,7 +19,7 @@
 int main() {
     stdio_init_all();
     ice_init();
-    ice_serial_mem_init();
+    ice_serial_mem_init(DMA_IRQ_1 /* Pass -1 for synchronous mode */);
 
     // Dont let the FPGA on the bus so we get exclusive access
     ice_fpga_halt();
