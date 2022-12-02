@@ -11,6 +11,7 @@
 static uint8_t g_dummy;
 static int g_tx_dma_channel = -1;
 static int g_rx_dma_channel = -1;
+static int g_irq_idx;
 
 static void serial_mem_select(void) {
   // TODO: delay here to allow DRAM refresh?
@@ -37,8 +38,8 @@ static void serial_mem_deselect(void) {
 // In a more complete application, this might invoke DMA complete callback or, if an RTOS were in use,
 // wake up a task blocked waiting for the DMA to finish.
 static void serial_mem_irq_handler(void) {
-  if (dma_channel_get_irq0_status(g_rx_dma_channel)) {
-    dma_channel_acknowledge_irq0(g_rx_dma_channel);
+  if (dma_irqn_get_channel_status(g_irq_idx, g_rx_dma_channel)) {
+    dma_irqn_acknowledge_channel(g_irq_idx, g_rx_dma_channel);
     serial_mem_deselect();
   }
 }
@@ -61,6 +62,7 @@ void ice_serial_mem_init(int irq) {
 
   if (irq > 0) {
     assert(irq == DMA_IRQ_0 || irq == DMA_IRQ_1);
+    g_irq_idx = irq - DMA_IRQ_0;
 
     g_tx_dma_channel = dma_claim_unused_channel(true);
     g_rx_dma_channel = dma_claim_unused_channel(true);
@@ -80,9 +82,9 @@ void ice_serial_mem_init(int irq) {
     dma_channel_configure(g_rx_dma_channel, &cfg, 0, &spi_get_hw(SPI_SSRAM)->dr, 0, false);
 
     // An interrupt that asserts when DMA transfers complete.
-    dma_channel_set_irq0_enabled(g_rx_dma_channel, true);
-    irq_add_shared_handler(DMA_IRQ_0, serial_mem_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
-    irq_set_enabled(DMA_IRQ_0, true);
+    dma_irqn_set_channel_enabled(g_irq_idx, g_rx_dma_channel, true);
+    irq_add_shared_handler(irq, serial_mem_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+    irq_set_enabled(irq, true);
   }
 }
 
