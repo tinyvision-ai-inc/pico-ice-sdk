@@ -14,7 +14,7 @@ static int g_rx_dma_channel = -1;
 
 // In a more complete application, this might invoke DMA complete callback or, if an RTOS were in use,
 // wake up a task blocked waiting for the DMA to finish.
-static void fpga_comm_irq_handler() {
+static void fpga_comm_dma_irq_handler() {
   if (dma_channel_get_irq0_status(g_rx_dma_channel)) {
     dma_channel_acknowledge_irq0(g_rx_dma_channel);
 
@@ -31,7 +31,7 @@ static void fpga_comm_irq_handler() {
   }
 }
 
-void init_fpga_comm_interface() {
+void init_fpga_comm_spi_dma_interface() {
   dma_channel_config cfg;
 
   spi_init(SPI_FPGA, 10 * 1000 * 1000);
@@ -64,7 +64,7 @@ void init_fpga_comm_interface() {
 
   // An interrupt that asserts when DMA transfers complete.
   dma_channel_set_irq0_enabled(g_rx_dma_channel, true);
-  irq_add_shared_handler(DMA_IRQ_0, fpga_comm_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+  irq_add_shared_handler(DMA_IRQ_0, fpga_comm_dma_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
   irq_set_enabled(DMA_IRQ_0, true);
 }
 
@@ -78,7 +78,7 @@ void wait_fpga_transfer_blocking() {
   }
 }
 
-void write_fpga(uint32_t dest_addr, const void* src, uint32_t size) {
+void ice_write_fpga_spi_dma(uint32_t dest_addr, const void* src, uint32_t size) {
   wait_fpga_transfer_blocking();
 
   gpio_put(ICE_RP_SPI_CSN_PIN, false);
@@ -95,7 +95,7 @@ void write_fpga(uint32_t dest_addr, const void* src, uint32_t size) {
   dma_channel_transfer_from_buffer_now(g_tx_dma_channel, src, size);
 }
 
-void read_fpga(void* dest, uint32_t src_addr, uint32_t size) {
+void ice_read_fpga_spi_dma(void* dest, uint32_t src_addr, uint32_t size) {
   wait_fpga_transfer_blocking();
 
   // Output 'h03 write sequence command. This also ignores data received before and during the command bits

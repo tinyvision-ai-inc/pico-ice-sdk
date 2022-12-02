@@ -22,7 +22,7 @@ int main() {
   // Dont let the FPGA on the bus as it isnt programmed yet. Remove this eventually...
   //ice_fpga_halt();
   ice_fpga_reset();
-  init_fpga_comm_interface();
+  init_fpga_comm_spi_dma_interface();
 
   static uint8_t write_data[DATA_LEN];
   static uint8_t read_data[DATA_LEN];
@@ -30,8 +30,8 @@ int main() {
         write_data[i] = i;
 
   for (;;) {
-    write_fpga(START_ADDR, write_data, sizeof(write_data));
-    read_fpga(read_data, START_ADDR, sizeof(read_data));
+    ice_write_fpga_spi_dma(START_ADDR, write_data, sizeof(write_data));
+    ice_read_fpga_spi_dma(read_data, START_ADDR, sizeof(read_data));
     //for (size_t i = 0; i < DATA_LEN; i++)
     //    if(read_data[i] != i)
     //      printf("Error at 0x%x\n\r", i);
