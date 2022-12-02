@@ -99,7 +99,7 @@ void ice_serial_mem_deinit(void) {
   if (g_rx_dma_channel >= 0) {
     // Note that the IRQ is not disabled here; the IRQ is likely shared with other systems (there are only 2
     // DMA IRQs total) and disabling it here would disable it for those other systems too.
-    //irq_set_enabled(irq, true);  <-- Deliberately not doing this.
+    //irq_set_enabled(g_irq, false);  <-- Deliberately not doing this.
 
     irq_remove_handler(g_irq, serial_mem_irq_handler);
     dma_irqn_set_channel_enabled(g_irq - DMA_IRQ_0, g_rx_dma_channel, false);
