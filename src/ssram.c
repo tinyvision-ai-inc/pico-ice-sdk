@@ -11,7 +11,7 @@
 static uint8_t g_dummy;
 static int g_tx_dma_channel = -1;
 static int g_rx_dma_channel = -1;
-static int g_irq_idx;
+static int g_irq;
 
 static void serial_mem_select(void) {
   // TODO: delay here to allow DRAM refresh?
@@ -38,8 +38,8 @@ static void serial_mem_deselect(void) {
 // In a more complete application, this might invoke DMA complete callback or, if an RTOS were in use,
 // wake up a task blocked waiting for the DMA to finish.
 static void serial_mem_irq_handler(void) {
-  if (dma_irqn_get_channel_status(g_irq_idx, g_rx_dma_channel)) {
-    dma_irqn_acknowledge_channel(g_irq_idx, g_rx_dma_channel);
+  if (dma_irqn_get_channel_status(g_irq - DMA_IRQ_0, g_rx_dma_channel)) {
+    dma_irqn_acknowledge_channel(g_irq - DMA_IRQ_0, g_rx_dma_channel);
     serial_mem_deselect();
   }
 }
@@ -62,7 +62,7 @@ void ice_serial_mem_init(int irq) {
 
   if (irq > 0) {
     assert(irq == DMA_IRQ_0 || irq == DMA_IRQ_1);
-    g_irq_idx = irq - DMA_IRQ_0;
+    g_irq = irq;
 
     g_tx_dma_channel = dma_claim_unused_channel(true);
     g_rx_dma_channel = dma_claim_unused_channel(true);
@@ -82,7 +82,7 @@ void ice_serial_mem_init(int irq) {
     dma_channel_configure(g_rx_dma_channel, &cfg, 0, &spi_get_hw(SPI_SSRAM)->dr, 0, false);
 
     // An interrupt that asserts when DMA transfers complete.
-    dma_irqn_set_channel_enabled(g_irq_idx, g_rx_dma_channel, true);
+    dma_irqn_set_channel_enabled(irq - DMA_IRQ_0, g_rx_dma_channel, true);
     irq_add_shared_handler(irq, serial_mem_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
     irq_set_enabled(irq, true);
   }
@@ -91,17 +91,24 @@ void ice_serial_mem_init(int irq) {
 void ice_serial_mem_deinit(void) {
   ice_serial_mem_wait();
 
-  spi_deinit(SPI_SSRAM);
-
   if (g_tx_dma_channel >= 0) {
     dma_channel_unclaim(g_tx_dma_channel);
     g_tx_dma_channel = -1;
   }
 
   if (g_rx_dma_channel >= 0) {
+    // Note that the IRQ is not disabled here; the IRQ is likely shared with other systems (there are only 2
+    // DMA IRQs total) and disabling it here would disable it for those other systems too.
+    //irq_set_enabled(irq, true);  <-- Deliberately not doing this.
+
+    irq_remove_handler(g_irq, serial_mem_irq_handler);
+    dma_irqn_set_channel_enabled(g_irq - DMA_IRQ_0, g_rx_dma_channel, false);
+
     dma_channel_unclaim(g_rx_dma_channel);
     g_rx_dma_channel = -1;
   }
+
+  spi_deinit(SPI_SSRAM);
 }
 
 bool ice_serial_mem_is_busy(void) {
