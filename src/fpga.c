@@ -41,7 +41,7 @@ void ice_fpga_halt(void)
  * Send a reset pulse to the FPGA re-reading its configuration then re-starting.
  * It must be called before ice_flash_init();
  */
-void ice_fpga_reset(void)
+int ice_fpga_reset(void)
 {
     // Issue a reset pulse.
     gpio_put(ICE_FPGA_CRESET_PIN, false);
@@ -51,7 +51,14 @@ void ice_fpga_reset(void)
     // Wait that the configuration is finished before interferring.
     // This makes sure the SPI bus is not driven by both the FPGA
     // (reading from flash) and the RP2040 (configuring the flash).
-    while (!gpio_get(ICE_FPGA_CDONE_PIN));
+    // Note that if the flash is corrupted, this function will timeout!
+    uint8_t ticker = 0;
+    bool done = gpio_get(ICE_FPGA_CDONE_PIN);
+    while (!done) {
+        if (ticker++ > 100) return -1;
+        sleep_ms(1);
+        done = gpio_get(ICE_FPGA_CDONE_PIN);
+    }
 }
 
 /**
