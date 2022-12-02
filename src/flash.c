@@ -145,6 +145,8 @@ static void ice_flash_wait(void *spi, uint8_t pin)
 static void ice_flash_enable_write(void *spi, uint8_t pin)
 {
     uint8_t cmds[] = { FLASH_CMD_ENABLE_WRITE };
+    ice_fpga_halt();
+    ice_flash_wakeup(spi, pin);
 
     soft_spi_chip_select(pin);
     soft_spi_write_blocking(spi, cmds, sizeof cmds);
@@ -162,6 +164,8 @@ void ice_flash_erase_sector(void *spi, uint8_t pin, uint32_t addr)
     uint8_t cmds[] = { FLASH_CMD_SECTOR_ERASE, addr >> 16, addr >> 8, addr };
 
     assert(addr % ICE_FLASH_PAGE_SIZE == 0);
+    ice_fpga_halt();
+    ice_flash_wakeup(spi, pin);
 
     ice_flash_enable_write(spi, pin);
 
@@ -184,6 +188,8 @@ void ice_flash_program_page(void *spi, uint8_t pin, uint32_t addr, uint8_t const
     uint8_t cmds[] = { FLASH_CMD_PROGRAM_PAGE, addr >> 16, addr >> 8, addr };
 
     assert(addr % ICE_FLASH_PAGE_SIZE == 0);
+    ice_fpga_halt();
+    ice_flash_wakeup(spi, pin);
 
     ice_flash_enable_write(spi, pin);
 
@@ -205,6 +211,9 @@ void ice_flash_program_page(void *spi, uint8_t pin, uint32_t addr, uint8_t const
  */
 void ice_flash_read(void *spi, uint8_t pin, uint32_t addr, uint8_t *buf, size_t sz)
 {
+    ice_fpga_halt();
+    ice_flash_wakeup(spi, pin);
+
     uint8_t cmds[] = { FLASH_CMD_READ, addr >> 16, addr >> 8, addr };
 
     soft_spi_chip_select(pin);
@@ -221,6 +230,8 @@ void ice_flash_read(void *spi, uint8_t pin, uint32_t addr, uint8_t *buf, size_t 
 void ice_flash_erase_chip(void *spi, uint8_t pin)
 {
     uint8_t cmds[] = { FLASH_CMD_CHIP_ERASE };
+    ice_fpga_halt();
+    ice_flash_wakeup(spi, pin);
 
     soft_spi_chip_select(pin);
     soft_spi_write_blocking(spi, cmds, sizeof cmds);
