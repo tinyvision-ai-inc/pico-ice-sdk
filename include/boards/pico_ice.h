@@ -66,8 +66,29 @@
 /** Configured as GPIO FUNCSEL by ``ice_init_ssram()``. Controlled by the ssram library. */
 #define ICE_SSRAM_SPI_CS_PIN 14
 
-/** The SSRAM uses an instance of the SPI **/
+/** The SSRAM uses spi1 **/
 #define SPI_SSRAM spi1
+
+// Pinout between the RP2040 and the FPGA.
+// Note that this doesnt include the UART passthrough pins which are independently handled by the tinyUSB driver.
+
+/** Configured as SPI FUNCSEL by ``ice_init_fpga_comm()``. */
+#define ICE_RP_SPI_SCK_PIN 6
+
+/** Configured as SPI FUNCSEL by ``ice_init_fpga_comm()``. */
+#define ICE_RP_SPI_TX_PIN 7
+
+/** Configured as SPI FUNCSEL by ``ice_init_fpga_comm()``. */
+#define ICE_RP_SPI_RX_PIN 4
+
+/** Configured as GPIO FUNCSEL by ``ice_init_fpga_comm()``. */
+#define ICE_RP_SPI_CSN_PIN 5
+
+/** Configured as GPIO FUNCSEL by ``ice_init_fpga_comm()``. */
+#define ICE_RP_SPI_IRQ_PIN 3
+
+/** The FPGA interface uses spi0 **/
+#define SPI_FPGA spi0
 
 /** To use for board-detection. */
 #define TINYVISION_AI_INC_PICO_ICE
