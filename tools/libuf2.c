@@ -1,12 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include <assert.h>
-#include <string.h>
+#include "libuf2.h"
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "uf2.h"
-#include "libuf2.h"
 
 #define uf2_check(e) uf2_check_(e, #e)
 
@@ -116,4 +116,43 @@ void uf2_write_block(UF2_Block *uf2, FILE *out)
 
     if (ferror(out))
         uf2_fatal("writing UF2 data out");
+}
+
+static void uf2_data_dump(uint8_t *buf, size_t buf_sz, uint32_t base_address, FILE *fp)
+{
+    uint32_t addr = 0;
+
+    while (buf_sz > 0) {
+        size_t row_sz = buf_sz < 0x20 ? buf_sz : 0x20;
+
+        printf("0x%08X:", base_address + addr);
+        for (; row_sz > 0; row_sz--, addr++)
+            printf(" %02X", *buf++, buf_sz--);
+        printf("\r\n");
+    }
+}
+
+void uf2_dump(UF2_Block *uf2, FILE *out)
+{
+    fprintf(out, "\n");
+    fprintf(out, "uint32_t magicStart0=0x%08X\n", uf2->magicStart0);
+    fprintf(out, "uint32_t magicStart1=0x%08X\n", uf2->magicStart1);
+    fprintf(out, "uint32_t flags=0x%08X\n", uf2->flags);
+    fprintf(out, "uint32_t targetAddr=0x%08X\n", uf2->targetAddr);
+    fprintf(out, "uint32_t payloadSize=0x%08X\n", uf2->payloadSize);
+    fprintf(out, "uint32_t blockNo=0x%08X\n", uf2->blockNo);
+    fprintf(out, "uint32_t numBlocks=0x%08X\n", uf2->numBlocks);
+    fprintf(out, "uint32_t reserved=0x%08X\n", uf2->reserved);
+
+    // raw data;
+    uint8_t data[476];
+    fprintf(out, "uint32_t data[476]=\n");
+    uf2_data_dump(uf2->data, uf2->payloadSize, uf2->targetAddr, out);
+
+    for (uint32_t i = uf2->payloadSize; i < sizeof uf2->data; i++)
+        uf2_check(uf2->data[i] == 0x00);
+
+    // store magic also at the end to limit damage from partial block reads
+    fprintf(out, "uint32_t magicEnd=0x%08X\n", uf2->magicEnd);
+
 }
