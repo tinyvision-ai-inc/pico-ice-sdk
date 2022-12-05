@@ -94,6 +94,9 @@ void ice_flash_init(void)
     gpio_init(ICE_FLASH_SPI_CSN_PIN);
     gpio_put(ICE_FLASH_SPI_CSN_PIN, true);
     gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_OUT);
+
+    // Flash might be asleep as a successful FPGA boot will put it to sleep as the last command!
+    ice_flash_wakeup(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN);
 }
 /**
  * Release the GPIO used for the FPGA flash so the FPGA can use them
