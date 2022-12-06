@@ -1,10 +1,8 @@
 #include "ice/usb.h"
 #include "hardware/uart.h"
 
-/**
- * Forward the data coming from USB CDC 1 UART to the FPGA UART.
- * Function to be called from tud_cdc_rx_cb().
- */
+/// Forward the data coming from USB CDC 1 UART to the FPGA UART.
+/// Function to be called from tud_cdc_rx_cb().
 void tud_cdc_rx_cb(uint8_t itf)
 {
     switch (itf) {
@@ -15,9 +13,7 @@ void tud_cdc_rx_cb(uint8_t itf)
     }
 }
 
-/**
- * Initialise the TinyUSB library, enabling the UART (CDC) and drag-and-drop (MSC) interfaces.
- */
+/// Initialise the TinyUSB library, enabling the UART (CDC) and drag-and-drop (MSC) interfaces.
 void ice_usb_init(void)
 {
     // TinyUSB
@@ -28,12 +24,10 @@ void ice_usb_init(void)
     uf2_init();
 }
 
-/**
- * Run all code related to USB in a non-blocking way.
- * It is typically to be placed at the end of the main application loop.
- * It must be called frequently in order to USB to work.
- * This is due to how the TinyUSB library works.
- */
+/// Run all code related to USB in a non-blocking way.
+/// It is typically to be placed at the end of the main application loop.
+/// It must be called frequently in order to USB to work.
+/// This is due to how the TinyUSB library works.
 void ice_usb_task(void)
 {
     tud_task();

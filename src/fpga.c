@@ -6,10 +6,8 @@
 #include "pico/stdlib.h"
 #include "tusb.h"
 
-/**
- * Initialise the FPGA chip and communication with it.
- * This will start the FPGA clock and take it out of reset.
- */
+/// Initialise the FPGA chip and communication with it.
+/// This will start the FPGA clock and take it out of reset.
 void ice_fpga_init(void)
 {
     // Keep the FPGA in reset until ice_fpga_reset() is called.
@@ -28,19 +26,15 @@ void ice_fpga_init(void)
     ice_fpga_init_uart(115200);
 }
 
-/**
- * Hold the FPGA in reset mode until ice_fpga_reset() is called.
- * Useful for programming the flash chip without disturbing the FPGA.
- */
+/// Hold the FPGA in reset mode until ice_fpga_reset() is called.
+/// Useful for programming the flash chip without disturbing the FPGA.
 void ice_fpga_halt(void)
 {
     gpio_put(ICE_FPGA_CRESET_PIN, false);
 }
 
-/**
- * Send a reset pulse to the FPGA re-reading its configuration then re-starting.
- * It must be called before ice_flash_init();
- */
+/// Send a reset pulse to the FPGA re-reading its configuration then re-starting.
+/// It must be called before ice_flash_init();
 int ice_fpga_reset(void)
 {
     // Issue a reset pulse.
@@ -61,18 +55,14 @@ int ice_fpga_reset(void)
     }
 }
 
-/**
- * Initialise the FPGA clock at the given frequency.
- * @param mhz The clock speed in MHz. Valid values: 48MHz, 24MHz, 16MHz 12MHz, 8MHz, 6MHz, 4MHz, 3MHz, 2MHz, 1MHz.
- */
+/// Initialise the FPGA clock at the given frequency.
+/// \param mhz The clock speed in MHz. Valid values: 48MHz, 24MHz, 16MHz 12MHz, 8MHz, 6MHz, 4MHz, 3MHz, 2MHz, 1MHz.
 void ice_fpga_init_clock(uint8_t mhz)
 {
     clock_gpio_init(ICE_FPGA_CLOCK_PIN, CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_VALUE_CLK_USB, 48 / mhz);
 }
 
-/**
- * Interrupt handler for reception of data from the UART instance connected to the FPGA.
- */
+/// Interrupt handler for reception of data from the UART instance connected to the FPGA.
 static void ice_fpga_uart_irq_handler(void)
 {
     while (uart_is_readable(uart_fpga)) {
@@ -81,10 +71,8 @@ static void ice_fpga_uart_irq_handler(void)
     }
 }
 
-/**
- * @brief Initialise the UART peripheral for communication with the FPGA, at the given baudrate.
- * @param mhz The baud rate speed in MHz. Can be any value supported by the pico-sdk.
- */
+/// Initialise the UART peripheral for communication with the FPGA, at the given baudrate.
+/// \param mhz The baud rate speed in MHz. Can be any value supported by the pico-sdk.
 void ice_fpga_init_uart(uint32_t mhz)
 {
     uart_init(uart_fpga, mhz);

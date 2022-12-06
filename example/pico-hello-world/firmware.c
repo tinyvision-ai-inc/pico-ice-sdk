@@ -4,12 +4,9 @@
 #include "ice/init.h"
 #include "ice/usb.h"
 
-int
-main(void)
-{
-
+int main(void) {
     // Init the pico-ice-sdk library
-    ice_init();
+    ice_sdk_init();
 
     // Enable USB-UART #0 output
     stdio_init_all();

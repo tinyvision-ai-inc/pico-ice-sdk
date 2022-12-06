@@ -8,8 +8,7 @@
 
 #define MY_BASE_ADDRESS 0x20000
 
-static inline void memdump(uint8_t const *buf, size_t sz)
-{
+static inline void memdump(uint8_t const *buf, size_t sz) {
     for (size_t i = 0; i < sz; i++) {
         printf(" %02X", buf[i]);
         if (i % 0x40 == (0x40 - 1))
@@ -18,16 +17,14 @@ static inline void memdump(uint8_t const *buf, size_t sz)
     printf("\r\n");
 }
 
-int
-main(void)
-{
+int main(void) {
     uint8_t buf_r[ICE_FLASH_PAGE_SIZE] = {0}, buf_w[ICE_FLASH_PAGE_SIZE] = {0};
 
     // Enable USB-UART #0 output
     stdio_init_all();
 
     // Let the FPGA boot up from flash
-    ice_init();
+    ice_sdk_init();
 
     // Booted up, now take control of the Flash
     ice_flash_init();
