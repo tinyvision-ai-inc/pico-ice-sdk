@@ -1,7 +1,7 @@
 #include "pico/stdlib.h"
 #include "pico/stdio.h"
 #include "boards/pico_ice.h"
-#include "ice/init.h"
+#include "ice/sdk.h"
 #include "ice/usb.h"
 
 int main(void) {
@@ -14,7 +14,6 @@ int main(void) {
     // Setup code here.
     for (;;) {
         ice_usb_task();
-
         printf("hello world\r\n");
     }
     return 0;

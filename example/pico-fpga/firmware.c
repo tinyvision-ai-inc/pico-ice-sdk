@@ -5,7 +5,7 @@
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
-#include "ice/init.h"
+#include "ice/sdk.h"
 #include "ice/fpga.h"
 #include "ice/fpga_comm.h"
 
@@ -17,16 +17,17 @@ int main() {
     ice_sdk_init();
 
     ice_fpga_reset();
-    init_fpga_comm_spi_dma_interface();
+    ice_fpga_comm_init();
 
     uint8_t write_data[DATA_LEN];
     uint8_t read_data[DATA_LEN];
-    for (uint16_t i = 0; i < DATA_LEN; i++)
+    for (uint16_t i = 0; i < DATA_LEN; i++) {
         write_data[i] = i;
+    }
 
     for (;;) {
         ice_usb_task();
-        ice_write_fpga_spi_dma(START_ADDR, write_data, sizeof(write_data));
-        ice_read_fpga_spi_dma(read_data, START_ADDR, sizeof(read_data));
+        ice_fpga_comm_write(START_ADDR, write_data, sizeof(write_data));
+        ice_fpga_comm_read(read_data, START_ADDR, sizeof(read_data));
     }
 }

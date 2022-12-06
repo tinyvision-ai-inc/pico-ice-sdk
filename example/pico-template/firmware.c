@@ -1,7 +1,7 @@
 #include "pico/stdlib.h"
 #include "pico/stdio.h"
 #include "boards/pico_ice.h"
-#include "ice/init.h"
+#include "ice/sdk.h"
 #include "ice/usb.h"
 
 int main(void) {

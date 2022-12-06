@@ -1,4 +1,4 @@
-#include "ice/init.h"
+#include "ice/sdk.h"
 #include "ice/usb.h"
 #include "ice/flash.h"
 #include "ice/fpga.h"
@@ -21,7 +21,7 @@ static void init_rgb_led(void)
 
 /// Call all functions below with default values.
 /// No need to call any other initialization function when this is called.
-void ice_init(void)
+void ice_sdk_init(void)
 {
     init_rgb_led();
     ice_usb_init();
