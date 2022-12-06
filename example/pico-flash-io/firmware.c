@@ -1,6 +1,6 @@
 #include "pico/stdlib.h"
 #include "pico/stdio.h"
-#include "ice/init.h"
+#include "ice/sdk.h"
 #include "ice/usb.h"
 #include "ice/flash.h"
 #include "ice/fpga.h"
@@ -33,8 +33,9 @@ int main(void) {
     ice_flash_wakeup(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN);
 
     // Write data: known pattern, not very random!
-    for (size_t i = 0; i < sizeof buf_w; i++)
+    for (size_t i = 0; i < sizeof buf_w; i++) {
         buf_w[i] = i;
+    }
 
     for (uint16_t i = 0;; i++) {
         ice_usb_task(); 

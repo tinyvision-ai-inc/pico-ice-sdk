@@ -13,7 +13,7 @@ add_library(pico_ice_sdk STATIC
     ${PICO_ICE_SDK_PATH}/src/ssram.c
     ${PICO_ICE_SDK_PATH}/src/flash.c
     ${PICO_ICE_SDK_PATH}/src/fpga.c
-    ${PICO_ICE_SDK_PATH}/src/init.c
+    ${PICO_ICE_SDK_PATH}/src/sdk.c
     ${PICO_ICE_SDK_PATH}/src/tinyuf2/board_pico_ice.c
     ${PICO_ICE_SDK_PATH}/src/tinyuf2/ghostfat.c
     ${PICO_ICE_SDK_PATH}/src/tinyuf2/main.c
