@@ -15,7 +15,7 @@ static int g_irq;
 
 /// Select the SRAM for SPI transaction.
 /// Unlike regular SPI, PSRAM CS is active high.
-static void serial_mem_select(void) {
+static void ice_ssram_select(void) {
     // TODO: delay here to allow DRAM refresh?
 
     gpio_put(ICE_SSRAM_SPI_CS_PIN, true);
@@ -24,7 +24,7 @@ static void serial_mem_select(void) {
 
 /// Select the SRAM for SPI transaction.
 /// Unlike regular SPI, PSRAM CS is active high.
-static void serial_mem_deselect(void) {
+static void ice_ssram_deselect(void) {
     // Busy wait until SCK goes low.
     while (gpio_get(ICE_FLASH_SPI_SCK_PIN)) {
         tight_loop_contents();
@@ -41,10 +41,10 @@ static void serial_mem_deselect(void) {
 
 /// In a more complete application, this might invoke DMA complete callback or, if an RTOS were in use,
 /// wake up a task blocked waiting for the DMA to finish.
-static void serial_mem_irq_handler(void) {
+static void ice_ssram_irq_handler(void) {
     if (dma_irqn_get_channel_status(g_irq - DMA_IRQ_0, g_rx_dma_channel)) {
         dma_irqn_acknowledge_channel(g_irq - DMA_IRQ_0, g_rx_dma_channel);
-        serial_mem_deselect();
+        ice_ssram_deselect();
     }
 }
 
@@ -62,7 +62,7 @@ void ice_ssram_init(int irq) {
     // we need to keep the PSRAM selected for a multi-byte read or write sequence.
     gpio_init(ICE_SSRAM_SPI_CS_PIN);
     gpio_set_dir(ICE_SSRAM_SPI_CS_PIN, GPIO_OUT);
-    serial_mem_deselect();
+    ice_ssram_deselect();
 
     if (irq > 0) {
         assert(irq == DMA_IRQ_0 || irq == DMA_IRQ_1);
@@ -87,14 +87,12 @@ void ice_ssram_init(int irq) {
 
         // An interrupt that asserts when DMA transfers complete.
         dma_irqn_set_channel_enabled(irq - DMA_IRQ_0, g_rx_dma_channel, true);
-        irq_add_shared_handler(irq, serial_mem_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+        irq_add_shared_handler(irq, ice_ssram_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
         irq_set_enabled(irq, true);
     }
 }
 
 void ice_ssram_deinit(void) {
-    ice_ssram_wait();
-
     if (g_tx_dma_channel >= 0) {
         dma_channel_unclaim(g_tx_dma_channel);
         g_tx_dma_channel = -1;
@@ -105,7 +103,7 @@ void ice_ssram_deinit(void) {
         // DMA IRQs total) and disabling it here would disable it for those other systems too.
         //irq_set_enabled(g_irq, false); // Deliberately not doing this.
 
-        irq_remove_handler(g_irq, serial_mem_irq_handler);
+        irq_remove_handler(g_irq, ice_ssram_irq_handler);
         dma_irqn_set_channel_enabled(g_irq - DMA_IRQ_0, g_rx_dma_channel, false);
 
         dma_channel_unclaim(g_rx_dma_channel);
@@ -115,19 +113,8 @@ void ice_ssram_deinit(void) {
     spi_deinit(SPI_SSRAM);
 }
 
-bool ice_ssram_is_busy(void) {
-    return gpio_get(ICE_SSRAM_SPI_CS_PIN);
-}
-
-void ice_ssram_wait(void) {
-    while (ice_ssram_is_busy()) {
-        tight_loop_contents();
-    }
-}
-
 void ice_ssram_write(uint32_t dest_addr, const void* src, uint32_t size) {
-    ice_ssram_wait();
-    serial_mem_select();
+    ice_ssram_select();
 
     // Output 0x02 read sequence command.
     uint8_t command[] = { 0x02, dest_addr >> 16, dest_addr >> 8, dest_addr };
@@ -142,17 +129,16 @@ void ice_ssram_write(uint32_t dest_addr, const void* src, uint32_t size) {
         dma_channel_transfer_from_buffer_now(g_tx_dma_channel, src, size);
     } else {
         spi_write_blocking(SPI_SSRAM, src, size);
-        serial_mem_deselect();
+        ice_ssram_deselect();
     }
 }
 
 void ice_ssram_read(void* dest, uint32_t src_addr, uint32_t size) {
-    ice_ssram_wait();
+    ice_ssram_select();
 
     // Output 0x03 write sequence command. This also ignores data received before and during the command bits
     // and drains the receive FIFO so can start the DMA transfer immediately after.
     uint8_t command[] = { 0x03, src_addr >> 16, src_addr >> 8, src_addr };
-    serial_mem_select();
     spi_write_blocking(SPI_SSRAM, command, sizeof(command));
 
     if (g_rx_dma_channel >= 0) {
@@ -166,6 +152,6 @@ void ice_ssram_read(void* dest, uint32_t src_addr, uint32_t size) {
         dma_channel_transfer_from_buffer_now(g_tx_dma_channel, &g_dummy, size);
     } else {
         spi_read_blocking(SPI_SSRAM, 0, dest, size);
-        serial_mem_deselect();
+        ice_ssram_deselect();
     }
 }
