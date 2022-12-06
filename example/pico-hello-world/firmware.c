@@ -10,7 +10,7 @@ int main(void) {
 
     // Enable USB-UART #0 output
     stdio_init_all();
-    
+
     // Setup code here.
     for (;;) {
         ice_usb_task();

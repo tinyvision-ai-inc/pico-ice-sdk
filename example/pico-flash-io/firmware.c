@@ -20,11 +20,11 @@ static inline void memdump(uint8_t const *buf, size_t sz) {
 int main(void) {
     uint8_t buf_r[ICE_FLASH_PAGE_SIZE] = {0}, buf_w[ICE_FLASH_PAGE_SIZE] = {0};
 
-    // Enable USB-UART #0 output
-    stdio_init_all();
-
     // Let the FPGA boot up from flash
     ice_sdk_init();
+
+    // Enable USB-UART #0 output
+    stdio_init_all();
 
     // Booted up, now take control of the Flash
     ice_flash_init();

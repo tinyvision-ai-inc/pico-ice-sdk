@@ -13,8 +13,8 @@
 #define START_ADDR 0xdead
 
 int main() {
-    stdio_init_all();
     ice_sdk_init();
+    stdio_init_all();
 
     ice_fpga_reset();
     ice_fpga_comm_init();

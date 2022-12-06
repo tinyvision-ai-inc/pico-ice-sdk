@@ -13,8 +13,8 @@
 #define START_ADDR 0
 
 int main() {
-    stdio_init_all();
     ice_sdk_init();
+    stdio_init_all();
     ice_ssram_init(DMA_IRQ_1 /* Pass -1 for synchronous mode */);
 
     // Dont let the FPGA on the bus so we get exclusive access
