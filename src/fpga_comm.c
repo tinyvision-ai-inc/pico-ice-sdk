@@ -1,7 +1,3 @@
-/*
- * This code is based in large part on the SSRAM code
- */
-
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
@@ -14,7 +10,7 @@ static int g_rx_dma_channel = -1;
 
 /// In a more complete application, this might invoke DMA complete callback or, if an RTOS were in use,
 /// wake up a task blocked waiting for the DMA to finish.
-static void fpga_comm_dma_irq_handler(void) {
+static void dma_irq_handler(void) {
     if (dma_channel_get_irq0_status(g_rx_dma_channel)) {
         dma_channel_acknowledge_irq0(g_rx_dma_channel);
 
@@ -31,7 +27,7 @@ static void fpga_comm_dma_irq_handler(void) {
     }
 }
 
-void fpga_comm_init(void) {
+void ice_fpga_comm_init(void) {
     dma_channel_config cfg;
 
     spi_init(SPI_FPGA, 10 * 1000 * 1000);
@@ -64,26 +60,14 @@ void fpga_comm_init(void) {
 
     // An interrupt that asserts when DMA transfers complete.
     dma_channel_set_irq0_enabled(g_rx_dma_channel, true);
-    irq_add_shared_handler(DMA_IRQ_0, fpga_comm_dma_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+    irq_add_shared_handler(DMA_IRQ_0, dma_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
     irq_set_enabled(DMA_IRQ_0, true);
 }
 
-static inline bool is_transfer_in_progress(void) {
-    return !gpio_get(ICE_RP_SPI_CSN_PIN);
-}
-
-static void wait_fpga_transfer(void) {
-    while (is_transfer_in_progress()) {
-        tight_loop_contents();
-    }
-}
-
 void ice_fpga_comm_write(uint32_t dest_addr, const void* src, uint32_t size) {
-    wait_fpga_transfer();
-
     gpio_put(ICE_RP_SPI_CSN_PIN, false);
 
-    // Output 'h02 read sequence command.
+    // Output 0x02 read sequence command.
     uint8_t command[] = { 0x02, dest_addr >> 16, dest_addr >> 8, dest_addr };
     spi_write_blocking(SPI_FPGA, command, sizeof(command));
 
@@ -96,9 +80,7 @@ void ice_fpga_comm_write(uint32_t dest_addr, const void* src, uint32_t size) {
 }
 
 void ice_fpga_comm_read(void* dest, uint32_t src_addr, uint32_t size) {
-    wait_fpga_transfer();
-
-    // Output 'h03 write sequence command. This also ignores data received before and during the command bits
+    // Output 0x03 write sequence command. This also ignores data received before and during the command bits
     // and drains the receive FIFO so can start the DMA transfer immediately after.
     uint8_t command[] = { 0x03, src_addr >> 16, src_addr >> 8, src_addr };
     gpio_put(ICE_RP_SPI_CSN_PIN, false);
