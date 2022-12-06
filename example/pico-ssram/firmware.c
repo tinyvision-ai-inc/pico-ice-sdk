@@ -2,23 +2,19 @@
 #include "pico/stdio.h"
 #include "boards/pico_ice.h"
 #include "ice/usb.h"
-
 #include "hardware/dma.h"
-#include "hardware/gpio.h"
 #include "hardware/irq.h"
 #include "hardware/spi.h"
 #include "ice/init.h"
 #include "ice/fpga.h"
 #include "ice/ssram.h"
 
-
-
 #define DATA_LEN 8
 #define START_ADDR 0
 
 int main() {
     stdio_init_all();
-    ice_init();
+    ice_sdk_init();
     ice_serial_mem_init(DMA_IRQ_1 /* Pass -1 for synchronous mode */);
 
     // Dont let the FPGA on the bus so we get exclusive access

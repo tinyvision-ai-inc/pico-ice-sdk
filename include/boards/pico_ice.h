@@ -8,8 +8,8 @@
 //       SHOULD ONLY CONSIST OF PREPROCESSOR DIRECTIVES
 // -----------------------------------------------------
 
-#ifndef BOARDS_PICO_ICE_H
-#define BOARDS_PICO_ICE_H
+#ifndef _BOARDS_PICO_ICE_H
+#define _BOARDS_PICO_ICE_H
 
 // Specific to pico-ice
 

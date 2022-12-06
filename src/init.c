@@ -19,14 +19,15 @@ static void init_rgb_led(void)
     gpio_put(ICE_LED_BLUE_PIN, true);
 }
 
-/**
- * Call all functions below with default values.
- * No need to call any other initialization function when this is called.
- */
+/// Call all functions below with default values.
+/// No need to call any other initialization function when this is called.
 void ice_init(void)
 {
     init_rgb_led();
     ice_usb_init();
-    ice_flash_deinit(); // Dont let the Pico control the FPGA flash so the FPGA is free to boot up
+    
+    // Do not let the Pico control the FPGA flash so the FPGA is free to boot up
+    ice_flash_deinit();
+
     ice_fpga_init();
 }

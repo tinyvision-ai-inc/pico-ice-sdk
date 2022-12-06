@@ -2,10 +2,8 @@
 #include "pico/stdio.h"
 #include "boards/pico_ice.h"
 
-int
-main(void)
-{
-    gpio_init(ICE_LED_RED_PIN);
+int main(void) {
+    gpio_sdk_init(ICE_LED_RED_PIN);
     gpio_put(ICE_LED_RED_PIN, true); // active-low
     gpio_set_dir(ICE_LED_RED_PIN, GPIO_OUT);
 

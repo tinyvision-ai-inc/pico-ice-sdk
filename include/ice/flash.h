@@ -1,16 +1,16 @@
+/** Low-level API for communicating with flash chips: reading and writing.
+* \defgroup pico_ice_flash
+*/
+
 #ifndef ICE_FLASH_H
 #define ICE_FLASH_H
-/**
- * Low-level API for communicating with flash chips: reading and writing.
- * @defgroup pico_ice_flash
- * @{
- */
+
 #include <stdint.h>
 #include <stddef.h>
 #include "pico/stdlib.h"
 //#include "hardware/spi.h"
 
-/** The size of the flash */
+/// The size of the flash
 #define ICE_FLASH_PAGE_SIZE         256
 
 void ice_flash_init(void);
@@ -23,5 +23,4 @@ void ice_flash_erase_chip(void *spi, uint8_t pin);
 void ice_flash_wakeup(void *spi, uint8_t pin);
 void ice_flash_sleep(void *spi, uint8_t pin);
 
-/** @} */
 #endif

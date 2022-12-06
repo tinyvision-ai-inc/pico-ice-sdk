@@ -111,7 +111,7 @@ uint8_t const desc_configuration[] = {
     TUD_MSC_DESCRIPTOR(ITF_NUM_MSC_0, STRID_MSC_0, EPNUM_MSC_0_OUT, EPNUM_MSC_0_IN, 64),
 };
 
-// array of pointer to string descriptors
+/// array of pointer to string descriptors
 char const *string_desc_arr[] = {
     [STRID_LANGID]        = (const char[]) { 0x09, 0x04 }, // 0: Supported language is English (0x0409)
     [STRID_MANUFACTURER]  = USB_MANUFACTURER,
@@ -123,8 +123,8 @@ char const *string_desc_arr[] = {
     [STRID_VENDOR]        = "TinyVision.ai Inc",
 };
 
-// Invoked when received GET DEVICE DESCRIPTOR
-// Application return pointer to descriptor
+/// Invoked when received GET DEVICE DESCRIPTOR
+/// Application return pointer to descriptor
 uint8_t const *tud_descriptor_device_cb(void)
 {
     return (uint8_t const *) &desc_device;
@@ -135,8 +135,8 @@ const uint8_t *tud_descriptor_configuration_cb(uint8_t index) {
     return desc_configuration;
 }
 
-// Invoked when received GET STRING DESCRIPTOR request
-// Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
+/// Invoked when received GET STRING DESCRIPTOR request
+/// Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
 uint16_t const *
 tud_descriptor_string_cb(uint8_t index, uint16_t langid)
 {
