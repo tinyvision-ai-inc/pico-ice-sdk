@@ -15,7 +15,7 @@ static void dma_irq_handler(void) {
         dma_channel_acknowledge_irq0(g_rx_dma_channel);
 
         // Busy wait until SCK goes low.
-        while (gpio_get(ICE_RP_SPI_SCK_PIN)) {
+        while (gpio_get(ICE_RP_SPI_SCK_PIN) == true) {
             tight_loop_contents();
         }
 
@@ -27,8 +27,17 @@ static void dma_irq_handler(void) {
     }
 }
 
+/// Wait that our own ongoing transaction completes.
+void ice_fpga_comm_wait(void) {
+    while (gpio_get(ICE_RP_SPI_CSN_PIN) == false) {
+        tight_loop_contents();
+    }
+}
+
 void ice_fpga_comm_init(void) {
     dma_channel_config cfg;
+
+    ice_fpga_comm_deinit();
 
     spi_init(SPI_FPGA, 10 * 1000 * 1000);
     gpio_set_function(ICE_RP_SPI_RX_PIN, GPIO_FUNC_SPI);
@@ -65,6 +74,9 @@ void ice_fpga_comm_init(void) {
 }
 
 void ice_fpga_comm_write(uint32_t dest_addr, const void* src, uint32_t size) {
+    // Wait for previous transactions from this library to terminate
+    ice_fpga_comm_wait();
+
     gpio_put(ICE_RP_SPI_CSN_PIN, false);
 
     // Output 0x02 read sequence command.
@@ -80,6 +92,9 @@ void ice_fpga_comm_write(uint32_t dest_addr, const void* src, uint32_t size) {
 }
 
 void ice_fpga_comm_read(void* dest, uint32_t src_addr, uint32_t size) {
+    // Wait for previous transactions from this library to terminate
+    ice_fpga_comm_wait();
+
     // Output 0x03 write sequence command. This also ignores data received before and during the command bits
     // and drains the receive FIFO so can start the DMA transfer immediately after.
     uint8_t command[] = { 0x03, src_addr >> 16, src_addr >> 8, src_addr };

@@ -13,6 +13,14 @@ static int g_tx_dma_channel = -1;
 static int g_rx_dma_channel = -1;
 static int g_irq;
 
+/// Wait that our own ongoing transaction completes.
+void ice_ssram_wait(void) {
+    // For PSRAM, CS is active high
+    while (gpio_get(ICE_SSRAM_SPI_CS_PIN) == true) {
+        tight_loop_contents();
+    }
+}
+
 /// Select the SRAM for SPI transaction.
 /// Unlike regular SPI, PSRAM CS is active high.
 static void ice_ssram_select(void) {
@@ -92,7 +100,11 @@ void ice_ssram_init(int irq) {
     }
 }
 
+// Release hardware resources for SSRAM
 void ice_ssram_deinit(void) {
+    // Wait for previous transactions from this library to terminate
+    ice_ssram_wait(void);
+
     if (g_tx_dma_channel >= 0) {
         dma_channel_unclaim(g_tx_dma_channel);
         g_tx_dma_channel = -1;
@@ -113,7 +125,12 @@ void ice_ssram_deinit(void) {
     spi_deinit(SPI_SSRAM);
 }
 
+/// Enqueue a SPI write operation performed asynchronously.
+/// Call ice_ssram_wait() after this to perform a blocking write until completion.
 void ice_ssram_write(uint32_t dest_addr, const void* src, uint32_t size) {
+    // Wait for previous transactions from this library to terminate
+    ice_ssram_wait();
+
     ice_ssram_select();
 
     // Output 0x02 read sequence command.
@@ -134,6 +151,9 @@ void ice_ssram_write(uint32_t dest_addr, const void* src, uint32_t size) {
 }
 
 void ice_ssram_read(void* dest, uint32_t src_addr, uint32_t size) {
+    // Wait for previous transactions from this library to terminate
+    ice_ssram_wait();
+
     ice_ssram_select();
 
     // Output 0x03 write sequence command. This also ignores data received before and during the command bits
