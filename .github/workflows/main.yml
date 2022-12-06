@@ -1,0 +1,23 @@
+name: build_on_push
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  firmware_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build each example on every commit
+        run: |
+          for example in example/pico-*; do
+            mkdir -p $example/build/
+            cd example/pico-hello-world/
+            cmake ..
+            make
+            cd ..
+          done
