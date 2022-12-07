@@ -11,8 +11,6 @@
 #define CMD_WRITE              0x02
 #define CMD_READ               0x03
 
-#define RESELECT_DELAY_US 2
-
 static uint8_t g_dummy;
 static volatile int g_tx_dma_channel = -1;
 static volatile int g_rx_dma_channel = -1;
