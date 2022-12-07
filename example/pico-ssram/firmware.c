@@ -28,8 +28,8 @@ int main() {
 
     for (;;) {
         ice_usb_task();
-        ice_ssram_write(START_ADDR, write_data, sizeof(write_data));
-        ice_ssram_read(read_data, START_ADDR, sizeof(read_data));
+        ice_ssram_write(ICE_SSRAM_SPI_CS_PIN, START_ADDR, write_data, sizeof(write_data));
+        ice_ssram_read(ICE_SSRAM_SPI_CS_PIN, read_data, START_ADDR, sizeof(read_data));
         ice_ssram_wait();
 
         for (size_t i = 0; i < DATA_LEN; i++) {
