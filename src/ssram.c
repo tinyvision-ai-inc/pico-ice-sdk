@@ -3,40 +3,60 @@
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
-
+#include "hardware/sync.h"
 #include "boards/pico_ice.h"
 
 #include "ice/ssram.h"
 
+#define CMD_WRITE              0x02
+#define CMD_READ               0x03
+
+#define RESELECT_DELAY_US 2
+
 static uint8_t g_dummy;
-static int g_tx_dma_channel = -1;
-static int g_rx_dma_channel = -1;
-static int g_irq;
+static volatile int g_tx_dma_channel = -1;
+static volatile int g_rx_dma_channel = -1;
+static volatile int g_irq;
+static volatile int g_cs_pin = -1;
 
-/// Select the SRAM for SPI transaction.
-/// Unlike regular SPI, PSRAM CS is active high.
-static void ice_ssram_select(void) {
-    // TODO: delay here to allow DRAM refresh?
+/// Wait that our own ongoing transaction completes.
+void ice_ssram_wait(void) {
+    while (ice_ssram_is_busy()) {
+        // Exiting the interrupt handler implicitly sets an event.
+        __wfe();
+    }
+}
 
-    gpio_put(ICE_SSRAM_SPI_CS_PIN, true);
-    sleep_us(1); // We use a pullup on the board so it needs a bit of time to settle
+bool ice_ssram_is_busy(void) {
+    return g_cs_pin >= 0;
 }
 
 /// Select the SRAM for SPI transaction.
-/// Unlike regular SPI, PSRAM CS is active high.
+static void ice_ssram_select(int cs_pin) {
+    g_cs_pin = cs_pin;
+
+    // Short delay for two reasons: 1) to pull-up SS_SSRAM via pull-up resistor and
+    // 2) to ensure memory is deselected long enough to refresh DRAM.
+    sleep_us(1);
+
+    gpio_put(cs_pin, false);
+}
+
+/// Select the SRAM for SPI transaction.
 static void ice_ssram_deselect(void) {
+    assert(g_cs_pin >= 0);
+    
     // Busy wait until SCK goes low.
     while (gpio_get(ICE_FLASH_SPI_SCK_PIN)) {
         tight_loop_contents();
     }
 
-    // TODO: record time here to help calculate DRAM refresh delay time?
-
     // This is called when the RX DMA transfers complete, not the TX transfers complete. Deselecting the PSRAM when
     // the TX transfers complete would be wrong. The DMA controller might have done its work but there could still
     // be untransmitted data in the SPI peripheral's TX FIFO or shift register, so it would be too early to deselect
     // the PSRAM chip.
-    gpio_put(ICE_SSRAM_SPI_CS_PIN, false);
+    gpio_put(g_cs_pin, true);
+    g_cs_pin = -1;
 }
 
 /// In a more complete application, this might invoke DMA complete callback or, if an RTOS were in use,
@@ -46,6 +66,12 @@ static void ice_ssram_irq_handler(void) {
         dma_irqn_acknowledge_channel(g_irq - DMA_IRQ_0, g_rx_dma_channel);
         ice_ssram_deselect();
     }
+}
+
+static void cs_pin_init(int cs_pin) {
+    gpio_init(cs_pin);
+    gpio_put(cs_pin, true);
+    gpio_set_dir(cs_pin, GPIO_OUT);
 }
 
 void ice_ssram_init(int irq) {
@@ -60,10 +86,13 @@ void ice_ssram_init(int irq) {
 
     // Not using the SPI peripheral to control CS because it only knows how to toggle it every 4-16 bits while
     // we need to keep the PSRAM selected for a multi-byte read or write sequence.
-    gpio_init(ICE_SSRAM_SPI_CS_PIN);
-    gpio_set_dir(ICE_SSRAM_SPI_CS_PIN, GPIO_OUT);
-    ice_ssram_deselect();
+    cs_pin_init(ICE_SSRAM_SPI_CS_PIN);
+    cs_pin_init(ICE_FLASH_SPI_CSN_PIN);
 
+    // SPI CS is active low. The pico-ice hardware inverts the CS signal for the SSRAM but not for flash. Invert
+    // the SSRAM CS so that all SPI is active low in software.
+    gpio_set_outover(ICE_SSRAM_SPI_CS_PIN, GPIO_OVERRIDE_INVERT);
+    
     if (irq > 0) {
         assert(irq == DMA_IRQ_0 || irq == DMA_IRQ_1);
         g_irq = irq;
@@ -92,7 +121,11 @@ void ice_ssram_init(int irq) {
     }
 }
 
+// Release hardware resources for SSRAM
 void ice_ssram_deinit(void) {
+    // Wait for previous transactions from this library to terminate
+    ice_ssram_wait();
+
     if (g_tx_dma_channel >= 0) {
         dma_channel_unclaim(g_tx_dma_channel);
         g_tx_dma_channel = -1;
@@ -110,14 +143,23 @@ void ice_ssram_deinit(void) {
         g_rx_dma_channel = -1;
     }
 
+    gpio_set_outover(ICE_SSRAM_SPI_CS_PIN, GPIO_OVERRIDE_NORMAL);
+    gpio_set_dir(ICE_SSRAM_SPI_CS_PIN, GPIO_IN);
+    gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_IN);
+
     spi_deinit(SPI_SSRAM);
 }
 
-void ice_ssram_write(uint32_t dest_addr, const void* src, uint32_t size) {
-    ice_ssram_select();
+/// Enqueue a SPI write operation performed asynchronously.
+/// Call ice_ssram_wait() after this to perform a blocking write until completion.
+void ice_ssram_write(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size) {
+    // Wait for previous transactions from this library to terminate
+    ice_ssram_wait();
 
-    // Output 0x02 read sequence command.
-    uint8_t command[] = { 0x02, dest_addr >> 16, dest_addr >> 8, dest_addr };
+    ice_ssram_select(cs_pin);
+
+    // Output read sequence command.
+    uint8_t command[] = { CMD_WRITE, dest_addr >> 16, dest_addr >> 8, dest_addr };
     spi_write_blocking(SPI_SSRAM, command, sizeof(command));
 
     if (g_rx_dma_channel >= 0) {
@@ -133,12 +175,15 @@ void ice_ssram_write(uint32_t dest_addr, const void* src, uint32_t size) {
     }
 }
 
-void ice_ssram_read(void* dest, uint32_t src_addr, uint32_t size) {
-    ice_ssram_select();
+void ice_ssram_read(int cs_pin, void* dest, uint32_t src_addr, uint32_t size) {
+    // Wait for previous transactions from this library to terminate
+    ice_ssram_wait();
 
-    // Output 0x03 write sequence command. This also ignores data received before and during the command bits
+    ice_ssram_select(cs_pin);
+
+    // Output write sequence command. This also ignores data received before and during the command bits
     // and drains the receive FIFO so can start the DMA transfer immediately after.
-    uint8_t command[] = { 0x03, src_addr >> 16, src_addr >> 8, src_addr };
+    uint8_t command[] = { CMD_READ, src_addr >> 16, src_addr >> 8, src_addr };
     spi_write_blocking(SPI_SSRAM, command, sizeof(command));
 
     if (g_rx_dma_channel >= 0) {
