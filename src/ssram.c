@@ -23,9 +23,10 @@ static volatile int g_tx_dma_channel = -1;
 static volatile int g_rx_dma_channel = -1;
 static volatile int g_irq;
 static volatile int g_cs_pin = -1;
+static volatile ice_ssram_async_callback_t g_async_callback;
 
 /// Wait that our own ongoing transaction completes.
-void ice_ssram_await_async_complete(void) {
+void ice_ssram_await_async_completion(void) {
     while (!ice_ssram_is_async_complete()) {
         // Exiting the interrupt handler implicitly sets an event.
         __wfe();
@@ -34,6 +35,10 @@ void ice_ssram_await_async_complete(void) {
 
 bool ice_ssram_is_async_complete(void) {
     return g_cs_pin < 0;
+}
+
+void ice_ssram_set_async_callback(ice_ssram_async_callback_t callback) {
+    g_async_callback = callback;
 }
 
 /// Select the SRAM for SPI transaction.
@@ -70,6 +75,10 @@ static void ice_ssram_irq_handler(void) {
     if (dma_irqn_get_channel_status(g_irq - DMA_IRQ_0, g_rx_dma_channel)) {
         dma_irqn_acknowledge_channel(g_irq - DMA_IRQ_0, g_rx_dma_channel);
         ice_ssram_deselect();
+
+        if (g_async_callback) {
+            g_async_callback();
+        }
     }
 }
 
@@ -129,7 +138,7 @@ void ice_ssram_init(int bit_rate, int irq) {
 // Release hardware resources for SSRAM
 void ice_ssram_deinit(void) {
     // Wait for previous transactions from this library to terminate
-    ice_ssram_await_async_complete();
+    ice_ssram_await_async_completion();
 
     if (g_tx_dma_channel >= 0) {
         dma_channel_unclaim(g_tx_dma_channel);
@@ -157,7 +166,7 @@ void ice_ssram_deinit(void) {
 
 void ice_ssram_output_command(int cs_pin, const uint8_t* command, uint32_t command_size, const void* data, uint32_t data_size, bool async) {
     // Wait for previous transactions from this library to terminate
-    ice_ssram_await_async_complete();
+    ice_ssram_await_async_completion();
     ice_ssram_select(cs_pin);
     spi_write_blocking(SPI_SSRAM, command, command_size);
 
@@ -176,7 +185,7 @@ void ice_ssram_output_command(int cs_pin, const uint8_t* command, uint32_t comma
 
 void ice_ssram_input_command(int cs_pin, const uint8_t* command, uint32_t command_size, void* data, uint32_t data_size, bool async) {
     // Wait for previous transactions from this library to terminate
-    ice_ssram_await_async_complete();
+    ice_ssram_await_async_completion();
 
     ice_ssram_select(cs_pin);
     spi_write_blocking(SPI_SSRAM, command, command_size);
@@ -220,14 +229,14 @@ void ice_ssram_enable_write(int cs_pin, bool enabled) {
     ice_ssram_input_command(cs_pin, command, sizeof(command), NULL, 0, false);
 }
 
-void ice_ssram_write(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size) {
+void ice_ssram_write(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size, bool async) {
     uint8_t command[] = { CMD_WRITE, dest_addr >> 16, dest_addr >> 8, dest_addr };
-    ice_ssram_output_command(cs_pin, command, sizeof(command), src, size, true);
+    ice_ssram_output_command(cs_pin, command, sizeof(command), src, size, async);
 }
 
-void ice_ssram_read(int cs_pin, void* dest, uint32_t src_addr, uint32_t size) {
+void ice_ssram_read(int cs_pin, void* dest, uint32_t src_addr, uint32_t size, bool async) {
     uint8_t command[] = { CMD_READ, src_addr >> 16, src_addr >> 8, src_addr };
-    ice_ssram_input_command(cs_pin, command, sizeof(command), dest, size, true);
+    ice_ssram_input_command(cs_pin, command, sizeof(command), dest, size, async);
 }
 
 void ice_ssram_enable_power(int cs_pin, bool enabled) {
