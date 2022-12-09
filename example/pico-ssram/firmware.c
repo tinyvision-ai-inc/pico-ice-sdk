@@ -15,7 +15,7 @@
 int main() {
     ice_sdk_init();
     stdio_init_all();
-    ice_ssram_init(DMA_IRQ_1 /* Pass -1 for synchronous mode */);
+    ice_ssram_init(10*1000*1000, DMA_IRQ_1 /* Pass -1 for synchronous mode */);
 
     // Dont let the FPGA on the bus so we get exclusive access
     ice_fpga_halt();
@@ -30,7 +30,7 @@ int main() {
         ice_usb_task();
         ice_ssram_write(ICE_SSRAM_SPI_CS_PIN, START_ADDR, write_data, sizeof(write_data));
         ice_ssram_read(ICE_SSRAM_SPI_CS_PIN, read_data, START_ADDR, sizeof(read_data));
-        ice_ssram_wait();
+        ice_ssram_await_async_complete();
 
         for (size_t i = 0; i < DATA_LEN; i++) {
             if (read_data[i] != i) {
