@@ -8,8 +8,15 @@
 
 #include "ice/ssram.h"
 
-#define CMD_WRITE              0x02
-#define CMD_READ               0x03
+#define CMD_CHIP_ERASE          0xC7
+#define CMD_ENABLE_WRITE        0x06
+#define CMD_DISABLE_WRITE       0x04
+#define CMD_POWER_DOWN          0xB9
+#define CMD_READ                0x03
+#define CMD_RELEASE_POWER_DOWN  0xAB
+#define CMD_SECTOR_ERASE        0x20
+#define CMD_STATUS              0x05
+#define CMD_WRITE               0x02
 
 static uint8_t g_dummy;
 static volatile int g_tx_dma_channel = -1;
@@ -18,15 +25,15 @@ static volatile int g_irq;
 static volatile int g_cs_pin = -1;
 
 /// Wait that our own ongoing transaction completes.
-void ice_ssram_wait(void) {
-    while (ice_ssram_is_busy()) {
+void ice_ssram_await_async_complete(void) {
+    while (!ice_ssram_is_async_complete()) {
         // Exiting the interrupt handler implicitly sets an event.
         __wfe();
     }
 }
 
-bool ice_ssram_is_busy(void) {
-    return g_cs_pin >= 0;
+bool ice_ssram_is_async_complete(void) {
+    return g_cs_pin < 0;
 }
 
 /// Select the SRAM for SPI transaction.
@@ -72,12 +79,12 @@ static void cs_pin_init(int cs_pin) {
     gpio_set_dir(cs_pin, GPIO_OUT);
 }
 
-void ice_ssram_init(int irq) {
+void ice_ssram_init(int bit_rate, int irq) {
     dma_channel_config cfg;
 
     ice_ssram_deinit();
 
-    spi_init(SPI_SSRAM, 10 * 1000 * 1000);
+    spi_init(SPI_SSRAM, bit_rate);
     gpio_set_function(ICE_FLASH_SPI_TX_PIN, GPIO_FUNC_SPI);
     gpio_set_function(ICE_FLASH_SPI_RX_PIN, GPIO_FUNC_SPI);
     gpio_set_function(ICE_FLASH_SPI_SCK_PIN, GPIO_FUNC_SPI);
@@ -122,7 +129,7 @@ void ice_ssram_init(int irq) {
 // Release hardware resources for SSRAM
 void ice_ssram_deinit(void) {
     // Wait for previous transactions from this library to terminate
-    ice_ssram_wait();
+    ice_ssram_await_async_complete();
 
     if (g_tx_dma_channel >= 0) {
         dma_channel_unclaim(g_tx_dma_channel);
@@ -148,53 +155,90 @@ void ice_ssram_deinit(void) {
     spi_deinit(SPI_SSRAM);
 }
 
-/// Enqueue a SPI write operation performed asynchronously.
-/// Call ice_ssram_wait() after this to perform a blocking write until completion.
-void ice_ssram_write(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size) {
+void ice_ssram_output_command(int cs_pin, const uint8_t* command, uint32_t command_size, const void* data, uint32_t data_size, bool async) {
     // Wait for previous transactions from this library to terminate
-    ice_ssram_wait();
-
+    ice_ssram_await_async_complete();
     ice_ssram_select(cs_pin);
+    spi_write_blocking(SPI_SSRAM, command, command_size);
 
-    // Output read sequence command.
-    uint8_t command[] = { CMD_WRITE, dest_addr >> 16, dest_addr >> 8, dest_addr };
-    spi_write_blocking(SPI_SSRAM, command, sizeof(command));
+    if (data_size) {
+        if (async && g_rx_dma_channel >= 0) {
+            // Receive to empty the SPI peripheral's RX FIFO and assert an interrupt on completion.
+            hw_clear_bits(&dma_hw->ch[g_rx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_WRITE_BITS);
+            dma_channel_transfer_to_buffer_now(g_rx_dma_channel, &g_dummy, data_size);
 
-    if (g_rx_dma_channel >= 0) {
-        // Receive to empty the SPI peripheral's RX FIFO and assert an interrupt on completion.
-        hw_clear_bits(&dma_hw->ch[g_rx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_WRITE_BITS);
-        dma_channel_transfer_to_buffer_now(g_rx_dma_channel, &g_dummy, size);
-
-        hw_set_bits(&dma_hw->ch[g_tx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_READ_BITS);
-        dma_channel_transfer_from_buffer_now(g_tx_dma_channel, src, size);
-    } else {
-        spi_write_blocking(SPI_SSRAM, src, size);
-        ice_ssram_deselect();
+            hw_set_bits(&dma_hw->ch[g_tx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_READ_BITS);
+            dma_channel_transfer_from_buffer_now(g_tx_dma_channel, data, data_size);
+        } else {
+            spi_write_blocking(SPI_SSRAM, data, data_size);
+            ice_ssram_deselect();
+        }
     }
 }
 
-void ice_ssram_read(int cs_pin, void* dest, uint32_t src_addr, uint32_t size) {
-    // Wait for previous transactions from this library to terminate
-    ice_ssram_wait();
+void ice_ssram_input_command(int cs_pin, const uint8_t* command, uint32_t command_size, void* data, uint32_t data_size, bool async) {
+   // Wait for previous transactions from this library to terminate
+    ice_ssram_await_async_complete();
 
     ice_ssram_select(cs_pin);
+    spi_write_blocking(SPI_SSRAM, command, command_size);
 
-    // Output write sequence command. This also ignores data received before and during the command bits
-    // and drains the receive FIFO so can start the DMA transfer immediately after.
+    if (data_size) {
+        if (async && g_rx_dma_channel >= 0) {
+            // Must start RX channel first. Suppose TX channel started first and a long-running interrupt handler ran
+            // before starting the RX channel. In that time, the RX FIFO could overflow. With RX starting first, the
+            // RX FIFO won't start to fill until TX also starts, since TX drives SCLK.
+            hw_set_bits(&dma_hw->ch[g_rx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_WRITE_BITS);
+            dma_channel_transfer_to_buffer_now(g_rx_dma_channel, data, data_size);
+
+            hw_clear_bits(&dma_hw->ch[g_tx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_READ_BITS);
+            dma_channel_transfer_from_buffer_now(g_tx_dma_channel, &g_dummy, data_size);
+        } else {
+            spi_read_blocking(SPI_SSRAM, 0, data, data_size);
+            ice_ssram_deselect();
+        }
+    }
+}
+
+uint8_t ice_ssram_get_status(int cs_pin) {
+    const uint8_t command[] = { CMD_STATUS };
+    uint8_t status;
+    ice_ssram_input_command(cs_pin, command, sizeof(command), &status, sizeof(status), false);
+    return status;
+}
+
+void ice_ssram_erase_chip(int cs_pin) {
+    const uint8_t command[] = { CMD_CHIP_ERASE };
+    ice_ssram_output_command(cs_pin, command, sizeof(command), NULL, 0, false);
+}
+
+void ice_ssram_erase_sector(int cs_pin, uint32_t dest_addr) {
+    assert(addr % ICE_FLASH_PAGE_SIZE == 0);
+
+    const uint8_t command[] = { CMD_SECTOR_ERASE, dest_addr >> 16, dest_addr >> 8, dest_addr };
+    ice_ssram_output_command(cs_pin, command, sizeof(command), NULL, 0, false);
+}
+
+void ice_ssram_enable_write(int cs_pin, bool enabled) {
+    const uint8_t command[] = { enabled ? CMD_ENABLE_WRITE : CMD_DISABLE_WRITE };
+    ice_ssram_input_command(cs_pin, command, sizeof(command), NULL, 0, false);
+}
+
+void ice_ssram_write(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size) {
+    uint8_t command[] = { CMD_WRITE, dest_addr >> 16, dest_addr >> 8, dest_addr };
+    ice_ssram_output_command(cs_pin, command, sizeof(command), src, size, true);
+}
+
+void ice_ssram_read(int cs_pin, void* dest, uint32_t src_addr, uint32_t size) {
     uint8_t command[] = { CMD_READ, src_addr >> 16, src_addr >> 8, src_addr };
-    spi_write_blocking(SPI_SSRAM, command, sizeof(command));
+    ice_ssram_input_command(cs_pin, command, sizeof(command), dest, size, true);
+}
 
-    if (g_rx_dma_channel >= 0) {
-        // Must start RX channel first. Suppose TX channel started first and a long-running interrupt handler ran
-        // before starting the RX channel. In that time, the RX FIFO could overflow. With RX starting first, the
-        // RX FIFO won't start to fill until TX also starts, since TX drives SCLK.
-        hw_set_bits(&dma_hw->ch[g_rx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_WRITE_BITS);
-        dma_channel_transfer_to_buffer_now(g_rx_dma_channel, dest, size);
+void ice_ssram_enable_power(int cs_pin, bool enabled) {
+    const uint8_t command[] = { enabled ? CMD_RELEASE_POWER_DOWN : CMD_POWER_DOWN };
+    ice_ssram_input_command(cs_pin, command, sizeof(command), NULL, 0, false);
 
-        hw_clear_bits(&dma_hw->ch[g_tx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_READ_BITS);
-        dma_channel_transfer_from_buffer_now(g_tx_dma_channel, &g_dummy, size);
-    } else {
-        spi_read_blocking(SPI_SSRAM, 0, dest, size);
-        ice_ssram_deselect();
+    if (enabled) {
+        sleep_us(5); // Command takes 3us per datasheet to take effect
     }
 }
