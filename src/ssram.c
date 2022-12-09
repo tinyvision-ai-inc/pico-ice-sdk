@@ -177,7 +177,7 @@ void ice_ssram_output_command(int cs_pin, const uint8_t* command, uint32_t comma
 }
 
 void ice_ssram_input_command(int cs_pin, const uint8_t* command, uint32_t command_size, void* data, uint32_t data_size, bool async) {
-   // Wait for previous transactions from this library to terminate
+    // Wait for previous transactions from this library to terminate
     ice_ssram_await_async_complete();
 
     ice_ssram_select(cs_pin);
