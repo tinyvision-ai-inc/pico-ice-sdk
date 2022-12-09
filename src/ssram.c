@@ -161,18 +161,16 @@ void ice_ssram_output_command(int cs_pin, const uint8_t* command, uint32_t comma
     ice_ssram_select(cs_pin);
     spi_write_blocking(SPI_SSRAM, command, command_size);
 
-    if (data_size) {
-        if (async && g_rx_dma_channel >= 0) {
-            // Receive to empty the SPI peripheral's RX FIFO and assert an interrupt on completion.
-            hw_clear_bits(&dma_hw->ch[g_rx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_WRITE_BITS);
-            dma_channel_transfer_to_buffer_now(g_rx_dma_channel, &g_dummy, data_size);
+    if (data_size && async && g_rx_dma_channel >= 0) {
+        // Receive to empty the SPI peripheral's RX FIFO and assert an interrupt on completion.
+        hw_clear_bits(&dma_hw->ch[g_rx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_WRITE_BITS);
+        dma_channel_transfer_to_buffer_now(g_rx_dma_channel, &g_dummy, data_size);
 
-            hw_set_bits(&dma_hw->ch[g_tx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_READ_BITS);
-            dma_channel_transfer_from_buffer_now(g_tx_dma_channel, data, data_size);
-        } else {
-            spi_write_blocking(SPI_SSRAM, data, data_size);
-            ice_ssram_deselect();
-        }
+        hw_set_bits(&dma_hw->ch[g_tx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_READ_BITS);
+        dma_channel_transfer_from_buffer_now(g_tx_dma_channel, data, data_size);
+    } else {
+        spi_write_blocking(SPI_SSRAM, data, data_size);
+        ice_ssram_deselect();
     }
 }
 
@@ -183,20 +181,18 @@ void ice_ssram_input_command(int cs_pin, const uint8_t* command, uint32_t comman
     ice_ssram_select(cs_pin);
     spi_write_blocking(SPI_SSRAM, command, command_size);
 
-    if (data_size) {
-        if (async && g_rx_dma_channel >= 0) {
-            // Must start RX channel first. Suppose TX channel started first and a long-running interrupt handler ran
-            // before starting the RX channel. In that time, the RX FIFO could overflow. With RX starting first, the
-            // RX FIFO won't start to fill until TX also starts, since TX drives SCLK.
-            hw_set_bits(&dma_hw->ch[g_rx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_WRITE_BITS);
-            dma_channel_transfer_to_buffer_now(g_rx_dma_channel, data, data_size);
+    if (data_size && async && g_rx_dma_channel >= 0) {
+        // Must start RX channel first. Suppose TX channel started first and a long-running interrupt handler ran
+        // before starting the RX channel. In that time, the RX FIFO could overflow. With RX starting first, the
+        // RX FIFO won't start to fill until TX also starts, since TX drives SCLK.
+        hw_set_bits(&dma_hw->ch[g_rx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_WRITE_BITS);
+        dma_channel_transfer_to_buffer_now(g_rx_dma_channel, data, data_size);
 
-            hw_clear_bits(&dma_hw->ch[g_tx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_READ_BITS);
-            dma_channel_transfer_from_buffer_now(g_tx_dma_channel, &g_dummy, data_size);
-        } else {
-            spi_read_blocking(SPI_SSRAM, 0, data, data_size);
-            ice_ssram_deselect();
-        }
+        hw_clear_bits(&dma_hw->ch[g_tx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_READ_BITS);
+        dma_channel_transfer_from_buffer_now(g_tx_dma_channel, &g_dummy, data_size);
+    } else {
+        spi_read_blocking(SPI_SSRAM, 0, data, data_size);
+        ice_ssram_deselect();
     }
 }
 
