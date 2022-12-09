@@ -229,14 +229,24 @@ void ice_ssram_enable_write(int cs_pin, bool enabled) {
     ice_ssram_input_command(cs_pin, command, sizeof(command), NULL, 0, false);
 }
 
-void ice_ssram_write(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size, bool async) {
+void ice_ssram_write(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size) {
     uint8_t command[] = { CMD_WRITE, dest_addr >> 16, dest_addr >> 8, dest_addr };
-    ice_ssram_output_command(cs_pin, command, sizeof(command), src, size, async);
+    ice_ssram_output_command(cs_pin, command, sizeof(command), src, size, false);
 }
 
-void ice_ssram_read(int cs_pin, void* dest, uint32_t src_addr, uint32_t size, bool async) {
+void ice_ssram_write_async(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size) {
+    uint8_t command[] = { CMD_WRITE, dest_addr >> 16, dest_addr >> 8, dest_addr };
+    ice_ssram_output_command(cs_pin, command, sizeof(command), src, size, true);
+}
+
+void ice_ssram_read(int cs_pin, void* dest, uint32_t src_addr, uint32_t size) {
     uint8_t command[] = { CMD_READ, src_addr >> 16, src_addr >> 8, src_addr };
-    ice_ssram_input_command(cs_pin, command, sizeof(command), dest, size, async);
+    ice_ssram_input_command(cs_pin, command, sizeof(command), dest, size, false);
+}
+
+void ice_ssram_read_async(int cs_pin, void* dest, uint32_t src_addr, uint32_t size) {
+    uint8_t command[] = { CMD_READ, src_addr >> 16, src_addr >> 8, src_addr };
+    ice_ssram_input_command(cs_pin, command, sizeof(command), dest, size, true);
 }
 
 void ice_ssram_enable_power(int cs_pin, bool enabled) {
