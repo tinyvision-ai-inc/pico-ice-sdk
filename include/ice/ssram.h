@@ -26,12 +26,20 @@ uint8_t ice_ssram_get_status(int cs_pin);
 void ice_ssram_erase_chip(int cs_pin);
 void ice_ssram_erase_sector(int cs_pin, uint32_t dest_addr);
 void ice_ssram_enable_write(int cs_pin, bool enabled);
-void ice_ssram_write(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size, bool async);
-void ice_ssram_read(int cs_pin, void* dest, uint32_t src_addr, uint32_t size, bool async);
+void ice_ssram_write(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size);
+void ice_ssram_write_async(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size);
+void ice_ssram_read(int cs_pin, void* dest, uint32_t src_addr, uint32_t size);
+void ice_ssram_read_async(int cs_pin, void* dest, uint32_t src_addr, uint32_t size);
 void ice_ssram_enable_power(int cs_pin, bool enabled);
 
 // Lower level interface
-void ice_ssram_output_command(int cs_pin, const uint8_t* command, uint32_t command_size, const void* data, uint32_t data_size, bool async);
-void ice_ssram_input_command(int cs_pin, const uint8_t* command, uint32_t command_size, void* data, uint32_t data_size, bool async);
+void ice_ssram_output_command(int cs_pin,
+                              const uint8_t* command, uint32_t command_size,
+                              const void* data, uint32_t data_size,
+                              bool async);
+void ice_ssram_input_command(int cs_pin,
+                             const uint8_t* command, uint32_t command_size,
+                             void* data, uint32_t data_size,
+                             bool async);
 
 #endif
