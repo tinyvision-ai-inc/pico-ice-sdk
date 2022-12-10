@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "ice/flash.h"
 #include "ice/fpga.h"
 #include "pico/stdlib.h"
@@ -14,6 +15,8 @@
 #define FLASH_CMD_POWERDOWN          0xB9
 
 #define FLASH_STATUS_BUSY_MASK       0x01
+
+#define LOG(fmt, ...) printf("%s: " fmt "\r\n", __func__, ##__VA_ARGS__)
 
 static void soft_spi_init(void *spi, uint64_t freq) {
     (void)spi;
