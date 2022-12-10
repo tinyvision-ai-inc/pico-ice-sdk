@@ -221,8 +221,6 @@ void ice_flash_wakeup(void *spi, uint8_t pin)
     soft_spi_chip_deselect(pin);
 
     ice_flash_wait(spi, pin);
-
-    sleep_us(5); // Command takes 3us per datasheet to take effect
 }
 
 /// Send a command to put the chip to sleep.
