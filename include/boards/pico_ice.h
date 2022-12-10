@@ -66,8 +66,8 @@
 /** Configured as GPIO FUNCSEL by ``ice_init_ssram()``. Controlled by the ssram library. */
 #define ICE_SSRAM_SPI_CS_PIN 14
 
-/** The SSRAM uses spi1 **/
-#define SPI_SSRAM spi1
+/** The serial memories use spi1 **/
+#define SPI_SERIAL_MEM spi1
 
 // Pinout between the RP2040 and the FPGA.
 // Note that this doesnt include the UART passthrough pins which are independently handled by the tinyUSB driver.
