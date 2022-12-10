@@ -45,7 +45,7 @@ void ice_smem_set_async_callback(ice_smem_async_callback_t callback) {
 static void ice_smem_select(int cs_pin) {
     g_cs_pin = cs_pin;
 
-    // Short delay for two reasons: 1) to pull-up SS_smem via pull-up resistor and
+    // Short delay for two reasons: 1) to pull-up SSRAM CS via pull-up resistor and
     // 2) to ensure memory is deselected long enough to refresh DRAM.
     sleep_us(1);
 
