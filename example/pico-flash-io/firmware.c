@@ -29,9 +29,6 @@ int main(void) {
     // Booted up, now take control of the Flash
     ice_flash_init();
 
-    // Flash might be asleep as a successful FPGA boot will put it to sleep as the last command!
-    ice_flash_wakeup(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN);
-
     // Write data: known pattern, not very random!
     for (size_t i = 0; i < sizeof buf_w; i++) {
         buf_w[i] = i;
