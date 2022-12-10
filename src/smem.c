@@ -6,7 +6,7 @@
 #include "hardware/sync.h"
 #include "boards/pico_ice.h"
 
-#include "ice/ssram.h"
+#include "ice/smem.h"
 
 #define CMD_CHIP_ERASE          0xC7
 #define CMD_ENABLE_WRITE        0x06
@@ -23,29 +23,29 @@ static volatile int g_tx_dma_channel = -1;
 static volatile int g_rx_dma_channel = -1;
 static volatile int g_irq;
 static volatile int g_cs_pin = -1;
-static volatile ice_ssram_async_callback_t g_async_callback;
+static volatile ice_smem_async_callback_t g_async_callback;
 
 /// Wait that our own ongoing transaction completes.
-void ice_ssram_await_async_completion(void) {
-    while (!ice_ssram_is_async_complete()) {
+void ice_smem_await_async_completion(void) {
+    while (!ice_smem_is_async_complete()) {
         // Exiting the interrupt handler implicitly sets an event.
         __wfe();
     }
 }
 
-bool ice_ssram_is_async_complete(void) {
+bool ice_smem_is_async_complete(void) {
     return g_cs_pin < 0;
 }
 
-void ice_ssram_set_async_callback(ice_ssram_async_callback_t callback) {
+void ice_smem_set_async_callback(ice_smem_async_callback_t callback) {
     g_async_callback = callback;
 }
 
 /// Select the SRAM for SPI transaction.
-static void ice_ssram_select(int cs_pin) {
+static void ice_smem_select(int cs_pin) {
     g_cs_pin = cs_pin;
 
-    // Short delay for two reasons: 1) to pull-up SS_SSRAM via pull-up resistor and
+    // Short delay for two reasons: 1) to pull-up SS_smem via pull-up resistor and
     // 2) to ensure memory is deselected long enough to refresh DRAM.
     sleep_us(1);
 
@@ -53,7 +53,7 @@ static void ice_ssram_select(int cs_pin) {
 }
 
 /// Select the SRAM for SPI transaction.
-static void ice_ssram_deselect(void) {
+static void ice_smem_deselect(void) {
     assert(g_cs_pin >= 0);
     
     // Busy wait until SCK goes low.
@@ -71,10 +71,10 @@ static void ice_ssram_deselect(void) {
 
 /// In a more complete application, this might invoke DMA complete callback or, if an RTOS were in use,
 /// wake up a task blocked waiting for the DMA to finish.
-static void ice_ssram_irq_handler(void) {
+static void ice_smem_irq_handler(void) {
     if (dma_irqn_get_channel_status(g_irq - DMA_IRQ_0, g_rx_dma_channel)) {
         dma_irqn_acknowledge_channel(g_irq - DMA_IRQ_0, g_rx_dma_channel);
-        ice_ssram_deselect();
+        ice_smem_deselect();
 
         if (g_async_callback) {
             g_async_callback();
@@ -88,12 +88,12 @@ static void cs_pin_init(int cs_pin) {
     gpio_set_dir(cs_pin, GPIO_OUT);
 }
 
-void ice_ssram_init(int bit_rate, int irq) {
+void ice_smem_init(int bit_rate, int irq) {
     dma_channel_config cfg;
 
-    ice_ssram_deinit();
+    ice_smem_deinit();
 
-    spi_init(SPI_SSRAM, bit_rate);
+    spi_init(SPI_SERIAL_MEM, bit_rate);
     gpio_set_function(ICE_FLASH_SPI_TX_PIN, GPIO_FUNC_SPI);
     gpio_set_function(ICE_FLASH_SPI_RX_PIN, GPIO_FUNC_SPI);
     gpio_set_function(ICE_FLASH_SPI_SCK_PIN, GPIO_FUNC_SPI);
@@ -117,28 +117,28 @@ void ice_ssram_init(int bit_rate, int irq) {
         // This DMA channel transfers from internal RAM to PSRAM.
         cfg = dma_channel_get_default_config(g_tx_dma_channel);
         channel_config_set_transfer_data_size(&cfg, DMA_SIZE_8);
-        channel_config_set_dreq(&cfg, spi_get_dreq(SPI_SSRAM, true));
+        channel_config_set_dreq(&cfg, spi_get_dreq(SPI_SERIAL_MEM, true));
         channel_config_set_write_increment(&cfg, false);
-        dma_channel_configure(g_tx_dma_channel, &cfg, &spi_get_hw(SPI_SSRAM)->dr, 0, 0, false);
+        dma_channel_configure(g_tx_dma_channel, &cfg, &spi_get_hw(SPI_SERIAL_MEM)->dr, 0, 0, false);
 
         // This DMA channel transfers from PSRAM to internal RAM.
         cfg = dma_channel_get_default_config(g_rx_dma_channel);
         channel_config_set_transfer_data_size(&cfg, DMA_SIZE_8);
-        channel_config_set_dreq(&cfg, spi_get_dreq(SPI_SSRAM, false));
+        channel_config_set_dreq(&cfg, spi_get_dreq(SPI_SERIAL_MEM, false));
         channel_config_set_read_increment(&cfg, false);
-        dma_channel_configure(g_rx_dma_channel, &cfg, 0, &spi_get_hw(SPI_SSRAM)->dr, 0, false);
+        dma_channel_configure(g_rx_dma_channel, &cfg, 0, &spi_get_hw(SPI_SERIAL_MEM)->dr, 0, false);
 
         // An interrupt that asserts when DMA transfers complete.
         dma_irqn_set_channel_enabled(irq - DMA_IRQ_0, g_rx_dma_channel, true);
-        irq_add_shared_handler(irq, ice_ssram_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+        irq_add_shared_handler(irq, ice_smem_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
         irq_set_enabled(irq, true);
     }
 }
 
-// Release hardware resources for SSRAM
-void ice_ssram_deinit(void) {
+// Release hardware resources for smem
+void ice_smem_deinit(void) {
     // Wait for previous transactions from this library to terminate
-    ice_ssram_await_async_completion();
+    ice_smem_await_async_completion();
 
     if (g_tx_dma_channel >= 0) {
         dma_channel_unclaim(g_tx_dma_channel);
@@ -150,7 +150,7 @@ void ice_ssram_deinit(void) {
         // DMA IRQs total) and disabling it here would disable it for those other systems too.
         //irq_set_enabled(g_irq, false); // Deliberately not doing this.
 
-        irq_remove_handler(g_irq, ice_ssram_irq_handler);
+        irq_remove_handler(g_irq, ice_smem_irq_handler);
         dma_irqn_set_channel_enabled(g_irq - DMA_IRQ_0, g_rx_dma_channel, false);
 
         dma_channel_unclaim(g_rx_dma_channel);
@@ -161,14 +161,14 @@ void ice_ssram_deinit(void) {
     gpio_set_dir(ICE_SSRAM_SPI_CS_PIN, GPIO_IN);
     gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_IN);
 
-    spi_deinit(SPI_SSRAM);
+    spi_deinit(SPI_SERIAL_MEM);
 }
 
-void ice_ssram_output_command(int cs_pin, const uint8_t* command, uint32_t command_size, const void* data, uint32_t data_size, bool async) {
+void ice_smem_output_command(int cs_pin, const uint8_t* command, uint32_t command_size, const void* data, uint32_t data_size, bool async) {
     // Wait for previous transactions from this library to terminate
-    ice_ssram_await_async_completion();
-    ice_ssram_select(cs_pin);
-    spi_write_blocking(SPI_SSRAM, command, command_size);
+    ice_smem_await_async_completion();
+    ice_smem_select(cs_pin);
+    spi_write_blocking(SPI_SERIAL_MEM, command, command_size);
 
     if (data_size && async && g_rx_dma_channel >= 0) {
         // Receive to empty the SPI peripheral's RX FIFO and assert an interrupt on completion.
@@ -178,17 +178,17 @@ void ice_ssram_output_command(int cs_pin, const uint8_t* command, uint32_t comma
         hw_set_bits(&dma_hw->ch[g_tx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_READ_BITS);
         dma_channel_transfer_from_buffer_now(g_tx_dma_channel, data, data_size);
     } else {
-        spi_write_blocking(SPI_SSRAM, data, data_size);
-        ice_ssram_deselect();
+        spi_write_blocking(SPI_SERIAL_MEM, data, data_size);
+        ice_smem_deselect();
     }
 }
 
-void ice_ssram_input_command(int cs_pin, const uint8_t* command, uint32_t command_size, void* data, uint32_t data_size, bool async) {
+void ice_smem_input_command(int cs_pin, const uint8_t* command, uint32_t command_size, void* data, uint32_t data_size, bool async) {
     // Wait for previous transactions from this library to terminate
-    ice_ssram_await_async_completion();
+    ice_smem_await_async_completion();
 
-    ice_ssram_select(cs_pin);
-    spi_write_blocking(SPI_SSRAM, command, command_size);
+    ice_smem_select(cs_pin);
+    spi_write_blocking(SPI_SERIAL_MEM, command, command_size);
 
     if (data_size && async && g_rx_dma_channel >= 0) {
         // Must start RX channel first. Suppose TX channel started first and a long-running interrupt handler ran
@@ -200,58 +200,58 @@ void ice_ssram_input_command(int cs_pin, const uint8_t* command, uint32_t comman
         hw_clear_bits(&dma_hw->ch[g_tx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_READ_BITS);
         dma_channel_transfer_from_buffer_now(g_tx_dma_channel, &g_dummy, data_size);
     } else {
-        spi_read_blocking(SPI_SSRAM, 0, data, data_size);
-        ice_ssram_deselect();
+        spi_read_blocking(SPI_SERIAL_MEM, 0, data, data_size);
+        ice_smem_deselect();
     }
 }
 
-uint8_t ice_ssram_get_status(int cs_pin) {
+uint8_t ice_smem_get_status(int cs_pin) {
     const uint8_t command[] = { CMD_STATUS };
     uint8_t status;
-    ice_ssram_input_command(cs_pin, command, sizeof(command), &status, sizeof(status), false);
+    ice_smem_input_command(cs_pin, command, sizeof(command), &status, sizeof(status), false);
     return status;
 }
 
-void ice_ssram_erase_chip(int cs_pin) {
+void ice_smem_erase_chip(int cs_pin) {
     const uint8_t command[] = { CMD_CHIP_ERASE };
-    ice_ssram_output_command(cs_pin, command, sizeof(command), NULL, 0, false);
+    ice_smem_output_command(cs_pin, command, sizeof(command), NULL, 0, false);
 }
 
-void ice_ssram_erase_sector(int cs_pin, uint32_t dest_addr) {
+void ice_smem_erase_sector(int cs_pin, uint32_t dest_addr) {
     assert(addr % ICE_FLASH_PAGE_SIZE == 0);
 
     const uint8_t command[] = { CMD_SECTOR_ERASE, dest_addr >> 16, dest_addr >> 8, dest_addr };
-    ice_ssram_output_command(cs_pin, command, sizeof(command), NULL, 0, false);
+    ice_smem_output_command(cs_pin, command, sizeof(command), NULL, 0, false);
 }
 
-void ice_ssram_enable_write(int cs_pin, bool enabled) {
+void ice_smem_enable_write(int cs_pin, bool enabled) {
     const uint8_t command[] = { enabled ? CMD_ENABLE_WRITE : CMD_DISABLE_WRITE };
-    ice_ssram_input_command(cs_pin, command, sizeof(command), NULL, 0, false);
+    ice_smem_input_command(cs_pin, command, sizeof(command), NULL, 0, false);
 }
 
-void ice_ssram_write(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size) {
+void ice_smem_write(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size) {
     uint8_t command[] = { CMD_WRITE, dest_addr >> 16, dest_addr >> 8, dest_addr };
-    ice_ssram_output_command(cs_pin, command, sizeof(command), src, size, false);
+    ice_smem_output_command(cs_pin, command, sizeof(command), src, size, false);
 }
 
-void ice_ssram_write_async(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size) {
+void ice_smem_write_async(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size) {
     uint8_t command[] = { CMD_WRITE, dest_addr >> 16, dest_addr >> 8, dest_addr };
-    ice_ssram_output_command(cs_pin, command, sizeof(command), src, size, true);
+    ice_smem_output_command(cs_pin, command, sizeof(command), src, size, true);
 }
 
-void ice_ssram_read(int cs_pin, void* dest, uint32_t src_addr, uint32_t size) {
+void ice_smem_read(int cs_pin, void* dest, uint32_t src_addr, uint32_t size) {
     uint8_t command[] = { CMD_READ, src_addr >> 16, src_addr >> 8, src_addr };
-    ice_ssram_input_command(cs_pin, command, sizeof(command), dest, size, false);
+    ice_smem_input_command(cs_pin, command, sizeof(command), dest, size, false);
 }
 
-void ice_ssram_read_async(int cs_pin, void* dest, uint32_t src_addr, uint32_t size) {
+void ice_smem_read_async(int cs_pin, void* dest, uint32_t src_addr, uint32_t size) {
     uint8_t command[] = { CMD_READ, src_addr >> 16, src_addr >> 8, src_addr };
-    ice_ssram_input_command(cs_pin, command, sizeof(command), dest, size, true);
+    ice_smem_input_command(cs_pin, command, sizeof(command), dest, size, true);
 }
 
-void ice_ssram_enable_power(int cs_pin, bool enabled) {
+void ice_smem_enable_power(int cs_pin, bool enabled) {
     const uint8_t command[] = { enabled ? CMD_RELEASE_POWER_DOWN : CMD_POWER_DOWN };
-    ice_ssram_input_command(cs_pin, command, sizeof(command), NULL, 0, false);
+    ice_smem_input_command(cs_pin, command, sizeof(command), NULL, 0, false);
 
     if (enabled) {
         sleep_us(5); // Command takes 3us per datasheet to take effect
