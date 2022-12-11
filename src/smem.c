@@ -29,29 +29,21 @@ static void* volatile g_async_context;
 
 auto_init_mutex(g_mutex);
 
-static void smem_deinit_internal();
+static void smem_deinit_internal(void);
 
-static void smem_lock() {
+static void smem_lock(void) {
     // Cannot lock in an interrupt handler.
-    assert(!__get_current_exception());
+    assert(__get_current_exception() == 0);
 
     mutex_enter_blocking(&g_mutex);
 }
 
-static void smem_unlock() {
+static void smem_unlock(void) {
     mutex_exit(&g_mutex);
 }
 
-// Sleep or block until after an asynchronous operation started by the calling core or task completes.
-//
-// This module is designed to integrate well with an RTOS. "Sleep" and "block" refer to differing
-// behaviors depending on whether an RTOS is in use. Without an RTOS, while awaiting an asynchronous
-// operation to complete, a core sleeps, potentially reducing power usage.
-//
-// In contrast, using an RTOS, while awaiting an asynchronous operation, the RTOS' scheduler blocks
-// the calling task until after the asynchronous operation completes and, meantime, switches to
-// another ready task.
-void ice_smem_await_async_completion() {
+// Sleep until after an asynchronous operation started by the calling core.
+void ice_smem_await_async_completion(void) {
     lock_owner_id_t caller = lock_get_caller_owner_id();
     for (;;) {
         uint32_t save = spin_lock_blocking(g_mutex.core.spin_lock);
@@ -181,7 +173,7 @@ void ice_smem_init(int bit_rate, int irq) {
 }
 
 // Release hardware resources for smem
-static void smem_deinit_internal() {
+static void smem_deinit_internal(void) {
     if (g_tx_dma_channel >= 0) {
         dma_channel_unclaim(g_tx_dma_channel);
         g_tx_dma_channel = -1;
@@ -206,7 +198,7 @@ static void smem_deinit_internal() {
     spi_deinit(SPI_SERIAL_MEM);
 }
 
-void ice_smem_deinit() {
+void ice_smem_deinit(void) {
     smem_lock();
     smem_deinit_internal();
     smem_unlock();
@@ -229,7 +221,7 @@ void ice_smem_output_command_async(int cs_pin,
                                    ice_smem_async_callback_t callback, void* context) {
     assert(data_size > 0);
     
-    if (__get_current_exception()) {
+    if (__get_current_exception() != 0) {
         // If called from exception handler, must already be locked.
         assert(lock_is_owner_id_valid(g_mutex.owner));
     } else {
