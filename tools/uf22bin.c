@@ -1,7 +1,9 @@
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
+
 #include "uf2.h"
 #include "libuf2.h"
 
@@ -22,13 +24,13 @@ void uf22bin(FILE *in, int fd_out, off_t start_address)
 
         // write data out at the specified offset filling gaps with '\0'
         if (pwrite(fd_out, uf2.data, uf2.payloadSize, off) < uf2.payloadSize)
-                perror("writing binary data out");
+            uf2_fatal("writing binary data out");
     }
 }
 
 void usage(char const *arg0)
 {
-    fprintf(stderr, "usage: %s [file.uf2]\n", arg0);
+    fprintf(stderr, "usage: %s [-a 0x01230000] [-o file.bin] [file.uf2]\n", arg0);
     exit(1);
 }
 
@@ -36,15 +38,37 @@ int main(int argc, char **argv)
 {
     char const *arg0 = *argv;
     FILE *in = stdin;
+    int out = STDOUT_FILENO;
+    uint32_t start_address = 0x00000000;
+    char *p;
 
-    if (argc > 2)
+    arg0 = *argv;
+    for (int c; (c = getopt(argc, argv, "a:o:")) != -1;) {
+        switch (c) {
+        case 'a':
+            start_address = strtoul(optarg, &p, 0);
+            if (*p != '\0')
+                uf2_fatal("invalid start address number format");
+            break;
+        case 'o':
+            if ((out = open(optarg, O_WRONLY | O_CREAT, 0644)) == -1)
+                uf2_fatal(optarg);
+            break;
+        default:
+            usage(arg0);
+        }
+    }
+    argv += optind;
+    argc -= optind;
+
+    if (argc > 1)
         usage(arg0);
 
-    if (argc == 2) {
-        if ((in = fopen(argv[1], "r")) == NULL)
-            uf2_fatal(argv[1]);
+    if (argc == 1) {
+        if ((in = fopen(argv[0], "r")) == NULL)
+            uf2_fatal(argv[0]);
     }
 
-    uf22bin(in, STDOUT_FILENO, 0);
+    uf22bin(in, out, start_address);
     return 0;
 }

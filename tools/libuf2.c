@@ -1,11 +1,13 @@
 #include <assert.h>
-#include "libuf2.h"
+#include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "libuf2.h"
 #include "uf2.h"
 
 #define uf2_check(e) uf2_check_(e, #e)
@@ -15,9 +17,8 @@ bool uf2_exit_on_error = true;
 static inline void uf2_check_(bool exp, char *text)
 {
     if (!exp) {
-        fprintf(stderr, "format error, this condition failed: %s\n", text);
-        if (uf2_exit_on_error)
-            exit(1);
+        fprintf(stderr, "format error: expected %s\n", text);
+        exit(1);
     }
 }
 
@@ -40,7 +41,10 @@ static inline uint32_t le32(uint32_t u32)
 
 void uf2_fatal(char const *msg)
 {
-    perror(msg);
+    if (errno > 0)
+        perror(msg);
+    else
+        fprintf(stderr, "%s\n", msg);
     exit(1);
 }
 
@@ -69,10 +73,10 @@ bool uf2_read_block(UF2_Block *uf2, FILE *in)
     assert(sizeof *uf2 == 512);
 
     sz = fread(uf2, 1, sizeof *uf2, in);
-    if (feof(in))
-        return false;
     if (ferror(in))
         uf2_fatal("reading UF2 data in");
+    if (sz == 0 && feof(in))
+        return false;
     if (sz != sizeof *uf2)
         uf2_fatal("file size is not a multiple of 512 bytes");
 
@@ -84,7 +88,7 @@ bool uf2_read_block(UF2_Block *uf2, FILE *in)
     uf2_check(uf2->magicStart1 == UF2_MAGIC_START1);
     uf2_check(uf2->payloadSize > 0);
 
-    return true;
+    return !feof(in);
 }
 
 /// Set the numbmer of blocks according to the input file size.

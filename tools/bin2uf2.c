@@ -46,12 +46,12 @@ int main(int argc, char **argv)
     for (int c; (c = getopt(argc, argv, "f:o:")) != -1;) {
         switch (c) {
         case 'f':
-            familyID = strtoll(optarg, &p, 0);
-            if (optarg[0] != '\0')
-                uf2_fatal("invalid familyID number format");
+            familyID = strtoul(optarg, &p, 0);
+            if (*p != '\0')
+                uf2_fatal("invalid family ID number format");
             break;
         case 'o':
-            if ((out = fopen(optarg, "r")) == NULL)
+            if ((out = fopen(optarg, "w")) == NULL)
                 uf2_fatal(optarg);
             break;
         default:
@@ -69,10 +69,10 @@ int main(int argc, char **argv)
         usage(arg0);
     }
 
-    for (; argc > 0; argc -= 2, argv -= 2) {
+    for (; argc > 0; argc -= 2, argv += 2) {
         fprintf(stderr, "addr=%s file=%s\n", argv[0], argv[1]);
 
-        targetAddr = strtoll(argv[0], &p, 0);
+        targetAddr = strtoul(argv[0], &p, 0);
         if (*p != '\0')
             uf2_fatal("invalid targetAddr number format");
 
