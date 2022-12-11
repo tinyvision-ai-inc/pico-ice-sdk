@@ -12,17 +12,10 @@
 #define DATA_LEN 8
 #define START_ADDR 0
 
-static volatile int g_sequence_count;
-
-void async_callback(void) {
-    ++g_sequence_count;
-}
-
 int main() {
     ice_sdk_init();
     stdio_init_all();
     ice_smem_init(10*1000*1000, DMA_IRQ_1 /* Pass -1 for synchronous mode */);
-    ice_smem_set_async_callback(async_callback);
 
     // Dont let the FPGA on the bus so we get exclusive access
     ice_fpga_halt();
@@ -35,8 +28,15 @@ int main() {
 
     for (;;) {
         ice_usb_task();
-        ice_smem_write_async(ICE_SSRAM_SPI_CS_PIN, START_ADDR, write_data, sizeof(write_data));
-        ice_smem_read_async(ICE_SSRAM_SPI_CS_PIN, read_data, START_ADDR, sizeof(read_data));
+
+        // The write callback chains a read sequence immediately after the write sequence from an interrupt handler,
+        // without any interaction with the main thread.
+        void write_callback(void* context) {
+            ice_smem_read_async(ICE_SSRAM_SPI_CS_PIN, read_data, START_ADDR, sizeof(read_data), NULL, NULL);
+        }
+        ice_smem_write_async(ICE_SSRAM_SPI_CS_PIN, START_ADDR, write_data, sizeof(write_data), write_callback, NULL);
+
+        // This doesn't return until both the write operation and the read operation chained after it complete.
         ice_smem_await_async_completion();
 
         for (size_t i = 0; i < DATA_LEN; i++) {
