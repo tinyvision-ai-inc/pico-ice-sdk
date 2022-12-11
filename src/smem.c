@@ -39,7 +39,7 @@ bool ice_smem_is_async_complete(void) {
 }
 
 /// Select the serial memory for SPI transaction.
-static void smem_select(int cs_pin) {
+static void ice_smem_select(int cs_pin) {
     assert(g_cs_pin < 0);
 
     g_cs_pin = cs_pin;
@@ -52,7 +52,7 @@ static void smem_select(int cs_pin) {
 }
 
 /// Deselect the serial memory for SPI transaction.
-static void smem_deselect(void) {
+static void ice_smem_deselect(void) {
     assert(g_cs_pin >= 0);
     
     // Busy wait until SCK goes low.
@@ -71,7 +71,7 @@ static void smem_deselect(void) {
 static void ice_smem_irq_handler(void) {
     if (dma_irqn_get_channel_status(g_irq - DMA_IRQ_0, g_rx_dma_channel)) {
         dma_irqn_acknowledge_channel(g_irq - DMA_IRQ_0, g_rx_dma_channel);
-        smem_deselect();
+        ice_smem_deselect();
 
         if (g_async_callback) {
             ice_smem_async_callback_t callback = g_async_callback;
@@ -136,6 +136,9 @@ void ice_smem_init(int bit_rate, int irq) {
 
 // Release hardware resources for smem
 void ice_smem_deinit(void) {
+    // Wait for previous transactions from this library to terminate
+    ice_smem_await_async_completion();
+
     if (g_tx_dma_channel >= 0) {
         dma_channel_unclaim(g_tx_dma_channel);
         g_tx_dma_channel = -1;
@@ -163,12 +166,13 @@ void ice_smem_deinit(void) {
 void ice_smem_output_command(int cs_pin,
                              const uint8_t* command, uint32_t command_size,
                              const void* data, uint32_t data_size) {
+    // Wait for previous transactions from this library to terminate
     ice_smem_await_async_completion();
 
-    smem_select(cs_pin);
+    ice_smem_select(cs_pin);
     spi_write_blocking(SPI_SERIAL_MEM, command, command_size);
     spi_write_blocking(SPI_SERIAL_MEM, data, data_size);
-    smem_deselect();
+    ice_smem_deselect();
 }
 
 void ice_smem_output_command_async(int cs_pin,
@@ -179,7 +183,7 @@ void ice_smem_output_command_async(int cs_pin,
     
     ice_smem_await_async_completion();
 
-    smem_select(cs_pin);
+    ice_smem_select(cs_pin);
     spi_write_blocking(SPI_SERIAL_MEM, command, command_size);
 
     g_async_callback = callback;
@@ -198,12 +202,13 @@ void ice_smem_output_command_async(int cs_pin,
 void ice_smem_input_command(int cs_pin,
                             const uint8_t* command, uint32_t command_size,
                             void* data, uint32_t data_size) {
+    // Wait for previous transactions from this library to terminate
     ice_smem_await_async_completion();
 
-    smem_select(cs_pin);
+    ice_smem_select(cs_pin);
     spi_write_blocking(SPI_SERIAL_MEM, command, command_size);
     spi_read_blocking(SPI_SERIAL_MEM, 0, data, data_size);
-    smem_deselect();
+    ice_smem_deselect();
 }
 
 void ice_smem_input_command_async(int cs_pin,
@@ -211,10 +216,10 @@ void ice_smem_input_command_async(int cs_pin,
                                   void* data, uint32_t data_size,
                                   ice_smem_async_callback_t callback, void* context) {
     assert(data_size > 0);
-    
+
     ice_smem_await_async_completion();
 
-    smem_select(cs_pin);
+    ice_smem_select(cs_pin);
     spi_write_blocking(SPI_SERIAL_MEM, command, command_size);
 
     g_async_callback = callback;
