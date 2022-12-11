@@ -12,6 +12,13 @@
 #define DATA_LEN 8
 #define START_ADDR 0
 
+static uint8_t write_data[DATA_LEN];
+static uint8_t read_data[DATA_LEN];
+
+void write_callback(void* context) {
+    ice_smem_read_async(ICE_SSRAM_SPI_CS_PIN, read_data, START_ADDR, sizeof(read_data), NULL, NULL);
+}
+
 int main() {
     ice_sdk_init();
     stdio_init_all();
@@ -20,8 +27,6 @@ int main() {
     // Dont let the FPGA on the bus so we get exclusive access
     ice_fpga_halt();
 
-    static uint8_t write_data[DATA_LEN];
-    static uint8_t read_data[DATA_LEN];
     for (uint16_t i = 0; i < DATA_LEN; i++) {
         write_data[i] = i;
     }
@@ -31,9 +36,6 @@ int main() {
 
         // The write callback chains a read sequence immediately after the write sequence from an interrupt handler,
         // without any interaction with the main thread.
-        void write_callback(void* context) {
-            ice_smem_read_async(ICE_SSRAM_SPI_CS_PIN, read_data, START_ADDR, sizeof(read_data), NULL, NULL);
-        }
         ice_smem_write_async(ICE_SSRAM_SPI_CS_PIN, START_ADDR, write_data, sizeof(write_data), write_callback, NULL);
 
         // This doesn't return until both the write operation and the read operation chained after it complete.
