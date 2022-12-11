@@ -12,6 +12,8 @@
 #include <stddef.h>
 #include "boards/pico_ice.h"
 
+// This module is _not_ thread safe.
+
 typedef void (*ice_smem_async_callback_t)(void* context);
 
 // Common interface

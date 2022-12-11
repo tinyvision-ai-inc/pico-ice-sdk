@@ -5,7 +5,6 @@
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
 #include "hardware/sync.h"
-#include "pico/mutex.h"
 
 #include "ice/smem.h"
 
@@ -27,42 +26,16 @@ static volatile int g_cs_pin = -1;
 static volatile ice_smem_async_callback_t g_async_callback;
 static void* volatile g_async_context;
 
-auto_init_mutex(g_mutex);
-
-static void smem_deinit_internal(void);
-
-static void smem_lock(void) {
-    // Cannot lock in an interrupt handler.
-    assert(__get_current_exception() == 0);
-
-    mutex_enter_blocking(&g_mutex);
-}
-
-static void smem_unlock(void) {
-    mutex_exit(&g_mutex);
-}
-
-// Sleep until after an asynchronous operation started by the calling core.
+/// Wait that our own ongoing transaction completes.
 void ice_smem_await_async_completion(void) {
-    lock_owner_id_t caller = lock_get_caller_owner_id();
-    for (;;) {
-        uint32_t save = spin_lock_blocking(g_mutex.core.spin_lock);
-        if (g_mutex.owner != caller) {
-            spin_unlock(g_mutex.core.spin_lock, save);
-            break;
-        }
-
-        lock_internal_spin_unlock_with_wait(&g_mutex.core, save);
+    while (!ice_smem_is_async_complete()) {
+        // Exiting the interrupt handler implicitly sets an event.
+        __wfe();
     }
 }
 
-// Return whether an asynchronous operation begun by the calling core/task is complete.
 bool ice_smem_is_async_complete(void) {
-    lock_owner_id_t caller = lock_get_caller_owner_id();
-    uint32_t save = spin_lock_blocking(g_mutex.core.spin_lock);
-    bool result = g_mutex.owner != caller;
-    spin_unlock(g_mutex.core.spin_lock, save);
-    return result;
+    return g_cs_pin < 0;
 }
 
 /// Select the serial memory for SPI transaction.
@@ -100,17 +73,10 @@ static void ice_smem_irq_handler(void) {
         dma_irqn_acknowledge_channel(g_irq - DMA_IRQ_0, g_rx_dma_channel);
         smem_deselect();
 
-        // At this point, the lock is still acquired. The async callback might chain another async operation. Must hold
-        // on the the lock for now to prevent the other core from acquiring the lock.
         if (g_async_callback) {
             ice_smem_async_callback_t callback = g_async_callback;
             g_async_callback = NULL;
             callback(g_async_context);
-        }
-
-        // Unlock only if the callback did not start another async operation.
-        if (g_cs_pin < 0) {
-            smem_unlock();
         }
     }
 }
@@ -124,9 +90,7 @@ static void cs_pin_init(int cs_pin) {
 void ice_smem_init(int bit_rate, int irq) {
     dma_channel_config cfg;
 
-    smem_lock();
-
-    smem_deinit_internal();
+    ice_smem_deinit();
 
     spi_init(SPI_SERIAL_MEM, bit_rate);
     gpio_set_function(ICE_FLASH_SPI_TX_PIN, GPIO_FUNC_SPI);
@@ -168,12 +132,10 @@ void ice_smem_init(int bit_rate, int irq) {
         irq_add_shared_handler(irq, ice_smem_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
         irq_set_enabled(irq, true);
     }
-
-    smem_unlock();
 }
 
 // Release hardware resources for smem
-static void smem_deinit_internal(void) {
+void ice_smem_deinit(void) {
     if (g_tx_dma_channel >= 0) {
         dma_channel_unclaim(g_tx_dma_channel);
         g_tx_dma_channel = -1;
@@ -198,21 +160,15 @@ static void smem_deinit_internal(void) {
     spi_deinit(SPI_SERIAL_MEM);
 }
 
-void ice_smem_deinit(void) {
-    smem_lock();
-    smem_deinit_internal();
-    smem_unlock();
-}
-
 void ice_smem_output_command(int cs_pin,
                              const uint8_t* command, uint32_t command_size,
                              const void* data, uint32_t data_size) {
-    smem_lock();
+    ice_smem_await_async_completion();
+
     smem_select(cs_pin);
     spi_write_blocking(SPI_SERIAL_MEM, command, command_size);
     spi_write_blocking(SPI_SERIAL_MEM, data, data_size);
     smem_deselect();
-    smem_unlock();
 }
 
 void ice_smem_output_command_async(int cs_pin,
@@ -221,12 +177,7 @@ void ice_smem_output_command_async(int cs_pin,
                                    ice_smem_async_callback_t callback, void* context) {
     assert(data_size > 0);
     
-    if (__get_current_exception() != 0) {
-        // If called from exception handler, must already be locked.
-        assert(lock_is_owner_id_valid(g_mutex.owner));
-    } else {
-        smem_lock();
-    }
+    ice_smem_await_async_completion();
 
     smem_select(cs_pin);
     spi_write_blocking(SPI_SERIAL_MEM, command, command_size);
@@ -247,12 +198,12 @@ void ice_smem_output_command_async(int cs_pin,
 void ice_smem_input_command(int cs_pin,
                             const uint8_t* command, uint32_t command_size,
                             void* data, uint32_t data_size) {
-    smem_lock();
+    ice_smem_await_async_completion();
+
     smem_select(cs_pin);
     spi_write_blocking(SPI_SERIAL_MEM, command, command_size);
     spi_read_blocking(SPI_SERIAL_MEM, 0, data, data_size);
     smem_deselect();
-    smem_unlock();
 }
 
 void ice_smem_input_command_async(int cs_pin,
@@ -260,13 +211,8 @@ void ice_smem_input_command_async(int cs_pin,
                                   void* data, uint32_t data_size,
                                   ice_smem_async_callback_t callback, void* context) {
     assert(data_size > 0);
-
-    if (__get_current_exception()) {
-        // If called from exception handler, must already be locked.
-        assert(lock_is_owner_id_valid(g_mutex.owner));
-    } else {
-        smem_lock();
-    }
+    
+    ice_smem_await_async_completion();
 
     smem_select(cs_pin);
     spi_write_blocking(SPI_SERIAL_MEM, command, command_size);
