@@ -1,10 +1,11 @@
 #include <assert.h>
 
+#include "boards/pico_ice.h"
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
 #include "hardware/sync.h"
-#include "boards/pico_ice.h"
+#include "pico/mutex.h"
 
 #include "ice/smem.h"
 
@@ -24,36 +25,69 @@ static volatile int g_rx_dma_channel = -1;
 static volatile int g_irq;
 static volatile int g_cs_pin = -1;
 static volatile ice_smem_async_callback_t g_async_callback;
+static void* volatile g_async_context;
 
-/// Wait that our own ongoing transaction completes.
-void ice_smem_await_async_completion(void) {
-    while (!ice_smem_is_async_complete()) {
-        // Exiting the interrupt handler implicitly sets an event.
-        __wfe();
+auto_init_mutex(g_mutex);
+
+static void smem_deinit_internal();
+
+static void smem_lock() {
+    // Cannot lock in an interrupt handler.
+    assert(!__get_current_exception());
+
+    mutex_enter_blocking(&g_mutex);
+}
+
+static void smem_unlock() {
+    mutex_exit(&g_mutex);
+}
+
+// Sleep or block until after an asynchronous operation started by the calling core or task completes.
+//
+// This module is designed to integrate well with an RTOS. "Sleep" and "block" refer to differing
+// behaviors depending on whether an RTOS is in use. Without an RTOS, while awaiting an asynchronous
+// operation to complete, a core sleeps, potentially reducing power usage.
+//
+// In contrast, using an RTOS, while awaiting an asynchronous operation, the RTOS' scheduler blocks
+// the calling task until after the asynchronous operation completes and, meantime, switches to
+// another ready task.
+void ice_smem_await_async_completion() {
+    lock_owner_id_t caller = lock_get_caller_owner_id();
+    for (;;) {
+        uint32_t save = spin_lock_blocking(g_mutex.core.spin_lock);
+        if (g_mutex.owner != caller) {
+            spin_unlock(g_mutex.core.spin_lock, save);
+            break;
+        }
+
+        lock_internal_spin_unlock_with_wait(&g_mutex.core, save);
     }
 }
 
+// Return whether an asynchronous operation begun by the calling core/task is complete.
 bool ice_smem_is_async_complete(void) {
-    return g_cs_pin < 0;
+    lock_owner_id_t caller = lock_get_caller_owner_id();
+    uint32_t save = spin_lock_blocking(g_mutex.core.spin_lock);
+    bool result = g_mutex.owner != caller;
+    spin_unlock(g_mutex.core.spin_lock, save);
+    return result;
 }
 
-void ice_smem_set_async_callback(ice_smem_async_callback_t callback) {
-    g_async_callback = callback;
-}
+/// Select the serial memory for SPI transaction.
+static void smem_select(int cs_pin) {
+    assert(g_cs_pin < 0);
 
-/// Select the SRAM for SPI transaction.
-static void ice_smem_select(int cs_pin) {
     g_cs_pin = cs_pin;
 
     // Short delay for two reasons: 1) to pull-up SSRAM CS via pull-up resistor and
     // 2) to ensure memory is deselected long enough to refresh DRAM.
-    sleep_us(1);
+    busy_wait_us(1);
 
     gpio_put(cs_pin, false);
 }
 
-/// Select the SRAM for SPI transaction.
-static void ice_smem_deselect(void) {
+/// Deselect the serial memory for SPI transaction.
+static void smem_deselect(void) {
     assert(g_cs_pin >= 0);
     
     // Busy wait until SCK goes low.
@@ -62,22 +96,29 @@ static void ice_smem_deselect(void) {
     }
 
     // This is called when the RX DMA transfers complete, not the TX transfers complete. Deselecting the PSRAM when
-    // the TX transfers complete would be wrong. The DMA controller might have done its work but there could still
+    // the TX transfers complete would be wrong; the DMA controller might have done its work but there could still
     // be untransmitted data in the SPI peripheral's TX FIFO or shift register, so it would be too early to deselect
     // the PSRAM chip.
     gpio_put(g_cs_pin, true);
     g_cs_pin = -1;
 }
 
-/// In a more complete application, this might invoke DMA complete callback or, if an RTOS were in use,
-/// wake up a task blocked waiting for the DMA to finish.
 static void ice_smem_irq_handler(void) {
     if (dma_irqn_get_channel_status(g_irq - DMA_IRQ_0, g_rx_dma_channel)) {
         dma_irqn_acknowledge_channel(g_irq - DMA_IRQ_0, g_rx_dma_channel);
-        ice_smem_deselect();
+        smem_deselect();
 
+        // At this point, the lock is still acquired. The async callback might chain another async operation. Must hold
+        // on the the lock for now to prevent the other core from acquiring the lock.
         if (g_async_callback) {
-            g_async_callback();
+            ice_smem_async_callback_t callback = g_async_callback;
+            g_async_callback = NULL;
+            callback(g_async_context);
+        }
+
+        // Unlock only if the callback did not start another async operation.
+        if (g_cs_pin < 0) {
+            smem_unlock();
         }
     }
 }
@@ -91,7 +132,9 @@ static void cs_pin_init(int cs_pin) {
 void ice_smem_init(int bit_rate, int irq) {
     dma_channel_config cfg;
 
-    ice_smem_deinit();
+    smem_lock();
+
+    smem_deinit_internal();
 
     spi_init(SPI_SERIAL_MEM, bit_rate);
     gpio_set_function(ICE_FLASH_SPI_TX_PIN, GPIO_FUNC_SPI);
@@ -133,13 +176,12 @@ void ice_smem_init(int bit_rate, int irq) {
         irq_add_shared_handler(irq, ice_smem_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
         irq_set_enabled(irq, true);
     }
+
+    smem_unlock();
 }
 
 // Release hardware resources for smem
-void ice_smem_deinit(void) {
-    // Wait for previous transactions from this library to terminate
-    ice_smem_await_async_completion();
-
+static void smem_deinit_internal() {
     if (g_tx_dma_channel >= 0) {
         dma_channel_unclaim(g_tx_dma_channel);
         g_tx_dma_channel = -1;
@@ -164,94 +206,143 @@ void ice_smem_deinit(void) {
     spi_deinit(SPI_SERIAL_MEM);
 }
 
-void ice_smem_output_command(int cs_pin, const uint8_t* command, uint32_t command_size, const void* data, uint32_t data_size, bool async) {
-    // Wait for previous transactions from this library to terminate
-    ice_smem_await_async_completion();
-    ice_smem_select(cs_pin);
-    spi_write_blocking(SPI_SERIAL_MEM, command, command_size);
-
-    if (data_size && async && g_rx_dma_channel >= 0) {
-        // Receive to empty the SPI peripheral's RX FIFO and assert an interrupt on completion.
-        hw_clear_bits(&dma_hw->ch[g_rx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_WRITE_BITS);
-        dma_channel_transfer_to_buffer_now(g_rx_dma_channel, &g_dummy, data_size);
-
-        hw_set_bits(&dma_hw->ch[g_tx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_READ_BITS);
-        dma_channel_transfer_from_buffer_now(g_tx_dma_channel, data, data_size);
-    } else {
-        spi_write_blocking(SPI_SERIAL_MEM, data, data_size);
-        ice_smem_deselect();
-    }
+void ice_smem_deinit() {
+    smem_lock();
+    smem_deinit_internal();
+    smem_unlock();
 }
 
-void ice_smem_input_command(int cs_pin, const uint8_t* command, uint32_t command_size, void* data, uint32_t data_size, bool async) {
-    // Wait for previous transactions from this library to terminate
-    ice_smem_await_async_completion();
+void ice_smem_output_command(int cs_pin,
+                             const uint8_t* command, uint32_t command_size,
+                             const void* data, uint32_t data_size) {
+    smem_lock();
+    smem_select(cs_pin);
+    spi_write_blocking(SPI_SERIAL_MEM, command, command_size);
+    spi_write_blocking(SPI_SERIAL_MEM, data, data_size);
+    smem_deselect();
+    smem_unlock();
+}
 
-    ice_smem_select(cs_pin);
+void ice_smem_output_command_async(int cs_pin,
+                                   const uint8_t* command, uint32_t command_size,
+                                   const void* data, uint32_t data_size,
+                                   ice_smem_async_callback_t callback, void* context) {
+    assert(data_size > 0);
+    
+    if (__get_current_exception()) {
+        // If called from exception handler, must already be locked.
+        assert(lock_is_owner_id_valid(g_mutex.owner));
+    } else {
+        smem_lock();
+    }
+
+    smem_select(cs_pin);
     spi_write_blocking(SPI_SERIAL_MEM, command, command_size);
 
-    if (data_size && async && g_rx_dma_channel >= 0) {
-        // Must start RX channel first. Suppose TX channel started first and a long-running interrupt handler ran
-        // before starting the RX channel. In that time, the RX FIFO could overflow. With RX starting first, the
-        // RX FIFO won't start to fill until TX also starts, since TX drives SCLK.
-        hw_set_bits(&dma_hw->ch[g_rx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_WRITE_BITS);
-        dma_channel_transfer_to_buffer_now(g_rx_dma_channel, data, data_size);
+    g_async_callback = callback;
+    g_async_context = context;
 
-        hw_clear_bits(&dma_hw->ch[g_tx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_READ_BITS);
-        dma_channel_transfer_from_buffer_now(g_tx_dma_channel, &g_dummy, data_size);
+    assert (g_rx_dma_channel >= 0);
+
+    // Receive to empty the SPI peripheral's RX FIFO and assert an interrupt on completion.
+    hw_clear_bits(&dma_hw->ch[g_rx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_WRITE_BITS);
+    dma_channel_transfer_to_buffer_now(g_rx_dma_channel, &g_dummy, data_size);
+
+    hw_set_bits(&dma_hw->ch[g_tx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_READ_BITS);
+    dma_channel_transfer_from_buffer_now(g_tx_dma_channel, data, data_size);
+}
+
+void ice_smem_input_command(int cs_pin,
+                            const uint8_t* command, uint32_t command_size,
+                            void* data, uint32_t data_size) {
+    smem_lock();
+    smem_select(cs_pin);
+    spi_write_blocking(SPI_SERIAL_MEM, command, command_size);
+    spi_read_blocking(SPI_SERIAL_MEM, 0, data, data_size);
+    smem_deselect();
+    smem_unlock();
+}
+
+void ice_smem_input_command_async(int cs_pin,
+                                  const uint8_t* command, uint32_t command_size,
+                                  void* data, uint32_t data_size,
+                                  ice_smem_async_callback_t callback, void* context) {
+    assert(data_size > 0);
+
+    if (__get_current_exception()) {
+        // If called from exception handler, must already be locked.
+        assert(lock_is_owner_id_valid(g_mutex.owner));
     } else {
-        spi_read_blocking(SPI_SERIAL_MEM, 0, data, data_size);
-        ice_smem_deselect();
+        smem_lock();
     }
+
+    smem_select(cs_pin);
+    spi_write_blocking(SPI_SERIAL_MEM, command, command_size);
+
+    g_async_callback = callback;
+    g_async_context = context;
+
+    assert (g_rx_dma_channel >= 0);
+
+    // Must start RX channel first. Suppose TX channel started first and a long-running interrupt handler ran
+    // before starting the RX channel. In that time, the RX FIFO could overflow. With RX starting first, the
+    // RX FIFO won't start to fill until TX also starts, since TX drives SCLK.
+    hw_set_bits(&dma_hw->ch[g_rx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_WRITE_BITS);
+    dma_channel_transfer_to_buffer_now(g_rx_dma_channel, data, data_size);
+
+    hw_clear_bits(&dma_hw->ch[g_tx_dma_channel].al1_ctrl, DMA_CH0_CTRL_TRIG_INCR_READ_BITS);
+    dma_channel_transfer_from_buffer_now(g_tx_dma_channel, &g_dummy, data_size);
 }
 
 uint8_t ice_smem_get_status(int cs_pin) {
     const uint8_t command[] = { CMD_STATUS };
     uint8_t status;
-    ice_smem_input_command(cs_pin, command, sizeof(command), &status, sizeof(status), false);
+    ice_smem_input_command(cs_pin, command, sizeof(command), &status, sizeof(status));
     return status;
 }
 
 void ice_smem_erase_chip(int cs_pin) {
     const uint8_t command[] = { CMD_CHIP_ERASE };
-    ice_smem_output_command(cs_pin, command, sizeof(command), NULL, 0, false);
+    ice_smem_output_command(cs_pin, command, sizeof(command), NULL, 0);
 }
 
 void ice_smem_erase_sector(int cs_pin, uint32_t dest_addr) {
-    assert(addr % ICE_FLASH_PAGE_SIZE == 0);
+    assert(dest_addr % ICE_SMEM_FLASH_PAGE_SIZE == 0);
 
     const uint8_t command[] = { CMD_SECTOR_ERASE, dest_addr >> 16, dest_addr >> 8, dest_addr };
-    ice_smem_output_command(cs_pin, command, sizeof(command), NULL, 0, false);
+    ice_smem_output_command(cs_pin, command, sizeof(command), NULL, 0);
 }
 
 void ice_smem_enable_write(int cs_pin, bool enabled) {
     const uint8_t command[] = { enabled ? CMD_ENABLE_WRITE : CMD_DISABLE_WRITE };
-    ice_smem_input_command(cs_pin, command, sizeof(command), NULL, 0, false);
+    ice_smem_input_command(cs_pin, command, sizeof(command), NULL, 0);
 }
 
 void ice_smem_write(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size) {
     uint8_t command[] = { CMD_WRITE, dest_addr >> 16, dest_addr >> 8, dest_addr };
-    ice_smem_output_command(cs_pin, command, sizeof(command), src, size, false);
+    ice_smem_output_command(cs_pin, command, sizeof(command), src, size);
 }
 
-void ice_smem_write_async(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size) {
+void ice_smem_write_async(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size,
+                          ice_smem_async_callback_t callback, void* context) {
     uint8_t command[] = { CMD_WRITE, dest_addr >> 16, dest_addr >> 8, dest_addr };
-    ice_smem_output_command(cs_pin, command, sizeof(command), src, size, true);
+    ice_smem_output_command_async(cs_pin, command, sizeof(command), src, size, callback, context);
 }
 
 void ice_smem_read(int cs_pin, void* dest, uint32_t src_addr, uint32_t size) {
     uint8_t command[] = { CMD_READ, src_addr >> 16, src_addr >> 8, src_addr };
-    ice_smem_input_command(cs_pin, command, sizeof(command), dest, size, false);
+    ice_smem_input_command(cs_pin, command, sizeof(command), dest, size);
 }
 
-void ice_smem_read_async(int cs_pin, void* dest, uint32_t src_addr, uint32_t size) {
+void ice_smem_read_async(int cs_pin, void* dest, uint32_t src_addr, uint32_t size,
+                          ice_smem_async_callback_t callback, void* context) {
     uint8_t command[] = { CMD_READ, src_addr >> 16, src_addr >> 8, src_addr };
-    ice_smem_input_command(cs_pin, command, sizeof(command), dest, size, true);
+    ice_smem_input_command_async(cs_pin, command, sizeof(command), dest, size, callback, context);
 }
 
 void ice_smem_enable_power(int cs_pin, bool enabled) {
     const uint8_t command[] = { enabled ? CMD_RELEASE_POWER_DOWN : CMD_POWER_DOWN };
-    ice_smem_input_command(cs_pin, command, sizeof(command), NULL, 0, false);
+    ice_smem_input_command(cs_pin, command, sizeof(command), NULL, 0);
 
     if (enabled) {
         sleep_us(5); // Command takes 3us per datasheet to take effect
