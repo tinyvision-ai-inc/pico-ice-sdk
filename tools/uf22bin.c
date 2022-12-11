@@ -26,8 +26,25 @@ void uf22bin(FILE *in, int fd_out, off_t start_address)
     }
 }
 
-int main(void)
+void usage(char const *arg0)
 {
-    uf22bin(stdin, STDOUT_FILENO, 0);
-    return (0);
+    fprintf(stderr, "usage: %s [file.uf2]\n", arg0);
+    exit(1);
+}
+
+int main(int argc, char **argv)
+{
+    char const *arg0 = *argv;
+    FILE *in = stdin;
+
+    if (argc > 2)
+        usage(arg0);
+
+    if (argc == 2) {
+        if ((in = fopen(argv[1], "r")) == NULL)
+            uf2_fatal(argv[1]);
+    }
+
+    uf22bin(in, STDOUT_FILENO, 0);
+    return 0;
 }

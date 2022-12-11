@@ -6,7 +6,7 @@
 #include "ice/fpga.h"
 #include "boards/pico_ice.h"
 
-#define MY_BASE_ADDRESS 0x20000
+#define MY_BASE_ADDRESS 0x00000
 
 static inline void memdump(uint8_t const *buf, size_t sz) {
     for (size_t i = 0; i < sz; i++) {
@@ -40,8 +40,10 @@ int main(void) {
         // Erase a sector, program the page and then read it back.
         // Note that we're using MY_BASE_ADDRESS to avoid erasing the FPGA bitfile which is at 0x0
         ice_flash_erase_sector(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, MY_BASE_ADDRESS);
+#if 0
         ice_flash_program_page(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, MY_BASE_ADDRESS, buf_w);
         ice_flash_read(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, MY_BASE_ADDRESS, buf_r, sizeof buf_r);
+#endif
         memdump(buf_r, sizeof buf_r);
     }
 

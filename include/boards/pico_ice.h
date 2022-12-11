@@ -87,6 +87,9 @@
 /** Configured as GPIO FUNCSEL by ``ice_init_fpga_comm()``. */
 #define ICE_RP_SPI_IRQ_PIN 3
 
+/** Generated at random for the pico-ice as advised by https://github.com/microsoft/uf2/ */
+#define ICE_UF2_FAMILY_ID 0x792e7263
+
 /** The FPGA interface uses spi0 **/
 #define SPI_FPGA spi0
 

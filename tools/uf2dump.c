@@ -1,6 +1,10 @@
 #include <stddef.h>
-#include "uf2.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include "libuf2.h"
+#include "uf2.h"
 
 void uf2dump(FILE *in, FILE *out)
 {
@@ -11,7 +15,25 @@ void uf2dump(FILE *in, FILE *out)
     }
 }
 
-int main(void)
+void usage(char const *arg0)
 {
-    uf2dump(stdin, stdout);
+    fprintf(stderr, "usage: %s [file.uf2]\n", arg0);
+    exit(1);
+}
+
+int main(int argc, char **argv)
+{
+    char const *arg0 = *argv;
+    FILE *in = stdin;
+
+    if (argc > 2)
+        usage(arg0);
+
+    if (argc == 2) {
+        if ((in = fopen(argv[1], "r")) == NULL)
+            uf2_fatal(argv[1]);
+    }
+
+    uf2dump(in, stdout);
+    return 0;
 }

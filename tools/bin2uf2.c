@@ -1,15 +1,22 @@
+#include <assert.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <assert.h>
 #include <string.h>
-#include <stdbool.h>
-#include "uf2.h"
-#include "libuf2.h"
+#include <unistd.h>
+#include <limits.h>
 
-void bin2uf2(FILE *in, FILE *out, uint32_t blockNo, uint32_t targetAddr)
+#include "boards/pico_ice.h"
+#include "libuf2.h"
+#include "uf2.h"
+
+void bin2uf2(FILE *in, FILE *out, uint32_t targetAddr, uint32_t familyID)
 {
-    UF2_Block uf2 = { .targetAddr = targetAddr };
+    UF2_Block uf2 = { .targetAddr = targetAddr, .flags = UF2_FLAG_FAMILYID_PRESENT, .reserved = familyID };
+
+    // compute the number of blocks in the input file, must be seekable
+    uf2_set_numBlocks(&uf2, in);
 
     // fill the data payload from the input file and store its size
     while ((uf2.payloadSize = fread(uf2.data, 1, UF2_PAYLOAD_SIZE, in)) > 0)
@@ -20,8 +27,63 @@ void bin2uf2(FILE *in, FILE *out, uint32_t blockNo, uint32_t targetAddr)
         uf2_fatal("reading binary data in");
 }
 
-int main(void)
+void usage(char const *arg0)
 {
-    bin2uf2(stdin, stdout, 0, 0);
+    fprintf(stderr, "usage: %s [-f familyID] [-o file.uf2] [0x00000000 file.uf2]...\n", arg0);
+    exit(1);
+}
+
+int main(int argc, char **argv)
+{
+    char const *arg0 = *argv;
+    FILE *out = stdout;
+    FILE *in;
+    uint32_t familyID = ICE_UF2_FAMILY_ID;
+    uint32_t targetAddr = 0x00000000;
+    char *p;
+
+    arg0 = *argv;
+    for (int c; (c = getopt(argc, argv, "f:o:")) != -1;) {
+        switch (c) {
+        case 'f':
+            familyID = strtoll(optarg, &p, 0);
+            if (optarg[0] != '\0')
+                uf2_fatal("invalid familyID number format");
+            break;
+        case 'o':
+            if ((out = fopen(optarg, "r")) == NULL)
+                uf2_fatal(optarg);
+            break;
+        default:
+            usage(arg0);
+        }
+    }
+    argv += optind;
+    argc -= optind;
+
+    if (argc == 0)
+        usage(arg0);
+
+    if (argc % 2 != 0) {
+        fprintf(stderr, "error: wrong number of arguments\n");
+        usage(arg0);
+    }
+
+    for (; argc > 0; argc -= 2, argv -= 2) {
+        fprintf(stderr, "addr=%s file=%s\n", argv[0], argv[1]);
+
+        targetAddr = strtoll(argv[0], &p, 0);
+        if (*p != '\0')
+            uf2_fatal("invalid targetAddr number format");
+
+        if (strcmp(argv[1], "-") == 0) {
+            in = stdin;
+        } else {
+            if ((in = fopen(argv[1], "r")) == NULL)
+                uf2_fatal(argv[1]);
+        }
+
+        bin2uf2(in, out, targetAddr, familyID);
+    }
     return (0);
 }

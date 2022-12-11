@@ -44,7 +44,7 @@ void uf2_fatal(char const *msg)
     exit(1);
 }
 
-void uf2_convert_endianness(UF2_Block *uf2)
+static void uf2_convert_endianness(UF2_Block *uf2)
 {
     uf2->magicStart0 = le32(uf2->magicStart0);
     uf2->magicStart1 = le32(uf2->magicStart1);
@@ -52,11 +52,15 @@ void uf2_convert_endianness(UF2_Block *uf2)
     uf2->targetAddr  = le32(uf2->targetAddr);
     uf2->payloadSize = le32(uf2->payloadSize);
     uf2->blockNo     = le32(uf2->blockNo);
-    uf2->numBlocks   = le32(uf2->blockNo);
+    uf2->numBlocks   = le32(uf2->numBlocks);
     uf2->reserved    = le32(uf2->reserved);
     uf2->magicEnd    = le32(uf2->magicEnd);
 }
 
+/// Read an UF2 block from a file.
+/// @param uf2 Block structure to store the data.
+/// @param in File pointer to read from.
+/// @return True while end of file not reached.
 bool uf2_read_block(UF2_Block *uf2, FILE *in)
 {
     size_t sz;
@@ -83,14 +87,35 @@ bool uf2_read_block(UF2_Block *uf2, FILE *in)
     return true;
 }
 
-/*
- * Set the following fields:
- * - uf2.flags        (optional)
- * - uf2.targetAddr   (only on first call, updated by this function)
- * - uf2.payloadSize  (required)
- * - uf2.blockNo      (only on first call, updated by this function)
- * - uf2.data         (required)
- */
+/// Set the numbmer of blocks according to the input file size.
+/// @param uf2 Block to store the result into.
+/// @param in File pointer to a seekable stream.
+void uf2_set_numBlocks(UF2_Block *uf2, FILE *in)
+{
+    long sz;
+
+    if (fseek(in, 0L, SEEK_END) == -1)
+        uf2_fatal("ftell: searching the input file end to estimate size");
+    if ((sz = ftell(in)) == -1)
+        uf2_fatal("ftell: searching the input file end to estimate size");
+
+    if (fseek(in, 0L, SEEK_SET) == -1)
+        uf2_fatal("fseek: restoring input file position to the beginning");
+
+    if (sz % 512 != 0)
+        uf2_fatal("file size is not a multiple of 512");
+
+    uf2->numBlocks = sz / UF2_PAYLOAD_SIZE;
+}
+
+/// Set the following fields:
+/// - uf2.flags        (optional)
+/// - uf2.targetAddr   (only on first call, updated by this function)
+/// - uf2.payloadSize  (required)
+/// - uf2.blockNo      (only on first call, updated by this function)
+/// - uf2.data         (required)
+/// @param uf2 Block structure to write.
+/// @param out File pointer to write to.
 void uf2_write_block(UF2_Block *uf2, FILE *out)
 {
     // check for library misuse
@@ -99,7 +124,6 @@ void uf2_write_block(UF2_Block *uf2, FILE *out)
     // fill default values
     uf2->magicStart0 = UF2_MAGIC_START0;
     uf2->magicStart1 = UF2_MAGIC_START1;
-    uf2->numBlocks = 0; // not implemented
     uf2->magicEnd = UF2_MAGIC_END;
 
     // prepare and write the UF2
@@ -112,7 +136,7 @@ void uf2_write_block(UF2_Block *uf2, FILE *out)
 
     // update the fields to keep track of file position
     uf2->targetAddr += UF2_PAYLOAD_SIZE;
-    uf2->blockNo += UF2_PAYLOAD_SIZE;
+    uf2->blockNo++;
 
     if (ferror(out))
         uf2_fatal("writing UF2 data out");
@@ -132,6 +156,9 @@ static void uf2_data_dump(uint8_t *buf, size_t buf_sz, uint32_t base_address, FI
     }
 }
 
+/// Dump the content of an UF2 file in human-readable format.
+/// @param uf2 Block structure to dump.
+/// @param out File pointer to write to.
 void uf2_dump(UF2_Block *uf2, FILE *out)
 {
     fprintf(out, "\n");
