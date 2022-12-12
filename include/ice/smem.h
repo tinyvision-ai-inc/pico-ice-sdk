@@ -5,14 +5,18 @@
 #ifndef _ICE_SMEM_H
 #define _ICE_SMEM_H
 
-#define ICE_SMEM_STATUS_BUSY_MASK  0x01
-#define ICE_SMEM_FLASH_PAGE_SIZE   0x100
-
 #include <stdint.h>
 #include <stddef.h>
 #include "boards/pico_ice.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // This module is _not_ thread safe.
+
+#define ICE_SMEM_STATUS_BUSY_MASK  0x01
+#define ICE_SMEM_FLASH_PAGE_SIZE   0x100
 
 typedef void (*ice_smem_async_callback_t)(void* context);
 
@@ -55,5 +59,9 @@ void ice_smem_input_command_async(int cs_pin,
                                   const uint8_t* command, uint32_t command_size,
                                   void* data, uint32_t data_size,
                                   ice_smem_async_callback_t callback, void* context);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

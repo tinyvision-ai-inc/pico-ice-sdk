@@ -10,6 +10,14 @@
 #include <assert.h>
 #include "bsp/board.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void ice_sdk_init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
