@@ -17,11 +17,17 @@ void bin2uf2(FILE *in, FILE *out, uint32_t targetAddr, uint32_t familyID)
 
     // compute the number of blocks in the input file, must be seekable
     uf2_set_numBlocks(&uf2, in);
+    uf2.payloadSize = UF2_PAYLOAD_SIZE;
 
     // fill the data payload from the input file and store its size
-    while ((uf2.payloadSize = fread(uf2.data, 1, UF2_PAYLOAD_SIZE, in)) > 0)
+    for (size_t sz; (sz = fread(uf2.data, 1, UF2_PAYLOAD_SIZE, in)) > 0;) {
+
+        // fill the rest of the block with zeros
+        memset(uf2.data + sz, '\0', sizeof uf2.data - sz);
+
         // encode it as UF2 and write it out
         uf2_write_block(&uf2, out);
+    }
 
     if (ferror(in))
         uf2_fatal("reading binary data in");

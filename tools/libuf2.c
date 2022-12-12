@@ -106,10 +106,7 @@ void uf2_set_numBlocks(UF2_Block *uf2, FILE *in)
     if (fseek(in, 0L, SEEK_SET) == -1)
         uf2_fatal("fseek: restoring input file position to the beginning");
 
-    if (sz % 512 != 0)
-        uf2_fatal("file size is not a multiple of 512");
-
-    uf2->numBlocks = sz / UF2_PAYLOAD_SIZE;
+    uf2->numBlocks = sz / UF2_PAYLOAD_SIZE + (sz % UF2_PAYLOAD_SIZE > 0);
 }
 
 /// Set the following fields:
