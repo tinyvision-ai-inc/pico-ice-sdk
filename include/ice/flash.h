@@ -1,6 +1,6 @@
 /** Low-level API for communicating with flash chips: reading and writing.
 * \defgroup pico_ice_flash
-*/
+* \{ */
 
 #ifndef ICE_FLASH_H
 #define ICE_FLASH_H
@@ -23,4 +23,5 @@ void ice_flash_erase_chip(void *spi, uint8_t pin);
 void ice_flash_wakeup(void *spi, uint8_t pin);
 void ice_flash_sleep(void *spi, uint8_t pin);
 
+/** \} */
 #endif

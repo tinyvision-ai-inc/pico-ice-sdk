@@ -1,6 +1,6 @@
 /** Low-level API for communicating with serial memory chips: reading and writing.
 * \defgroup pico_ice_smem
-*/
+* \{ */
 
 #ifndef _ICE_SMEM_H
 #define _ICE_SMEM_H
@@ -56,4 +56,5 @@ void ice_smem_input_command_async(int cs_pin,
                                   void* data, uint32_t data_size,
                                   ice_smem_async_callback_t callback, void* context);
 
+/** \} */
 #endif
