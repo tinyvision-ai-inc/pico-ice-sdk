@@ -9,6 +9,10 @@
 
 #include "tusb.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// TinyUSB CDC interface number for the USB-UART link.
 #define ICE_USB_UART_FPGA_ITF 1
 
@@ -20,5 +24,8 @@ void board_init(void);
 void ice_usb_init(void);
 void ice_usb_task(void);
 
+#ifdef __cplusplus
+}
+#endif
 /** \} */
 #endif
