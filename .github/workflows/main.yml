@@ -24,6 +24,7 @@ jobs:
       - name: Build each example on every commit
         run: |
           for example in example/pico-*; do
+            if [ $example = example/pico-template ]; then continue; fi
             mkdir -p $example/build
             cd $example/build
             cmake ..
