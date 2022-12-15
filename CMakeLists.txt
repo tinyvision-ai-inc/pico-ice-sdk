@@ -1,36 +1,20 @@
-# We do not really use C++, but CXX is still required for using the
-# raspberrypi/pico-sdk. This also enable C++ support.
-enable_language(C CXX)
+cmake_minimum_required(VERSION 3.13)
 
-set(PICO_ICE_SDK_PATH ${CMAKE_CURRENT_LIST_DIR})
-list(APPEND PICO_BOARD_HEADER_DIRS ${PICO_ICE_SDK_PATH}/include/boards)
+if (NOT DEFINED PICO_SDK_PATH)
+    set(PICO_SDK_PATH "${CMAKE_CURRENT_LIST_DIR}/pico-sdk")
+endif()
 
-# Add the pico-ice-sdk as a CMake STATIC library, otherwise it will link
-# the raspberrypi/pico-sdk twice
-add_library(pico_ice_sdk STATIC
-    ${PICO_ICE_SDK_PATH}/src/fpga_comm.c
-    ${PICO_ICE_SDK_PATH}/src/fpga.c
-    ${PICO_ICE_SDK_PATH}/src/flash.c
-    ${PICO_ICE_SDK_PATH}/src/fpga.c
-    ${PICO_ICE_SDK_PATH}/src/sdk.c
-    ${PICO_ICE_SDK_PATH}/src/smem.c
-    ${PICO_ICE_SDK_PATH}/src/tinyuf2/board_pico_ice.c
-    ${PICO_ICE_SDK_PATH}/src/tinyuf2/ghostfat.c
-    ${PICO_ICE_SDK_PATH}/src/tinyuf2/main.c
-    ${PICO_ICE_SDK_PATH}/src/tinyuf2/msc.c
-    ${PICO_ICE_SDK_PATH}/src/usb.c
-    ${PICO_ICE_SDK_PATH}/src/usb_descriptors.c
-)
-target_include_directories(pico_ice_sdk PUBLIC ${PICO_ICE_SDK_PATH}/include)
+set(PICO_ICE_SDK_PATH "${CMAKE_CURRENT_LIST_DIR}")
 
-# This is in order to access the headers of the raspberrypi/pico-sdk, which
-# will add the -I flags.
-target_link_libraries(pico_ice_sdk 
-    tinyusb_device
-    tinyusb_board
-    pico_stdlib
-    hardware_spi
-    hardware_uart
-    hardware_flash
-    hardware_dma
-)
+if (NOT DEFINED PICO_BOARD)
+    set(PICO_BOARD pico_ice)
+endif()
+
+list(APPEND PICO_BOARD_HEADER_DIRS "${PICO_ICE_SDK_PATH}/include/boards")
+
+include("${PICO_SDK_PATH}/pico_sdk_init.cmake")
+project(pico_ice_sdk C CXX ASM)
+pico_sdk_init()
+
+add_subdirectory(src)
+add_subdirectory(example EXCLUDE_FROM_ALL)
