@@ -11,6 +11,10 @@ jobs:
   firmware_release:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        cmake_build_type: [Debug, Release]
+
     steps:
       - uses: actions/checkout@v3
 
@@ -27,5 +31,5 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake ..
+          cmake -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} ..
           cmake --build . --target pico_ice_all_examples
