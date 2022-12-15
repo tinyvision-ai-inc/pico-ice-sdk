@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  firmware_release:
+  firmware:
     runs-on: ubuntu-latest
 
     strategy:
