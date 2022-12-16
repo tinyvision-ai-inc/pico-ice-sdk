@@ -1,6 +1,12 @@
 #include "ice/usb.h"
 #include "hardware/uart.h"
 
+// in src/tinyuf2/uf2.h
+void uf2_init(void);
+
+// in src/tinyuf2/board_api.h
+void board_init(void);
+
 /// Forward the data coming from USB CDC 1 UART to the FPGA UART.
 /// Function to be called from tud_cdc_rx_cb().
 void tud_cdc_rx_cb(uint8_t itf)
@@ -22,13 +28,4 @@ void ice_usb_init(void)
 
     // TinyUF2
     uf2_init();
-}
-
-/// Run all code related to USB in a non-blocking way.
-/// It is typically to be placed at the end of the main application loop.
-/// It must be called frequently in order to USB to work.
-/// This is due to how the TinyUSB library works.
-void ice_usb_task(void)
-{
-    tud_task();
 }

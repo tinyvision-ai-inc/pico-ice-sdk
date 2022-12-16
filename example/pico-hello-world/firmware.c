@@ -13,7 +13,7 @@ int main(void) {
 
     // Setup code here.
     for (;;) {
-        ice_usb_task();
+        tud_task();
         printf("hello world\r\n");
     }
     return 0;

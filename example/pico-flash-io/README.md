@@ -1,4 +1,4 @@
-"template" example
+"flash-io" example
 ==================
 This example is built as a CMake project:
 

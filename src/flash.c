@@ -23,21 +23,28 @@ static void soft_spi_init(void *spi, uint64_t freq) {
     (void)freq;
 }
 
+static uint8_t soft_spi_delay(void)
+{
+    for (volatile uint8_t i = 0; i < 0xF; i++);
+}
+
 static uint8_t soft_spi_xfer_byte(uint8_t tx) {
     uint8_t rx;
 
     for (uint8_t i = 0; i < 8; i++) {
         // Update TX and immediately set positive edge.
         gpio_put(ICE_FLASH_SPI_TX_PIN, tx >> 7);
+        soft_spi_delay();
         gpio_put(ICE_FLASH_SPI_SCK_PIN, true);
         tx <<= 1;
-        __asm volatile ("nop\n");
+        soft_spi_delay();
 
         // Sample RX and immediately set negative edge.
         rx <<= 1;
         rx |= gpio_get(ICE_FLASH_SPI_RX_PIN);
+        soft_spi_delay();
         gpio_put(ICE_FLASH_SPI_SCK_PIN, false);
-        __asm volatile ("nop\n");
+        soft_spi_delay();
     }
     return rx;
 }
