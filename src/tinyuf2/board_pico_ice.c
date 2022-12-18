@@ -18,7 +18,7 @@ void board_flash_init(void) {
 
 void board_flash_read(uint32_t addr, void *buffer, uint32_t len) {
     board_flash_init();
-    ice_flash_read(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, addr, buffer, len);
+    ice_flash_read(addr, buffer, len);
 }
 
 void board_flash_write(uint32_t addr, void const *data, uint32_t len) {
@@ -26,7 +26,7 @@ void board_flash_write(uint32_t addr, void const *data, uint32_t len) {
     if (len != ICE_FLASH_PAGE_SIZE) {
         printf("%s: expected len=%u got len=%ld\r\n", __func__, ICE_FLASH_PAGE_SIZE, len);
     } else {
-        ice_flash_program_page(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, addr, data);
+        ice_flash_program_page(addr, data);
     }
 }
 
