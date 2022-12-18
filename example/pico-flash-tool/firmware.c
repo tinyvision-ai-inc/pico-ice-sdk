@@ -9,6 +9,10 @@
 #include "ice/sdk.h"
 #include "ice/usb.h"
 
+// address to work upon
+uint32_t repl_address;
+
+// for repl_ungetchar() to take back the last character from repl_getchar():
 int repl_last_char;
 bool repl_last_held;
 
@@ -39,16 +43,6 @@ static void repl_ungetchar(int c)
     repl_last_held = true;
 }
 
-static inline void memdump(uint8_t const *buf, size_t sz, uint32_t addr)
-{
-    while (sz > 0) {
-        printf("0x%08X:", addr);
-        for (size_t n = 0x20; sz > 0 && n > 0; sz--, buf++, n--, addr++)
-            printf(" %02X", *buf);
-        printf("\n");
-    }
-}
-
 static inline bool repl_parse_error(char *msg, char c)
 {
     // reset whatever was being input
@@ -61,8 +55,6 @@ static inline bool repl_parse_error(char *msg, char c)
 static bool repl_expect(char *str)
 {
     for (char *s = str; *s != '\0'; s++)
-        if (repl_getchar() != *s)
-            return repl_parse_error(str, *s);
     return true;
 }
 
@@ -103,13 +95,6 @@ static inline bool repl_parse_u32(uint32_t *u32)
     return true;
 }
 
-static inline bool repl_parse_address(uint32_t *addr)
-{
-    if (!repl_expect("0x"))
-        return false;
-    return repl_parse_u32(addr);
-}
-
 static bool repl_parse_newline(void)
 {
     int c;
@@ -128,45 +113,50 @@ static bool repl_parse_newline(void)
 static void repl_command_write(void)
 {
     uint8_t buf[ICE_FLASH_PAGE_SIZE] = {0};
-    uint32_t addr;
 
-    if (!repl_expect(" ") || !repl_parse_address(&addr) || !repl_parse_newline())
+    if (!repl_parse_newline())
         return;
-    ice_flash_program_page(addr, buf);
-    printf("%s 0x%08X done\r\n", __func__, addr);
+    ice_flash_program_page(repl_address, buf);
+    printf("%s 0x%08X done\r\n", __func__, repl_address);
+}
+
+static inline void memdump(uint8_t const *buf, size_t sz, uint32_t addr)
+{
+    while (sz > 0) {
+        printf("0x%08X:", addr);
+        for (size_t n = 0x20; sz > 0 && n > 0; sz--, buf++, n--, addr++)
+            printf(" %02X", *buf);
+        printf("\n");
+    }
 }
 
 static void repl_command_read(void)
 {
-    uint32_t addr;
     uint8_t buf[ICE_FLASH_PAGE_SIZE] = {0};
 
-    if (!repl_expect(" ") || !repl_parse_address(&addr) || !repl_parse_newline())
+    if (!repl_parse_newline())
         return;
-    ice_flash_read(addr, buf, sizeof buf);
-    printf("%s 0x%08X done\r\n", __func__, addr);
-    memdump(buf, sizeof buf, addr);
+    ice_flash_read(repl_address, buf, sizeof buf);
+    printf("%s 0x%08X done\r\n", __func__, repl_address);
+    memdump(buf, sizeof buf, repl_address);
 }
 
 static void repl_command_erase(void)
 {
-    uint32_t addr;
-
-    if (!repl_expect(" ") || !repl_parse_address(&addr) || !repl_parse_newline())
+    if (!repl_parse_newline())
         return;
-    ice_flash_erase_sector(addr);
-    printf("%s 0x%08X done\r\n", __func__, addr);
+    ice_flash_erase_sector(repl_address);
+    printf("%s 0x%08X done\r\n", __func__, repl_address);
 }
 
 static void repl_command_zero(void)
 {
     uint8_t buf[ICE_FLASH_PAGE_SIZE] = {0};
-    uint32_t addr;
 
-    if (!repl_expect(" ") || !repl_parse_address(&addr) || !repl_parse_newline())
+    if (!repl_parse_newline())
         return;
-    ice_flash_program_page(addr, buf);
-    printf("%s 0x%08X done\r\n", __func__, addr);
+    ice_flash_program_page(repl_address, buf);
+    printf("%s 0x%08X done\r\n", __func__, repl_address);
 }
 
 static void repl_command_sleep(void)
@@ -193,12 +183,27 @@ static void repl_command_init(void)
     printf("%s done\r\n", __func__);
 }
 
-static void repl_command_enable_write(void)
+static void repl_set_address(void)
 {
+    uint8_t c;
+
+    if ((c = repl_getchar()) != 'x') {
+        repl_parse_error("x", c);
+        return;
+    }
+    if (!repl_parse_u32(&repl_address))
+        return;
     if (!repl_parse_newline())
         return;
-    ice_flash_enable_write();
-    printf("%s done\r\n", __func__);
+}
+
+static void repl_command_page(void)
+{
+    uint8_t buf[ICE_FLASH_PAGE_SIZE] = {0};
+
+    ice_flash_read(repl_address, buf, sizeof buf);
+    memdump(buf, sizeof buf, repl_address);
+    repl_address += 0x1000;
 }
 
 int main(void)
@@ -212,9 +217,12 @@ int main(void)
     for (;;) {
         tud_task();
 
-        printf("pico-flash-tool> ");
+        printf("0x%08X> ", repl_address);
 
         switch (repl_getchar()) {
+        case '0':
+            repl_set_address();
+            break;
         case 'w':
             repl_command_write();
             break;
@@ -236,14 +244,13 @@ int main(void)
         case 'i':
             repl_command_init();
             break;
-        case '+':
-            repl_command_enable_write();
-            break;
         case '\r':
         case '\n':
+            repl_command_page();
             break;
         default:
-            printf("\navailable commands: w r e z s u i\n");
+            printf("\navailable commands: w r e z s u i +\n");
+            printf("or an address: 0x00000000\n");
             break;
         }
     }

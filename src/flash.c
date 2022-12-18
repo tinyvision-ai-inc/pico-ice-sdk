@@ -28,8 +28,8 @@ static uint8_t soft_spi_xfer_byte(uint8_t tx) {
 
     for (uint8_t i = 0; i < 8; i++) {
         // Update TX and immediately set negative edge.
-        gpio_put(ICE_FLASH_SPI_TX_PIN, tx >> 7);
         gpio_put(ICE_FLASH_SPI_SCK_PIN, false);
+        gpio_put(ICE_FLASH_SPI_TX_PIN, tx >> 7);
         tx <<= 1;
 
         // stable for a while with clock low
@@ -109,9 +109,6 @@ void ice_flash_init(void) {
 
     // Flash might be asleep as a successful FPGA boot will put it to sleep as the last command!
     ice_flash_wakeup();
-
-    // Enable writing to the flash once here for all subsequent invocations.
-    ice_flash_enable_write();
 }
 
 /// Release the GPIO used for the FPGA flash so the FPGA can use them
@@ -139,6 +136,7 @@ static void ice_flash_wait(void) {
         soft_spi_chip_select();
         soft_spi_write_read_blocking(cmds, buf, 2);
         soft_spi_chip_deselect();
+
     } while (buf[1] & FLASH_STATUS_BUSY_MASK);
 }
 
@@ -150,6 +148,8 @@ void ice_flash_erase_sector(uint32_t addr) {
     uint8_t cmds[] = { FLASH_CMD_SECTOR_ERASE, addr >> 16, addr >> 8, addr };
 
     assert(addr % ICE_FLASH_PAGE_SIZE == 0);
+
+    ice_flash_enable_write();
 
     soft_spi_chip_select();
     soft_spi_write_blocking(cmds, sizeof cmds);
@@ -168,6 +168,7 @@ void ice_flash_program_page(uint32_t addr, uint8_t const page[ICE_FLASH_PAGE_SIZ
     uint8_t cmds[] = { FLASH_CMD_PROGRAM_PAGE, addr >> 16, addr >> 8, addr };
 
     assert(addr % ICE_FLASH_PAGE_SIZE == 0);
+
     ice_flash_enable_write();
 
     soft_spi_chip_select();
