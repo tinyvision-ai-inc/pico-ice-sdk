@@ -39,9 +39,9 @@ int main(void) {
 
         // Erase a sector, program the page and then read it back.
         // Note that we're using MY_BASE_ADDRESS to avoid erasing the FPGA bitfile which is at 0x0
-        ice_flash_erase_sector(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, MY_BASE_ADDRESS);
-        ice_flash_program_page(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, MY_BASE_ADDRESS, buf_w);
-        ice_flash_read(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, MY_BASE_ADDRESS, buf_r, sizeof buf_r);
+        ice_flash_erase_sector(MY_BASE_ADDRESS);
+        ice_flash_program_page(MY_BASE_ADDRESS, buf_w);
+        ice_flash_read(MY_BASE_ADDRESS, buf_r, sizeof buf_r);
         memdump(buf_r, sizeof buf_r);
     }
 

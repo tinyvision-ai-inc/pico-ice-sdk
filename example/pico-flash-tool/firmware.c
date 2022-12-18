@@ -39,14 +39,14 @@ static void repl_ungetchar(int c)
     repl_last_held = true;
 }
 
-static inline void memdump(uint8_t const *buf, size_t sz)
+static inline void memdump(uint8_t const *buf, size_t sz, uint32_t addr)
 {
-    for (size_t i = 0; i < sz; i++) {
-        printf(" %02X", buf[i]);
-        if (i % 0x20 == (0x20 - 1))
-            printf("\n");
+    while (sz > 0) {
+        printf("0x%08X:", addr);
+        for (size_t n = 0x20; sz > 0 && n > 0; sz--, buf++, n--, addr++)
+            printf(" %02X", *buf);
+        printf("\n");
     }
-    printf("\n");
 }
 
 static inline bool repl_parse_error(char *msg, char c)
@@ -132,8 +132,7 @@ static void repl_command_write(void)
 
     if (!repl_expect(" ") || !repl_parse_address(&addr) || !repl_parse_newline())
         return;
-
-    ice_flash_program_page(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, addr, buf);
+    ice_flash_program_page(addr, buf);
     printf("%s 0x%08X done\r\n", __func__, addr);
 }
 
@@ -144,10 +143,9 @@ static void repl_command_read(void)
 
     if (!repl_expect(" ") || !repl_parse_address(&addr) || !repl_parse_newline())
         return;
-
-    ice_flash_read(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, addr, buf, sizeof buf);
+    ice_flash_read(addr, buf, sizeof buf);
     printf("%s 0x%08X done\r\n", __func__, addr);
-    memdump(buf, sizeof buf);
+    memdump(buf, sizeof buf, addr);
 }
 
 static void repl_command_erase(void)
@@ -156,8 +154,7 @@ static void repl_command_erase(void)
 
     if (!repl_expect(" ") || !repl_parse_address(&addr) || !repl_parse_newline())
         return;
-
-    ice_flash_erase_sector(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, addr);
+    ice_flash_erase_sector(addr);
     printf("%s 0x%08X done\r\n", __func__, addr);
 }
 
@@ -168,8 +165,7 @@ static void repl_command_zero(void)
 
     if (!repl_expect(" ") || !repl_parse_address(&addr) || !repl_parse_newline())
         return;
-
-    ice_flash_program_page(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN, addr, buf);
+    ice_flash_program_page(addr, buf);
     printf("%s 0x%08X done\r\n", __func__, addr);
 }
 
@@ -177,8 +173,7 @@ static void repl_command_sleep(void)
 {
     if (!repl_parse_newline())
         return;
-
-    ice_flash_sleep(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN);
+    ice_flash_sleep();
     printf("%s done\r\n", __func__);
 }
 
@@ -186,8 +181,7 @@ static void repl_command_wakeup(void)
 {
     if (!repl_parse_newline())
         return;
-
-    ice_flash_wakeup(spi_fpga_flash, ICE_FLASH_SPI_CSN_PIN);
+    ice_flash_wakeup();
     printf("%s done\r\n", __func__);
 }
 
@@ -195,8 +189,15 @@ static void repl_command_init(void)
 {
     if (!repl_parse_newline())
         return;
-
     ice_flash_init();
+    printf("%s done\r\n", __func__);
+}
+
+static void repl_command_enable_write(void)
+{
+    if (!repl_parse_newline())
+        return;
+    ice_flash_enable_write();
     printf("%s done\r\n", __func__);
 }
 
@@ -234,6 +235,9 @@ int main(void)
             break;
         case 'i':
             repl_command_init();
+            break;
+        case '+':
+            repl_command_enable_write();
             break;
         case '\r':
         case '\n':
