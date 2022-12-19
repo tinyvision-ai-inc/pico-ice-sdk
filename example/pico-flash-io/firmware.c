@@ -5,7 +5,7 @@
 
 #include "ice_sdk.h"
 #include "ice_usb.h"
-#include "ice_flash.h"
+#include "ice_fpga_flash.h"
 #include "ice_fpga.h"
 
 #define MY_BASE_ADDRESS 0x00000
@@ -29,7 +29,7 @@ int main(void) {
     stdio_init_all();
 
     // Booted up, now take control of the Flash
-    ice_flash_init();
+    ice_fpga_flash_init();
 
     // Write data: known pattern, not very random!
     for (size_t i = 0; i < sizeof buf_w; i++) {
@@ -41,9 +41,9 @@ int main(void) {
 
         // Erase a sector, program the page and then read it back.
         // Note that we're using MY_BASE_ADDRESS to avoid erasing the FPGA bitfile which is at 0x0
-        ice_flash_erase_sector(MY_BASE_ADDRESS);
-        ice_flash_program_page(MY_BASE_ADDRESS, buf_w);
-        ice_flash_read(MY_BASE_ADDRESS, buf_r, sizeof buf_r);
+        ice_fpga_flash_erase_sector(MY_BASE_ADDRESS);
+        ice_fpga_flash_program_page(MY_BASE_ADDRESS, buf_w);
+        ice_fpga_flash_read(MY_BASE_ADDRESS, buf_r, sizeof buf_r);
         memdump(buf_r, sizeof buf_r);
     }
 

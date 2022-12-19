@@ -11,7 +11,7 @@ extern "C" {
 
 void ice_fpga_comm_init(void);
 void ice_fpga_comm_write(uint32_t dest_addr, const void* src, uint32_t size);
-void ice_fpga_comm_read_(void* dest, uint32_t src_addr, uint32_t size);
+void ice_fpga_comm_read(void* dest, uint32_t src_addr, uint32_t size);
 
 #ifdef __cplusplus
 }
