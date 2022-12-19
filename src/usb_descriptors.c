@@ -125,8 +125,7 @@ char const *string_desc_arr[] = {
 
 /// Invoked when received GET DEVICE DESCRIPTOR
 /// Application return pointer to descriptor
-uint8_t const *tud_descriptor_device_cb(void)
-{
+uint8_t const *tud_descriptor_device_cb(void) {
     return (uint8_t const *) &desc_device;
 }
 
@@ -138,8 +137,7 @@ const uint8_t *tud_descriptor_configuration_cb(uint8_t index) {
 /// Invoked when received GET STRING DESCRIPTOR request
 /// Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
 uint16_t const *
-tud_descriptor_string_cb(uint8_t index, uint16_t langid)
-{
+tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
     static uint16_t utf16[32];
     uint8_t len;
 

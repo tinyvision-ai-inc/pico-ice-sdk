@@ -1,24 +1,27 @@
-#include <stdio.h>
 #include <stdbool.h>
-#include "ice/flash.h"
+#include <stdio.h>
+
+#include "pico/stdio.h"
 #include "pico/time.h"
 #include "hardware/watchdog.h"
 #include "hardware/timer.h"
 #include "board_api.h"
+
+#include "ice_fpga_flash.h"
 
 alarm_id_t alarm_id;
 bool flash_ready = false;
 
 void board_flash_init(void) {
     if (!flash_ready) {
-        ice_flash_init();
+        ice_fpga_flash_init();
         flash_ready = true;
     }
 }
 
 void board_flash_read(uint32_t addr, void *buffer, uint32_t len) {
     board_flash_init();
-    ice_flash_read(addr, buffer, len);
+    ice_fpga_flash_read(addr, buffer, len);
 }
 
 void board_flash_write(uint32_t addr, void const *data, uint32_t len) {
@@ -26,7 +29,7 @@ void board_flash_write(uint32_t addr, void const *data, uint32_t len) {
     if (len != ICE_FLASH_PAGE_SIZE) {
         printf("%s: expected len=%u got len=%ld\r\n", __func__, ICE_FLASH_PAGE_SIZE, len);
     } else {
-        ice_flash_program_page(addr, data);
+        ice_fpga_flash_program_page(addr, data);
     }
 }
 

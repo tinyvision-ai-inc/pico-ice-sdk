@@ -1,10 +1,12 @@
 #include "pico/stdlib.h"
 #include "pico/stdio.h"
-#include "ice/sdk.h"
-#include "ice/usb.h"
-#include "ice/flash.h"
-#include "ice/fpga.h"
+
 #include "boards/pico_ice.h"
+
+#include "ice_sdk.h"
+#include "ice_usb.h"
+#include "ice_flash.h"
+#include "ice_fpga.h"
 
 #define MY_BASE_ADDRESS 0x00000
 

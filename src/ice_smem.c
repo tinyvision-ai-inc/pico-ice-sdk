@@ -6,7 +6,7 @@
 #include "hardware/spi.h"
 #include "hardware/sync.h"
 
-#include "ice/smem.h"
+#include "ice_smem.h"
 
 #define CMD_CHIP_ERASE          0xC7
 #define CMD_ENABLE_WRITE        0x06
@@ -23,10 +23,9 @@ static volatile int g_tx_dma_channel = -1;
 static volatile int g_rx_dma_channel = -1;
 static volatile int g_irq;
 static volatile int g_cs_pin = -1;
-static volatile ice_smem_async_callback_t g_async_callback;
-static void* volatile g_async_context;
+static volatile void (*g_async_callback)(void *);
+static void *volatile g_async_context;
 
-/// Wait that our own ongoing transaction completes.
 void ice_smem_await_async_completion(void) {
     while (!ice_smem_is_async_complete()) {
         // Exiting the interrupt handler implicitly sets an event.
@@ -38,23 +37,22 @@ bool ice_smem_is_async_complete(void) {
     return g_cs_pin < 0;
 }
 
-/// Select the serial memory for SPI transaction.
-static void ice_smem_select(int cs_pin) {
+static void ice_smem_select(uint cs_pin) {
     assert(g_cs_pin < 0);
 
     g_cs_pin = cs_pin;
 
-    // Short delay for two reasons: 1) to pull-up SSRAM CS via pull-up resistor and
+    // Short delay for two reasons:
+    // 1) to pull-up the CS pin via pull-up resistor and
     // 2) to ensure memory is deselected long enough to refresh DRAM.
     busy_wait_us(1);
 
     gpio_put(cs_pin, false);
 }
 
-/// Deselect the serial memory for SPI transaction.
 static void ice_smem_deselect(void) {
     assert(g_cs_pin >= 0);
-    
+
     // Busy wait until SCK goes low.
     while (gpio_get(ICE_FLASH_SPI_SCK_PIN)) {
         tight_loop_contents();
@@ -74,25 +72,25 @@ static void ice_smem_irq_handler(void) {
         ice_smem_deselect();
 
         if (g_async_callback) {
-            ice_smem_async_callback_t callback = g_async_callback;
+            void (*callback)(void *) = g_async_callback;
             g_async_callback = NULL;
             callback(g_async_context);
         }
     }
 }
 
-static void cs_pin_init(int cs_pin) {
+static void cs_pin_init(uint cs_pin) {
     gpio_init(cs_pin);
     gpio_put(cs_pin, true);
     gpio_set_dir(cs_pin, GPIO_OUT);
 }
 
-void ice_smem_init(int bit_rate, int irq) {
+void ice_smem_init(uint baudrate_hz, int irq) {
     dma_channel_config cfg;
 
     ice_smem_deinit();
 
-    spi_init(SPI_SERIAL_MEM, bit_rate);
+    spi_init(SPI_SERIAL_MEM, baudrate_hz);
     gpio_set_function(ICE_FLASH_SPI_TX_PIN, GPIO_FUNC_SPI);
     gpio_set_function(ICE_FLASH_SPI_RX_PIN, GPIO_FUNC_SPI);
     gpio_set_function(ICE_FLASH_SPI_SCK_PIN, GPIO_FUNC_SPI);
@@ -105,7 +103,7 @@ void ice_smem_init(int bit_rate, int irq) {
     // SPI CS is active low. The pico-ice hardware inverts the CS signal for the SSRAM but not for flash. Invert
     // the SSRAM CS so that all SPI is active low in software.
     gpio_set_outover(ICE_SSRAM_SPI_CS_PIN, GPIO_OVERRIDE_INVERT);
-    
+
     if (irq > 0) {
         assert(irq == DMA_IRQ_0 || irq == DMA_IRQ_1);
         g_irq = irq;
@@ -134,7 +132,6 @@ void ice_smem_init(int bit_rate, int irq) {
     }
 }
 
-// Release hardware resources for smem
 void ice_smem_deinit(void) {
     // Wait for previous transactions from this library to terminate
     ice_smem_await_async_completion();
@@ -163,9 +160,9 @@ void ice_smem_deinit(void) {
     spi_deinit(SPI_SERIAL_MEM);
 }
 
-void ice_smem_output_command(int cs_pin,
-                             const uint8_t* command, uint32_t command_size,
-                             const void* data, uint32_t data_size) {
+void ice_smem_output_command(uint cs_pin,
+                             const uint8_t *command, uint32_t command_size,
+                             const void *data, uint32_t data_size) {
     // Wait for previous transactions from this library to terminate
     ice_smem_await_async_completion();
 
@@ -175,12 +172,12 @@ void ice_smem_output_command(int cs_pin,
     ice_smem_deselect();
 }
 
-void ice_smem_output_command_async(int cs_pin,
-                                   const uint8_t* command, uint32_t command_size,
-                                   const void* data, uint32_t data_size,
-                                   ice_smem_async_callback_t callback, void* context) {
+void ice_smem_output_command_async(uint cs_pin,
+                                   const uint8_t *command, uint32_t command_size,
+                                   const void *data, uint32_t data_size,
+                                   void (*callback)(void *), void *context) {
     assert(data_size > 0);
-    
+
     ice_smem_await_async_completion();
 
     ice_smem_select(cs_pin);
@@ -199,9 +196,9 @@ void ice_smem_output_command_async(int cs_pin,
     dma_channel_transfer_from_buffer_now(g_tx_dma_channel, data, data_size);
 }
 
-void ice_smem_input_command(int cs_pin,
-                            const uint8_t* command, uint32_t command_size,
-                            void* data, uint32_t data_size) {
+void ice_smem_input_command(uint cs_pin,
+                            const uint8_t *command, uint32_t command_size,
+                            void *data, uint32_t data_size) {
     // Wait for previous transactions from this library to terminate
     ice_smem_await_async_completion();
 
@@ -211,10 +208,10 @@ void ice_smem_input_command(int cs_pin,
     ice_smem_deselect();
 }
 
-void ice_smem_input_command_async(int cs_pin,
-                                  const uint8_t* command, uint32_t command_size,
-                                  void* data, uint32_t data_size,
-                                  ice_smem_async_callback_t callback, void* context) {
+void ice_smem_input_command_async(uint cs_pin,
+                                  const uint8_t *command, uint32_t command_size,
+                                  void *data, uint32_t data_size,
+                                  void (*callback)(void *), void *context) {
     assert(data_size > 0);
 
     ice_smem_await_async_completion();
@@ -237,57 +234,73 @@ void ice_smem_input_command_async(int cs_pin,
     dma_channel_transfer_from_buffer_now(g_tx_dma_channel, &g_dummy, data_size);
 }
 
-uint8_t ice_smem_get_status(int cs_pin) {
+uint8_t ice_smem_get_status(uint cs_pin) {
     const uint8_t command[] = { CMD_STATUS };
     uint8_t status;
+
     ice_smem_input_command(cs_pin, command, sizeof(command), &status, sizeof(status));
     return status;
 }
 
-void ice_smem_erase_chip(int cs_pin) {
+void ice_smem_erase_chip(uint cs_pin) {
     const uint8_t command[] = { CMD_CHIP_ERASE };
+
     ice_smem_output_command(cs_pin, command, sizeof(command), NULL, 0);
 }
 
-void ice_smem_erase_sector(int cs_pin, uint32_t dest_addr) {
-    assert(dest_addr % ICE_SMEM_FLASH_PAGE_SIZE == 0);
-
+void ice_smem_erase_sector(uint cs_pin, uint32_t dest_addr) {
     const uint8_t command[] = { CMD_SECTOR_ERASE, dest_addr >> 16, dest_addr >> 8, dest_addr };
+
+    assert(dest_addr % ICE_SMEM_FLASH_PAGE_SIZE == 0);
     ice_smem_output_command(cs_pin, command, sizeof(command), NULL, 0);
 }
 
-void ice_smem_enable_write(int cs_pin, bool enabled) {
-    const uint8_t command[] = { enabled ? CMD_ENABLE_WRITE : CMD_DISABLE_WRITE };
+void ice_smem_enable_write(uint cs_pin) {
+    const uint8_t command[] = { CMD_DISABLE_WRITE };
+
     ice_smem_input_command(cs_pin, command, sizeof(command), NULL, 0);
 }
 
-void ice_smem_write(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size) {
+void ice_smem_disable_write(uint cs_pin) {
+    const uint8_t command[] = { CMD_ENABLE_WRITE };
+
+    ice_smem_input_command(cs_pin, command, sizeof(command), NULL, 0);
+}
+
+void ice_smem_write(uint cs_pin, uint32_t dest_addr, const void *src, uint32_t size) {
     uint8_t command[] = { CMD_WRITE, dest_addr >> 16, dest_addr >> 8, dest_addr };
+
     ice_smem_output_command(cs_pin, command, sizeof(command), src, size);
 }
 
-void ice_smem_write_async(int cs_pin, uint32_t dest_addr, const void* src, uint32_t size,
-                          ice_smem_async_callback_t callback, void* context) {
+void ice_smem_write_async(uint cs_pin, uint32_t dest_addr, const void *src, uint32_t size,
+                          void (*callback)(void *), void *context) {
     uint8_t command[] = { CMD_WRITE, dest_addr >> 16, dest_addr >> 8, dest_addr };
     ice_smem_output_command_async(cs_pin, command, sizeof(command), src, size, callback, context);
 }
 
-void ice_smem_read(int cs_pin, void* dest, uint32_t src_addr, uint32_t size) {
+void ice_smem_read(uint cs_pin, void *dest, uint32_t src_addr, uint32_t size) {
     uint8_t command[] = { CMD_READ, src_addr >> 16, src_addr >> 8, src_addr };
+
     ice_smem_input_command(cs_pin, command, sizeof(command), dest, size);
 }
 
-void ice_smem_read_async(int cs_pin, void* dest, uint32_t src_addr, uint32_t size,
-                          ice_smem_async_callback_t callback, void* context) {
+void ice_smem_read_async(uint cs_pin, void *dest, uint32_t src_addr, uint32_t size,
+                          void (*callback)(void *), void *context) {
     uint8_t command[] = { CMD_READ, src_addr >> 16, src_addr >> 8, src_addr };
+
     ice_smem_input_command_async(cs_pin, command, sizeof(command), dest, size, callback, context);
 }
 
-void ice_smem_enable_power(int cs_pin, bool enabled) {
-    const uint8_t command[] = { enabled ? CMD_RELEASE_POWER_DOWN : CMD_POWER_DOWN };
-    ice_smem_input_command(cs_pin, command, sizeof(command), NULL, 0);
+void ice_smem_power_off(uint cs_pin) {
+    const uint8_t command[] = { CMD_RELEASE_POWER_DOWN };
 
-    if (enabled) {
-        sleep_us(5); // Command takes 3us per datasheet to take effect
-    }
+    ice_smem_input_command(cs_pin, command, sizeof(command), NULL, 0);
+    sleep_us(5); // Takes around 3us of delay.
+}
+
+void ice_smem_power_on(uint cs_pin) {
+    const uint8_t command[] = { CMD_POWER_DOWN };
+
+    ice_smem_input_command(cs_pin, command, sizeof(command), NULL, 0);
 }

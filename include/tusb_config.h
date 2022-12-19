@@ -23,7 +23,9 @@
  * THE SOFTWARE.
  */
 
-#pragma once
+#ifndef TUSB_CONFIG_H
+#define TUSB_CONFIG_H
+
 #include "hardware/flash.h"
 
 // RHPort number used for device can be defined by board.mk, port 0 for pico-ice
@@ -56,3 +58,5 @@
 
 // MSC Buffer size of Device Mass storage
 #define CFG_TUD_MSC_BUFSIZE       FLASH_SECTOR_SIZE
+
+#endif
