@@ -4,12 +4,12 @@
 
 // Deliberately adding all pico-ice-sdk headers here, even ones not needed for blinky, so that continuous integration
 // verifies that all SDK headers can be compiled as C++.
-#include "ice/flash.h"
-#include "ice/fpga.h"
-#include "ice/fpga_comm.h"
-#include "ice/sdk.h"
-#include "ice/smem.h"
-#include "ice/usb.h"
+#include "ice_fpga_flash.h"
+#include "ice_fpga.h"
+#include "ice_fpga_comm.h"
+#include "ice_sdk.h"
+#include "ice_smem.h"
+#include "ice_usb.h"
 
 int main() {
     gpio_init(ICE_LED_RED_PIN);
