@@ -35,7 +35,7 @@ int main() {
     }
 
     for (;;) {
-        ice_usb_task();
+        tud_task();
 
         // The write callback chains a read sequence immediately after the write sequence from an interrupt handler,
         // without any interaction with the main thread.
