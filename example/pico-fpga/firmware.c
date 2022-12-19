@@ -29,7 +29,7 @@ int main() {
     }
 
     for (;;) {
-        ice_usb_task();
+        tud_task();
         ice_fpga_comm_write(START_ADDR, write_data, sizeof(write_data));
         ice_fpga_comm_read(read_data, START_ADDR, sizeof(read_data));
     }

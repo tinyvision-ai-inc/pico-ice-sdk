@@ -15,7 +15,7 @@ int main(void) {
 
     // Setup code here.
     for (;;) {
-        ice_usb_task();
+        tud_task();
     }
     return 0;
 }
