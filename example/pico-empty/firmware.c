@@ -1,8 +1,10 @@
 #include "pico/stdlib.h"
 #include "pico/stdio.h"
+
 #include "boards/pico_ice.h"
-#include "ice/sdk.h"
-#include "ice/usb.h"
+
+#include "ice_sdk.h"
+#include "ice_usb.h"
 
 int main(void) {
     // Init the pico-ice-sdk library

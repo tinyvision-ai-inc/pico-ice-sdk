@@ -1,13 +1,11 @@
-#include <ctype.h>
-#include <stdio.h>
-
-#include "boards/pico_ice.h"
 #include "pico/stdio.h"
 #include "pico/stdlib.h"
 
-#include "ice/flash.h"
-#include "ice/sdk.h"
-#include "ice/usb.h"
+#include "boards/pico_ice.h"
+
+#include "ice_fpga_flash.h"
+#include "ice_sdk.h"
+#include "ice_usb.h"
 
 // address to work upon
 uint32_t repl_address;
@@ -116,7 +114,7 @@ static void repl_command_write(void)
 
     if (!repl_parse_newline())
         return;
-    ice_flash_program_page(repl_address, buf);
+    ice_fpga_flash_program_page(repl_address, buf);
     printf("%s 0x%08X done\r\n", __func__, repl_address);
 }
 
@@ -136,7 +134,7 @@ static void repl_command_read(void)
 
     if (!repl_parse_newline())
         return;
-    ice_flash_read(repl_address, buf, sizeof buf);
+    ice_fpga_flash_read(repl_address, buf, sizeof buf);
     printf("%s 0x%08X done\r\n", __func__, repl_address);
     memdump(buf, sizeof buf, repl_address);
 }
@@ -145,7 +143,7 @@ static void repl_command_erase(void)
 {
     if (!repl_parse_newline())
         return;
-    ice_flash_erase_sector(repl_address);
+    ice_fpga_flash_erase_sector(repl_address);
     printf("%s 0x%08X done\r\n", __func__, repl_address);
 }
 
@@ -155,7 +153,7 @@ static void repl_command_zero(void)
 
     if (!repl_parse_newline())
         return;
-    ice_flash_program_page(repl_address, buf);
+    ice_fpga_flash_program_page(repl_address, buf);
     printf("%s 0x%08X done\r\n", __func__, repl_address);
 }
 
@@ -163,7 +161,7 @@ static void repl_command_sleep(void)
 {
     if (!repl_parse_newline())
         return;
-    ice_flash_sleep();
+    ice_fpga_flash_sleep();
     printf("%s done\r\n", __func__);
 }
 
@@ -171,7 +169,7 @@ static void repl_command_wakeup(void)
 {
     if (!repl_parse_newline())
         return;
-    ice_flash_wakeup();
+    ice_fpga_flash_wakeup();
     printf("%s done\r\n", __func__);
 }
 
@@ -179,7 +177,7 @@ static void repl_command_init(void)
 {
     if (!repl_parse_newline())
         return;
-    ice_flash_init();
+    ice_fpga_flash_init();
     printf("%s done\r\n", __func__);
 }
 
@@ -201,7 +199,7 @@ static void repl_command_page(void)
 {
     uint8_t buf[ICE_FLASH_PAGE_SIZE] = {0};
 
-    ice_flash_read(repl_address, buf, sizeof buf);
+    ice_fpga_flash_read(repl_address, buf, sizeof buf);
     memdump(buf, sizeof buf, repl_address);
     repl_address += 0x1000;
 }

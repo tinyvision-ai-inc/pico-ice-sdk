@@ -3,17 +3,16 @@ if (NOT TARGET pico_ice_sdk)
     add_library(pico_ice_sdk INTERFACE)
 
     target_sources(pico_ice_sdk INTERFACE
-        fpga_comm.c
-        fpga.c
-        flash.c
-        fpga.c
-        sdk.c
-        smem.c
+        ice_fpga.c
+        ice_fpga_comm.c
+        ice_fpga_flash.c
+        ice_sdk.c
+        ice_smem.c
+        ice_usb.c
         tinyuf2/board_pico_ice.c
         tinyuf2/ghostfat.c
         tinyuf2/main.c
         tinyuf2/msc.c
-        usb.c
         usb_descriptors.c
     )
 

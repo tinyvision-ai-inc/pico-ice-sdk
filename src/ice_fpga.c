@@ -1,15 +1,13 @@
 #include "hardware/clocks.h"
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
-#include "ice/flash.h"
-#include "ice/fpga.h"
 #include "pico/stdlib.h"
 #include "tusb.h"
 
-/// Initialise the FPGA chip and communication with it.
-/// This will start the FPGA clock and take it out of reset.
-void ice_fpga_init(void)
-{
+#include "ice_fpga.h"
+#include "ice_fpga_flash.h"
+
+void ice_fpga_init(void) {
     // Keep the FPGA in reset until ice_fpga_reset() is called.
     gpio_put(ICE_FPGA_CRESET_PIN, false);
     gpio_init(ICE_FPGA_CRESET_PIN);
@@ -26,17 +24,11 @@ void ice_fpga_init(void)
     ice_fpga_init_uart(115200);
 }
 
-/// Hold the FPGA in reset mode until ice_fpga_reset() is called.
-/// Useful for programming the flash chip without disturbing the FPGA.
-void ice_fpga_halt(void)
-{
+void ice_fpga_halt(void) {
     gpio_put(ICE_FPGA_CRESET_PIN, false);
 }
 
-/// Send a reset pulse to the FPGA re-reading its configuration then re-starting.
-/// It must be called before ice_flash_init();
-int ice_fpga_reset(void)
-{
+bool ice_fpga_reset(void) {
     // Issue a reset pulse.
     gpio_put(ICE_FPGA_CRESET_PIN, false);
     sleep_ms(1);
@@ -46,36 +38,27 @@ int ice_fpga_reset(void)
     // This makes sure the SPI bus is not driven by both the FPGA
     // (reading from flash) and the RP2040 (configuring the flash).
     // Note that if the flash is corrupted, this function will timeout!
-    uint8_t ticker = 0;
-    bool done = gpio_get(ICE_FPGA_CDONE_PIN);
-    while (!done) {
-        if (ticker++ > 100) return -1;
+    for (uint8_t timeout = 100; !gpio_get(ICE_FPGA_CDONE_PIN); timeout--) {
+        if (timeout == 0)
+            return false;
         sleep_ms(1);
-        done = gpio_get(ICE_FPGA_CDONE_PIN);
     }
+    return true;
 }
 
-/// Initialise the FPGA clock at the given frequency.
-/// \param mhz The clock speed in MHz. Valid values: 48MHz, 24MHz, 16MHz 12MHz, 8MHz, 6MHz, 4MHz, 3MHz, 2MHz, 1MHz.
-void ice_fpga_init_clock(uint8_t mhz)
-{
-    clock_gpio_init(ICE_FPGA_CLOCK_PIN, CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_VALUE_CLK_USB, 48 / mhz);
+void ice_fpga_init_clock(uint8_t freq_mhz) {
+    clock_gpio_init(ICE_FPGA_CLOCK_PIN, CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_VALUE_CLK_USB, 48 / freq_mhz);
 }
 
-/// Interrupt handler for reception of data from the UART instance connected to the FPGA.
-static void ice_fpga_uart_irq_handler(void)
-{
+static void ice_fpga_uart_irq_handler(void) {
     while (uart_is_readable(uart_fpga)) {
         tud_cdc_n_write_char(1, uart_getc(uart_fpga));
         tud_cdc_n_write_flush(1);
     }
 }
 
-/// Initialise the UART peripheral for communication with the FPGA, at the given baudrate.
-/// \param mhz The baud rate speed in MHz. Can be any value supported by the pico-sdk.
-void ice_fpga_init_uart(uint32_t mhz)
-{
-    uart_init(uart_fpga, mhz);
+void ice_fpga_init_uart(uint32_t baudrate_hz) {
+    uart_init(uart_fpga, baudrate_hz);
     gpio_set_function(ICE_FPGA_UART_TX_PIN, GPIO_FUNC_UART);
     gpio_set_function(ICE_FPGA_UART_RX_PIN, GPIO_FUNC_UART);
 

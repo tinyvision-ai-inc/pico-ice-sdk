@@ -1,13 +1,16 @@
 #include "pico/stdlib.h"
 #include "pico/stdio.h"
-#include "boards/pico_ice.h"
-#include "ice/usb.h"
+
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
-#include "ice/sdk.h"
-#include "ice/fpga.h"
-#include "ice/fpga_comm.h"
+
+#include "boards/pico_ice.h"
+
+#include "ice_usb.h"
+#include "ice_sdk.h"
+#include "ice_fpga.h"
+#include "ice_fpga_comm.h"
 
 #define DATA_LEN 8
 #define START_ADDR 0xdead
