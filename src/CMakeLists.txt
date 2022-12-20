@@ -43,7 +43,7 @@ if (NOT TARGET pico_ice_sdk)
         tinyuf2/msc.c
         usb_descriptors.c
     )
-    target_include_directories(pico_ice_usb INTERFACE ../include)
+    target_include_directories(pico_ice_usb INTERFACE ../include/ice_usb)
     target_link_libraries(pico_ice_usb INTERFACE
         hardware_uart
         tinyusb_device
