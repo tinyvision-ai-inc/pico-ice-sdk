@@ -7,6 +7,7 @@ add_dependencies(pico_ice_all_examples
     pico_fpga
     pico_hello_world
     pico_ssram
+    pico_usb_keyboard
 )
 
 add_subdirectory(pico-blinky)
@@ -16,3 +17,4 @@ add_subdirectory(pico-flash-io)
 add_subdirectory(pico-fpga)
 add_subdirectory(pico-hello-world)
 add_subdirectory(pico-ssram)
+add_subdirectory(pico-usb-keyboard)
