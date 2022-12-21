@@ -30,4 +30,4 @@ This should produce a `firmware.uf2` file to flash onto the pico-ice RP2040 chip
 See the [main `README.md`](../../README.md) for how to do this.
 
 It will also have all the USB features enabled (flashing a bitfile, forwarding the FPGA UART over USB-UART #1)
-as long as `ice_usb_task()` is called repeatedly.
+as long as `tud_task()` is called repeatedly.

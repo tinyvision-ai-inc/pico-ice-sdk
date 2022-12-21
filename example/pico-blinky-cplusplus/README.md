@@ -1,5 +1,5 @@
 "blinky-cplusplus" example
-================
+==========================
 This example is built as a CMake project:
 
 ```
