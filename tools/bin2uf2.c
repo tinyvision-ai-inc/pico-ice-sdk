@@ -35,7 +35,8 @@ void bin2uf2(FILE *in, FILE *out, uint32_t targetAddr, uint32_t familyID)
 
 void usage(char const *arg0)
 {
-    fprintf(stderr, "usage: %s [-f familyID] [-o file.uf2] [0x00000000 file.uf2]...\n", arg0);
+    fprintf(stderr, "usage: %s [-f familyID] [-o file.uf2] file.bin\n", arg0);
+    fprintf(stderr, "usage: %s [-f familyID] [-o file.uf2] [0x00000000 file.bin]...\n", arg0);
     exit(1);
 }
 
@@ -45,7 +46,6 @@ int main(int argc, char **argv)
     FILE *out = stdout;
     FILE *in;
     uint32_t familyID = ICE_UF2_FAMILY_ID;
-    uint32_t targetAddr = 0x00000000;
     char *p;
 
     arg0 = *argv;
@@ -67,15 +67,27 @@ int main(int argc, char **argv)
     argv += optind;
     argc -= optind;
 
-    if (argc == 0)
+    // By default, read from stdin
+    if (argc == 0) {
         usage(arg0);
 
-    if (argc % 2 != 0) {
+    // If only one argument, guess that the address is 0x00000000
+    } else if (argc == 1) {
+        if ((in = fopen(argv[0], "r")) == NULL)
+            uf2_fatal(argv[0]);
+        bin2uf2(in, out, 0x00000000, familyID);
+        return 0;
+
+    // If more than two, assume a mapping of multiple files and addresses
+    } else if (argc % 2 != 0) {
         fprintf(stderr, "error: wrong number of arguments\n");
         usage(arg0);
     }
 
+    // We loop through every address-file pair of argument and append them to the UF2 file
     for (; argc > 0; argc -= 2, argv += 2) {
+        uint32_t targetAddr;
+
         fprintf(stderr, "addr=%s file=%s\n", argv[0], argv[1]);
 
         targetAddr = strtoul(argv[0], &p, 0);
@@ -88,7 +100,6 @@ int main(int argc, char **argv)
             if ((in = fopen(argv[1], "r")) == NULL)
                 uf2_fatal(argv[1]);
         }
-
         bin2uf2(in, out, targetAddr, familyID);
     }
     return (0);
