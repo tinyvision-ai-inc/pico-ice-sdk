@@ -1,3 +1,4 @@
+#include "ice_fpga.h"
 #include "pico/stdlib.h"
 #include "tusb.h"
 
@@ -55,7 +56,12 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t cons
 }
 
 int main(void) {
+    // Initialize as a USB host.
     tusb_init();
+
+    // Don't call ice_sdk_init because that would initialize as a USB device.
+    // Instead, initialize individual SDK modules.
+    ice_fpga_init();
 
     gpio_init(ICE_LED_RED_PIN);
     gpio_put(ICE_LED_RED_PIN, true); // active-low

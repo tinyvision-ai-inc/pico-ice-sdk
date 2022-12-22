@@ -20,6 +20,7 @@ pico_enable_stdio_usb(pico_usb_keyboard 0)
 target_include_directories(pico_usb_keyboard PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 target_link_libraries(pico_usb_keyboard
+    pico_ice_core
     pico_stdlib
     tinyusb_board
     tinyusb_host
