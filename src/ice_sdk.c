@@ -7,7 +7,7 @@
 #include "ice_fpga.h"
 #include "ice_fpga_flash.h"
 
-static void init_rgb_led(void) {
+void init_rgb_led(void) {
     gpio_init(ICE_LED_RED_PIN);
     gpio_init(ICE_LED_GREEN_PIN);
     gpio_init(ICE_LED_BLUE_PIN);
@@ -20,11 +20,12 @@ static void init_rgb_led(void) {
 }
 
 void ice_sdk_init(void) {
-    init_rgb_led();
+    //init_rgb_led(); //this can be called by the user. Otherwise interferes with FGPA executiong bitstream
     ice_usb_init();
     
     // Do not let the Pico control the FPGA flash so the FPGA is free to boot up
     ice_fpga_flash_deinit();
 
     ice_fpga_init();
+    ice_fpga_reset(); //needed to allow FPGA to start execution
 }

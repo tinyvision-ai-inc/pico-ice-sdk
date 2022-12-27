@@ -8,6 +8,7 @@
 #include "board_api.h"
 
 #include "ice_fpga_flash.h"
+#include "ice_fpga.h"
 
 alarm_id_t alarm_id;
 bool flash_ready = false;
@@ -29,6 +30,20 @@ void board_flash_write(uint32_t addr, void const *data, uint32_t len) {
     if (len != ICE_FLASH_PAGE_SIZE) {
         printf("%s: expected len=%u got len=%ld\r\n", __func__, ICE_FLASH_PAGE_SIZE, len);
     } else {
+        if (addr==0) //when writing to write the first block halt FPGA, reinit flash access
+        {
+            ice_fpga_halt();
+
+            //flash initialization
+            ice_fpga_flash_init();
+            ice_fpga_flash_wakeup();
+            tud_task();            
+
+            ice_fpga_flash_erase_chip(); //without erasing new data was not 
+            tud_task();
+        }
+        
+        uint8_t buf_r[ICE_FLASH_PAGE_SIZE] = {0};
         ice_fpga_flash_program_page(addr, data);
     }
 }

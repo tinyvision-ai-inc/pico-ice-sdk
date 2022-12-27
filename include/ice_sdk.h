@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
 void ice_sdk_init(void);
+void init_rgb_led(void);
 
 #ifdef __cplusplus
 }

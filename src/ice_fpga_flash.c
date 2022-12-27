@@ -84,7 +84,7 @@ void ice_fpga_flash_enable_write(void) {
 
 void ice_fpga_flash_init(void) {
     // Hold the FPGA in reset while flashing so that it does not interfer.
-    ice_fpga_halt();
+    //ice_fpga_halt(); //this was moved outside since this function is called late in the init process in tinuuf2
 
     // Setup the associated GPIO pins except CSN
 
@@ -142,6 +142,7 @@ void ice_fpga_flash_erase_sector(uint32_t addr) {
 
     assert(addr % ICE_FLASH_PAGE_SIZE == 0);
 
+    ice_fpga_flash_wakeup(); //temo
     ice_fpga_flash_enable_write();
 
     soft_spi_chip_select();
