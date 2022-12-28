@@ -142,7 +142,7 @@ void ice_fpga_flash_erase_sector(uint32_t addr) {
 
     assert(addr % ICE_FLASH_PAGE_SIZE == 0);
 
-    ice_fpga_flash_wakeup(); //temo
+    ice_fpga_flash_wakeup();
     ice_fpga_flash_enable_write();
 
     soft_spi_chip_select();

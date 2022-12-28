@@ -104,22 +104,28 @@
 #endif
 
 /** Different than boards/pico.h: same physical location, different GPIO pin. */
+//PICO_PMOD_A1 = 16
 #ifndef PICO_DEFAULT_UART_TX_PIN
-#define PICO_DEFAULT_UART_TX_PIN 12
+#define PICO_DEFAULT_UART_TX_PIN 16 
 #endif
 
+
 /** Different than boards/pico.h: same physical location, different GPIO pin. */
+//PICO_PMOD_A2 = 17
 #ifndef PICO_DEFAULT_UART_RX_PIN
-#define PICO_DEFAULT_UART_RX_PIN 13
+#define PICO_DEFAULT_UART_RX_PIN 17 
 #endif
+
 
 // LED
 
 /** The GPIO25 used by pico-sdk is used for sending the clock over to the FPGA.
  * There are three LED pins (RGB): GPIO22 (red), GPIO23 (green), GPIO24 (blue). */
+/*** Not needed to be set explicitly. As pin 15 (blue led) is shared with pico and FPGA
 #ifndef PICO_DEFAULT_LED_PIN
 #define PICO_DEFAULT_LED_PIN 15
 #endif
+***/
 
 // no PICO_DEFAULT_WS2812_PIN
 
@@ -129,13 +135,17 @@
 #define PICO_DEFAULT_I2C 0
 #endif
 
+//PICO_PMOD_B1 = 20
 #ifndef PICO_DEFAULT_I2C_SDA_PIN
-#define PICO_DEFAULT_I2C_SDA_PIN 12
+#define PICO_DEFAULT_I2C_SDA_PIN 20
 #endif
 
+
+//PICO_PMOD_B1 = 21
 #ifndef PICO_DEFAULT_I2C_SCL_PIN
-#define PICO_DEFAULT_I2C_SCL_PIN 13
+#define PICO_DEFAULT_I2C_SCL_PIN 21
 #endif
+
 
 // SPI
 
@@ -184,8 +194,9 @@
 
 /** Changed from the default pico-board to not enable it at all time (due to the RGB LED driving it up).
  * Drive high to force power supply into PWM mode (lower ripple on 3V3 at light loads)
- * It is the PICO_PMOD_A4 pin. */
-#define PICO_SMPS_MODE_PIN 15
+ * It is the PICO_PMOD_A4 pin(19). */
+#define PICO_SMPS_MODE_PIN 19
+
 
 /** Nearly all RP2040 chips sold on 2022 are B0 or B1 iterations, so B0 features are guaranteed to be supported. */
 #ifndef PICO_RP2040_B0_SUPPORTED
