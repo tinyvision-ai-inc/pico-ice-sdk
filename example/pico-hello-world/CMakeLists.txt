@@ -13,6 +13,5 @@ pico_sdk_init()
 add_subdirectory(${PICO_ICE_SDK_PATH}/src pico-ice-sdk)
 add_executable(pico_hello_world firmware.c)
 target_link_libraries(pico_hello_world pico_ice_sdk)
-pico_enable_stdio_usb(pico_hello_world 1) # enable usb output
-pico_enable_stdio_uart(pico_hello_world 1) # enable uart output. This might need to be disabled when pico needs uart communication to ice uart.
+pico_enable_stdio_usb(pico_hello_world 1)
 pico_add_extra_outputs(pico_hello_world)
