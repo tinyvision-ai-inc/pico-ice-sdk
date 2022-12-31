@@ -1,6 +1,8 @@
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
+#include "hardware/watchdog.h"
 
+#include "ice_fpga_flash.h"
 #include "ice_usb.h"
 
 // in src/tinyuf2/uf2.h
@@ -25,6 +27,46 @@ static void ice_fpga_uart_irq_handler(void) {
         tud_cdc_n_write_char(1, uart_getc(uart_fpga));
         tud_cdc_n_write_flush(1);
     }
+}
+
+// Invoked right before tud_dfu_download_cb() (state=DFU_DNBUSY) or tud_dfu_manifest_cb() (state=DFU_MANIFEST)
+// Application return timeout in milliseconds (bwPollTimeout) for the next download/manifest operation.
+// During this period, USB host won't try to communicate with us.
+uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state)
+{
+	  return 0; /* Request we are polled in 1ms */
+}
+
+// Invoked when received DFU_DNLOAD (wLength>0) following by DFU_GETSTATUS (state=DFU_DNBUSY) requests
+// This callback could be returned before flashing op is complete (async).
+// Once finished flashing, application must call tud_dfu_finish_flashing()
+void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, uint16_t length) {
+    assert(length % ICE_FLASH_SECTOR_SIZE == 0);
+    
+    uint32_t dest_addr = block_num * CFG_TUD_DFU_XFER_BUFSIZE;
+
+    for (uint32_t offset = 0; offset < length; offset += ICE_FLASH_SECTOR_SIZE) {
+        ice_fpga_flash_erase_sector(dest_addr + offset);
+    }
+    
+    for (uint32_t offset = 0; offset < length; offset += ICE_FLASH_PAGE_SIZE) {
+        ice_fpga_flash_program_page(dest_addr + offset, data + offset);
+    }
+
+    tud_dfu_finish_flashing(DFU_STATUS_OK);
+}
+
+// Invoked when download process is complete, received DFU_DNLOAD (wLength=0) following by DFU_GETSTATUS (state=Manifest)
+// Application can do checksum, or actual flashing if buffered entire image previously.
+// Once finished flashing, application must call tud_dfu_finish_flashing()
+void tud_dfu_manifest_cb(uint8_t alt)
+{
+    tud_dfu_finish_flashing(DFU_STATUS_OK);
+}
+
+// Invoked when a DFU_DETACH request is received
+void tud_dfu_detach_cb(void) {
+    watchdog_reboot(0, 0, 1000);
 }
 
 static void ice_fpga_init_uart(uint32_t baudrate_hz) {
