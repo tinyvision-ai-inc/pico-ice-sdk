@@ -12,4 +12,5 @@ make
 This should produce a `pico_usb_keyboard.uf2` file to flash onto the pico-ice RP2040 chip.
 See the [main `README.md`](../../README.md) for how to do this.
 
-After this, you should have the red led blinking once per second.
+Connect a USB keyboard and an external 5V power supply to VDC. The LED should blink whenever
+you press a key. The pattern blinked by the LED is the HID key code.
