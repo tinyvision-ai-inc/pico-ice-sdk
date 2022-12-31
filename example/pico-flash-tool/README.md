@@ -9,7 +9,7 @@ cmake ..
 make
 ```
 
-This should produce a `firmware.uf2` file to flash onto the pico-ice RP2040 chip.
+This should produce a `pico_flash_tool.uf2` file to flash onto the pico-ice RP2040 chip.
 See the [main `README.md`](../../README.md) for how to do this.
 
 It will offer a REPL accessible over the USB-UART #0 with commands for
