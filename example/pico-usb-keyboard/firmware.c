@@ -10,9 +10,9 @@ static struct {
 } g_hid_info[CFG_TUH_HID];
 
 // Invoked when device with hid interface is mounted
-void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* desc_report, uint16_t desc_len) {
+void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, const uint8_t *desc_report, uint16_t desc_len) {
     // Interface protocol (hid_interface_protocol_enum_t)
-    uint8_t const itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
+    uint8_t itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
 
     // By default host stack will use activate boot protocol on supported interface.
     // Therefore for this simple example, we only need to parse generic report descriptor (with built-in parser)
@@ -30,11 +30,11 @@ void tuh_hid_umount_cb(uint8_t dev_addr, uint8_t instance) {
 }
 
 // Invoked when report is available.
-void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* report, uint16_t len) {
-    uint8_t const itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
+void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, const uint8_t *report, uint16_t len) {
+    uint8_t itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
 
     if (itf_protocol == HID_ITF_PROTOCOL_KEYBOARD) {
-        const hid_keyboard_report_t* kbd_report = (const hid_keyboard_report_t*) report;
+        const hid_keyboard_report_t *kbd_report = (const hid_keyboard_report_t *) report;
 
         for (int i = 0; i < count_of(kbd_report->keycode); ++i) {
             int key_code = kbd_report->keycode[i];
