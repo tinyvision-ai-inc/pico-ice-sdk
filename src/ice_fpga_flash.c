@@ -140,7 +140,7 @@ static void ice_fpga_flash_wait(void) {
 void ice_fpga_flash_erase_sector(uint32_t addr) {
     uint8_t cmds[] = { FLASH_CMD_SECTOR_ERASE, addr >> 16, addr >> 8, addr };
 
-    assert(addr % ICE_FLASH_PAGE_SIZE == 0);
+    assert(addr % ICE_FLASH_SECTOR_SIZE == 0);
 
     ice_fpga_flash_enable_write();
 

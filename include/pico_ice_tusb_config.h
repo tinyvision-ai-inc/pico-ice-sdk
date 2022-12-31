@@ -45,6 +45,7 @@
 // Device classes
 #define CFG_TUD_CDC               2
 #define CFG_TUD_MSC               1
+#define CFG_TUD_DFU               1
 #define CFG_TUD_HID               0
 #define CFG_TUD_MIDI              0
 #define CFG_TUD_VENDOR            0
@@ -59,4 +60,9 @@
 // MSC Buffer size of Device Mass storage
 #define CFG_TUD_MSC_BUFSIZE       FLASH_SECTOR_SIZE
 
+// DFU buffer size, it has to be set to the buffer size used in TUD_DFU_DESCRIPTOR
+// Must be a multiple of erasable flash sector size
+#define CFG_TUD_DFU_XFER_BUFSIZE    4096
+
 #endif
+

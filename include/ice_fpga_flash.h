@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #define ICE_FLASH_PAGE_SIZE         256
+#define ICE_FLASH_SECTOR_SIZE       4096
 
 void ice_fpga_flash_init(void);
 void ice_fpga_flash_deinit(void);
