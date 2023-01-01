@@ -49,7 +49,10 @@
 #define USB_SERIAL_NUMBER "123456"
 #endif
 
-#define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
+#define FUNC_ATTRS (DFU_ATTR_CAN_DOWNLOAD | DFU_ATTR_MANIFESTATION_TOLERANT)
+#define ALT_COUNT 1
+
+#define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN + TUD_DFU_DESC_LEN(ALT_COUNT))
 
 // [7] Direction (0=Out 1=In) [6:4] Reserved [3:0] Endpoint Number
 
@@ -66,8 +69,6 @@
 
 #define EPNUM_MSC_1_OUT 0x06
 #define EPNUM_MSC_1_IN 0x86
-
-#define FUNC_ATTRS (DFU_ATTR_CAN_DOWNLOAD | DFU_ATTR_MANIFESTATION_TOLERANT)
 
 enum {
     ITF_NUM_CDC_0,
@@ -87,6 +88,7 @@ enum string_desc {
     STRID_CDC_0,
     STRID_CDC_1,
     STRID_MSC_0,
+    STRID_DFU_FLASH,
     STRID_VENDOR,
 };
 
@@ -112,7 +114,7 @@ uint8_t const desc_configuration[] = {
     TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_0, STRID_CDC_0, EPNUM_CDC_0_NOTIF, 8, EPNUM_CDC_0_OUT, EPNUM_CDC_0_IN, 64),
     TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_1, STRID_CDC_1, EPNUM_CDC_1_NOTIF, 8, EPNUM_CDC_1_OUT, EPNUM_CDC_1_IN, 64),
     TUD_MSC_DESCRIPTOR(ITF_NUM_MSC_0, STRID_MSC_0, EPNUM_MSC_0_OUT, EPNUM_MSC_0_IN, 64),
-    TUD_DFU_DESCRIPTOR(ITF_NUM_DFU_MODE, 1, 4, FUNC_ATTRS, 1000, CFG_TUD_DFU_XFER_BUFSIZE),
+    TUD_DFU_DESCRIPTOR(ITF_NUM_DFU_MODE, ALT_COUNT, STRID_DFU_FLASH, FUNC_ATTRS, 1000, CFG_TUD_DFU_XFER_BUFSIZE),
 };
 
 /// array of pointer to string descriptors
@@ -124,6 +126,7 @@ char const *string_desc_arr[] = {
     [STRID_CDC_0]         = "UART serial (rp2040)",
     [STRID_CDC_1]         = "UART serial (ice40)",
     [STRID_MSC_0]         = "UF2 flashing (ice40)",
+    [STRID_DFU_FLASH]     = "DFU flash",
     [STRID_VENDOR]        = "TinyVision.ai Inc",
 };
 
