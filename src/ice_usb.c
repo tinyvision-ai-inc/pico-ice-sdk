@@ -34,7 +34,7 @@ static void ice_fpga_uart_irq_handler(void) {
 // During this period, USB host won't try to communicate with us.
 uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state)
 {
-	  return 0; /* Request we are polled in 1ms */
+	return 0; /* Request we are polled in 1ms */
 }
 
 // Invoked when received DFU_DNLOAD (wLength>0) following by DFU_GETSTATUS (state=DFU_DNBUSY) requests
