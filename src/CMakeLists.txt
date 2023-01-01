@@ -43,6 +43,7 @@ if (NOT TARGET pico_ice_sdk)
         tinyusb_device
         tinyusb_board
         pico_stdlib
+        pico_unique_id
     )
 
 

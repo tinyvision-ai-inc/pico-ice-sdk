@@ -23,6 +23,7 @@
  * THE SOFTWARE.
  */
 
+#include "pico/unique_id.h"
 #include "tusb.h"
 
 #ifndef USB_VID
@@ -117,12 +118,14 @@ uint8_t const desc_configuration[] = {
     TUD_DFU_DESCRIPTOR(ITF_NUM_DFU_MODE, ALT_COUNT, STRID_DFU_FLASH, FUNC_ATTRS, 1000, CFG_TUD_DFU_XFER_BUFSIZE),
 };
 
+static char usbd_serial_str[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
+
 /// array of pointer to string descriptors
 char const *string_desc_arr[] = {
     [STRID_LANGID]        = (const char[]) { 0x09, 0x04 }, // 0: Supported language is English (0x0409)
     [STRID_MANUFACTURER]  = USB_MANUFACTURER,
     [STRID_PRODUCT]       = USB_PRODUCT,
-    [STRID_SERIAL_NUMBER] = USB_SERIAL_NUMBER,
+    [STRID_SERIAL_NUMBER] = usbd_serial_str,
     [STRID_CDC_0]         = "UART serial (rp2040)",
     [STRID_CDC_1]         = "UART serial (ice40)",
     [STRID_MSC_0]         = "UF2 flashing (ice40)",
@@ -149,6 +152,11 @@ tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
     uint8_t len;
 
     (void) langid;
+
+    // Assign the SN using the unique flash id
+    if (!usbd_serial_str[0]) {
+        pico_get_unique_board_id_string(usbd_serial_str, sizeof(usbd_serial_str));
+    }
 
     if (index == 0) {
         memcpy(&utf16[1], string_desc_arr[0], 2);
