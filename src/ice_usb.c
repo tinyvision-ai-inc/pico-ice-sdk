@@ -41,8 +41,6 @@ uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state)
 // This callback could be returned before flashing op is complete (async).
 // Once finished flashing, application must call tud_dfu_finish_flashing()
 void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, uint16_t length) {
-    assert(length % ICE_FLASH_SECTOR_SIZE == 0);
-    
     uint32_t dest_addr = block_num * CFG_TUD_DFU_XFER_BUFSIZE;
 
     for (uint32_t offset = 0; offset < length; offset += ICE_FLASH_SECTOR_SIZE) {
