@@ -61,8 +61,8 @@
 #define CFG_TUD_MSC_BUFSIZE       FLASH_SECTOR_SIZE
 
 // DFU buffer size, it has to be set to the buffer size used in TUD_DFU_DESCRIPTOR
-// Must be a multiple of erasable flash sector size
-#define CFG_TUD_DFU_XFER_BUFSIZE    4096
+// Must be a multiple of flash page size
+#define CFG_TUD_DFU_XFER_BUFSIZE    256
 
 #endif
 

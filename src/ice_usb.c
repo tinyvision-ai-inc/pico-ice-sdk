@@ -42,12 +42,12 @@ uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state)
 // Once finished flashing, application must call tud_dfu_finish_flashing()
 void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, uint16_t length) {
     uint32_t dest_addr = block_num * CFG_TUD_DFU_XFER_BUFSIZE;
-
-    for (uint32_t offset = 0; offset < length; offset += ICE_FLASH_SECTOR_SIZE) {
-        ice_fpga_flash_erase_sector(dest_addr + offset);
-    }
     
     for (uint32_t offset = 0; offset < length; offset += ICE_FLASH_PAGE_SIZE) {
+        if ((dest_addr + offset) % ICE_FLASH_SECTOR_SIZE == 0) {
+            ice_fpga_flash_erase_sector(dest_addr + offset);
+        }
+
         ice_fpga_flash_program_page(dest_addr + offset, data + offset);
     }
 
@@ -60,10 +60,6 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
 void tud_dfu_manifest_cb(uint8_t alt)
 {
     tud_dfu_finish_flashing(DFU_STATUS_OK);
-}
-
-// Invoked when a DFU_DETACH request is received
-void tud_dfu_detach_cb(void) {
     watchdog_reboot(0, 0, 1000);
 }
 
