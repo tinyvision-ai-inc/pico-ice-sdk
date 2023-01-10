@@ -27,10 +27,10 @@
 #define ICE_FPGA_UART_RX_PIN 1
 
 /** The RP2040 pin at which a clock signal is sent, as a source for the ICE40 system clock. */
-#define ICE_FPGA_CLOCK_PIN 25
+#define ICE_FPGA_CLOCK_PIN 24
 
 /** The RP2040 pin for exporting a clock to an external header. */
-#define ICE_CLOCK_OUT_PIN 24
+#define ICE_CLOCK_OUT_PIN 25
 
 /** The size of the W25Q32JVSSIQ flash chip also connected to the FPGA. */
 #define ICE_FPGA_FLASH_SIZE_BYTES (4 * 1024 * 1024)
