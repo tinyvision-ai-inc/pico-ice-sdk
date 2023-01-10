@@ -31,7 +31,7 @@
 #endif
 
 #ifndef USB_PID
-#define USB_PID 0x0001  // TEST ONLY, DO NOT USE IN PRODUCTION
+#define USB_PID 0xB1C0  // Reserved for the pico-ice: https://github.com/pidcodes/pidcodes.github.com/pull/801/files
 #endif
 
 #ifndef USB_CURRENT_MA
@@ -39,7 +39,7 @@
 #endif
 
 #ifndef USB_MANUFACTURER
-#define USB_MANUFACTURER "TinyVision.ai Inc."
+#define USB_MANUFACTURER "tinyVision.ai Inc."
 #endif
 
 #ifndef USB_PRODUCT
@@ -96,7 +96,7 @@ enum string_desc {
 static const tusb_desc_device_t desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
     .bDescriptorType    = TUSB_DESC_DEVICE,
-    .bcdUSB             = 0x0200,
+    .bcdUSB             = 0x0110,
     .bDeviceClass       = TUSB_CLASS_MISC,
     .bDeviceSubClass    = MISC_SUBCLASS_COMMON,
     .bDeviceProtocol    = MISC_PROTOCOL_IAD,
