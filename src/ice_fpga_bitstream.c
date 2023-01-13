@@ -7,7 +7,7 @@
 static PIO pio;
 static int sm;
 static uint offset;
-static const int clk_div = 125;  // 1Mbit/sec for debugging, could be much faster
+static const int clk_div = 30;  // 1Mbit/sec for debugging, could be much faster
 
 static bool try_add_program(PIO try_pio) {
     if (!pio_can_add_program(try_pio, &ice_fpga_bitstream_program)) return false;

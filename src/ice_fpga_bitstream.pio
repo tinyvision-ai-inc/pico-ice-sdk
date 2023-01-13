@@ -1,4 +1,4 @@
-; SPI controller capable of transmitting up to one bit per 2 system clocks, ignoring response.
+; SPI controller capable of transmitting up to one bit per 4 system clocks, ignoring response.
 .program ice_fpga_bitstream
 .side_set 1 opt
     ; SDO               SCLK

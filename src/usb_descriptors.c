@@ -51,7 +51,7 @@
 #endif
 
 #define FUNC_ATTRS DFU_ATTR_CAN_DOWNLOAD
-#define ALT_COUNT 1
+#define ALT_COUNT 2
 
 #define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN + TUD_DFU_DESC_LEN(ALT_COUNT))
 
@@ -90,6 +90,7 @@ enum string_desc {
     STRID_CDC_1,
     STRID_MSC_0,
     STRID_DFU_FLASH,
+    STRID_DFU_DIRECT,
     STRID_VENDOR,
 };
 
@@ -110,7 +111,7 @@ static const tusb_desc_device_t desc_device = {
     .bNumConfigurations = 1
 };
 
-uint8_t const desc_configuration[] = {
+uint8_t const desc_configuration[CONFIG_TOTAL_LEN] = {
     TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, USB_CURRENT_MA),
     TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_0, STRID_CDC_0, EPNUM_CDC_0_NOTIF, 8, EPNUM_CDC_0_OUT, EPNUM_CDC_0_IN, 64),
     TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_1, STRID_CDC_1, EPNUM_CDC_1_NOTIF, 8, EPNUM_CDC_1_OUT, EPNUM_CDC_1_IN, 64),
@@ -130,6 +131,7 @@ char const *string_desc_arr[] = {
     [STRID_CDC_1]         = "UART serial (ice40)",
     [STRID_MSC_0]         = "UF2 flashing (ice40)",
     [STRID_DFU_FLASH]     = "DFU flash",
+    [STRID_DFU_DIRECT]    = "DPU direct",
     [STRID_VENDOR]        = "TinyVision.ai Inc",
 };
 

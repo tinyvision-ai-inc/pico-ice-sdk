@@ -3,6 +3,7 @@
 #include "hardware/watchdog.h"
 
 #include "ice_fpga.h"
+#include "ice_fpga_bitstream.h"
 #include "ice_fpga_flash.h"
 #include "ice_usb.h"
 
@@ -45,17 +46,25 @@ uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state) {
 void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, uint16_t length) {
     if (!dfu_download_pending) {
         dfu_download_pending = true;
-        ice_fpga_flash_init();
+        if (alt == 1) {
+            ice_fpga_flash_init();
+        } else {
+            ice_fpga_bitstream_open();
+        }
     }
 
     uint32_t dest_addr = block_num * CFG_TUD_DFU_XFER_BUFSIZE;
 
     for (uint32_t offset = 0; offset < length; offset += ICE_FLASH_PAGE_SIZE) {
-        if ((dest_addr + offset) % ICE_FLASH_SECTOR_SIZE == 0) {
-            ice_fpga_flash_erase_sector(dest_addr + offset);
-        }
+        if (alt == 1) {
+            if ((dest_addr + offset) % ICE_FLASH_SECTOR_SIZE == 0) {
+                ice_fpga_flash_erase_sector(dest_addr + offset);
+            }
 
-        ice_fpga_flash_program_page(dest_addr + offset, data + offset);
+            ice_fpga_flash_program_page(dest_addr + offset, data + offset);
+        } else {
+            ice_fpga_bitstream_write(data, length);
+        }
     }
 
     tud_dfu_finish_flashing(DFU_STATUS_OK);
@@ -68,8 +77,14 @@ void tud_dfu_manifest_cb(uint8_t alt) {
     assert(dfu_download_pending);
     dfu_download_pending = false;
 
-    ice_fpga_flash_deinit();
-    bool fpga_done = ice_fpga_reset();
+    bool fpga_done;
+    if (alt == 1) {
+        ice_fpga_flash_deinit();
+        fpga_done = ice_fpga_reset();
+    } else {
+        fpga_done = ice_fpga_bitstream_close();
+    }
+
     tud_dfu_finish_flashing(fpga_done ? DFU_STATUS_OK : DFU_STATUS_ERR_FIRMWARE);
 }
 
