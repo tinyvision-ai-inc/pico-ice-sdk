@@ -5,7 +5,9 @@
 
 #include "ice_sdk.h"
 #include "ice_usb.h"
+#include "ice_fpga_bitstream.h"
 
+// This is a hack for testing. ice_fpga_bitstream should have its own example.
 int main(void) {
     // Init the pico-ice-sdk library
     ice_sdk_init();
@@ -17,6 +19,11 @@ int main(void) {
     for (;;) {
         tud_task();
         printf("hello world\r\n");
+
+        uint8_t bitstream[3] = {1, 2, 3};
+        ice_fpga_bitstream_open();
+        ice_fpga_bitstream_write(bitstream, sizeof(bitstream));
+        ice_fpga_bitstream_close();
     }
     return 0;
 }

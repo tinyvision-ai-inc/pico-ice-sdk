@@ -1,0 +1,7 @@
+; SPI controller capable of transmitting up to one bit per 2 system clocks, ignoring response.
+.program ice_fpga_bitstream
+.side_set 1 opt
+    ; SDO               SCLK
+    nop                 side 1        ; receiver samples on rising SCLK edge
+    out x, 1
+    mov pins, x [1]     side 0        ; shift out on falling SCLK edge
