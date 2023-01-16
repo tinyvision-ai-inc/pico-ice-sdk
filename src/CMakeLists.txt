@@ -5,9 +5,12 @@ if (NOT TARGET pico_ice_sdk)
     target_sources(pico_ice_core INTERFACE
         ice_fpga.c
         ice_fpga_comm.c
+        ice_fpga_bitstream.c
         ice_fpga_flash.c
         ice_smem.c
     )
+
+    pico_generate_pio_header(pico_ice_core ${CMAKE_CURRENT_LIST_DIR}/ice_fpga_bitstream.pio)
 
     target_include_directories(pico_ice_core INTERFACE ../include)
 
@@ -15,9 +18,11 @@ if (NOT TARGET pico_ice_sdk)
     # will add the -I flags.
     target_link_libraries(pico_ice_core INTERFACE
         hardware_gpio
+        hardware_pio
         hardware_spi
         hardware_uart
         hardware_dma
+        pico_time
     )
 
     add_library(pico_ice_usb INTERFACE)
