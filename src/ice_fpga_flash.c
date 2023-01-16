@@ -19,7 +19,7 @@
 #define LOG(fmt, ...) printf("%s: " fmt "\r\n", __func__, ##__VA_ARGS__)
 
 static uint8_t soft_spi_delay(void) {
-    for (volatile uint8_t i = 0; i < 0xF; i++);
+    for (volatile uint8_t i = 0; i < 0x4; i++); // Leads to approx 1MHz SPI clock
 }
 
 static uint8_t soft_spi_xfer_byte(uint8_t tx) {
