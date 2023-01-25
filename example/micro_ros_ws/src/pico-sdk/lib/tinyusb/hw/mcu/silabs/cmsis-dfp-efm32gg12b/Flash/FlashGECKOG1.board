@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<flash_board>
+  <pass>
+    <loader>${CMSIS_PACK_PATH_SiliconLabs#EFM32GG12B_DFP#3.0.0}$\Flash\FlashGECKOG1.flash</loader>
+  </pass>
+</flash_board>

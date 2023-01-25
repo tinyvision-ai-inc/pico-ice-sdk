@@ -1,0 +1,15 @@
+{
+  "name": "framework-nuclei-sdk",
+  "version": "0.3.2-dev",
+  "description": "Nuclei N/NX Embedded Software Development Kit",
+  "keywords": [
+    "framework",
+    "sdk",
+    "risc-v"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nuclei-Software/nuclei-sdk"
+  }
+}

@@ -1,0 +1,10 @@
+
+setup()
+{
+  __message "Setting up GECKOG1 flash";
+}
+
+execUserFlashInit()
+{
+  setup();
+}

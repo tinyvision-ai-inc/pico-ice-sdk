@@ -1,0 +1,47 @@
+ARCHCFLAGS       = -fno-builtin -mabi=aapcs -ffunction-sections -fdata-sections -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
+ARCHCXXFLAGS     = -fno-builtin -fno-exceptions -fno-rtti -std=c++98 -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
+ARCHPICFLAGS     = -fpic -msingle-pic-base -mpic-register=r10
+ARCHWARNINGS     = -Wall -Wstrict-prototypes -Wshadow -Wundef
+ARCHWARNINGSXX   = -Wall -Wshadow -Wundef
+ARCHOPTIMIZATION = -g -Os -fno-strict-aliasing -fno-strength-reduce -fomit-frame-pointer
+WINTOOL          = 
+CROSSDEV         = arm-none-eabi-
+CC               = arm-none-eabi-gcc
+CXX              = arm-none-eabi-g++
+CPP              = arm-none-eabi-gcc -E
+LD               = arm-none-eabi-ld
+AR               = arm-none-eabi-ar rcs
+NM               = arm-none-eabi-nm
+STRIP            = arm-none-eabi-strip
+OBJCOPY          = arm-none-eabi-objcopy
+OBJDUMP          = arm-none-eabi-objdump
+NXFLATLDFLAGS1   = -r -d -warn-common
+<<<<<<< HEAD
+NXFLATLDFLAGS2   = -r -d -warn-common -Tspresense/nuttx/binfmt/libnxflat/gnu-nxflat-pcrel.ld -no-check-sections
+=======
+NXFLATLDFLAGS2   = -r -d -warn-common -T/spresense-build/nuttx/binfmt/libnxflat/gnu-nxflat-pcrel.ld -no-check-sections
+>>>>>>> 752c4cd... Change USERMAIN_STACKSIZE to 2048
+OBJEXT           = .o
+LIBEXT           = .a
+EXEEXT           = 
+HOSTCC           = gcc
+HOSTINCLUDES     = -I.
+HOSTCFLAGS       = -Wall -Wstrict-prototypes -Wshadow -Wundef -g -pipe
+HOSTLDFLAGS      = 
+HOSTEXEEXT       = 
+DIRLINK          = 
+DIRUNLINK        = 
+<<<<<<< HEAD
+MKDEP            = spresense/nuttx/tools/mkdeps
+=======
+MKDEP            = /spresense-build/nuttx/tools/mkdeps
+>>>>>>> 752c4cd... Change USERMAIN_STACKSIZE to 2048
+LDSCRIPT         = ramconfig.ld
+LDFLAGS      = 
+HEAD_OBJ     = 
+EXTRA_OBJS   = 
+LDSTARTGROUP = 
+LDLIBS       = 
+EXTRA_LIBS   = 
+LIBGCC       = 
+LDENDGROUP   = 

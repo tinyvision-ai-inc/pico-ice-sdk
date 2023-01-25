@@ -1,0 +1,202 @@
+variables:
+    DOC_SERVER: doc
+    DOC_CENTER: /home/xl_ci/doc_center
+
+before_script:
+    - module load nucleisys/riscv-nuclei-elf-gcc
+    - module load nucleisys/openocd
+    - source .ci/build_sdk.sh
+    - source .ci/build_applications.sh
+
+stages:
+    - doc_build
+    - doc_deploy
+    - build_nuclei_fpga_eval
+    - build_gd32vf103v_eval
+    - build_gd32vf103v_rvstar
+
+## Job for build document
+build_doc:
+    stage: doc_build
+    only:
+        changes:
+          - doc/source/**/**/**/*
+          - .gitlab-ci.yml
+    retry: 1
+    artifacts:
+        name: "nuclei_sdk_doc-${CI_COMMIT_SHA::8}"
+        paths:
+            - doc/build
+        expire_in: 2 day
+    script:
+        - cd doc
+        - pip3 install --user -r requirements.txt
+        - export PATH=$HOME/.local/bin:$PATH
+        - make clean
+        - make all
+        - make latexpdf
+        - cp build/latex/*.pdf build/html/
+    tags:
+        - env::native
+        - host::xls01
+
+## Job for deploy document to internal server
+deploy_doc:
+    stage: doc_deploy
+    when: on_success
+    retry: 1
+    only:
+        refs:
+          - master
+        changes:
+          - doc/source/**/**/**/*
+          - .gitlab-ci.yml
+    script:
+        - ssh $DOC_SERVER "rm -rf $DOC_CENTER/nuclei_sdk/*"
+        - ssh $DOC_SERVER "mkdir -p $DOC_CENTER/nuclei_sdk/"
+        - cd doc/build
+        - scp -r html $DOC_SERVER:$DOC_CENTER/nuclei_sdk
+    tags:
+        - env::native
+        - host::xls01
+    dependencies:
+        - build_doc
+
+## Job for deploy document to nuclei website
+deploy_website:
+    stage: doc_deploy
+    when: on_success
+    retry: 1
+    only:
+        refs:
+          - master
+        changes:
+          - doc/source/**/**/**/*
+    script:
+        - ./.ci/ftp_deploy.sh $FTPUSER $FTPPWD $FTPSERVER doc/build/html nuclei_sdk
+    tags:
+        - env::native
+        - host::xls01
+    dependencies:
+        - build_doc
+
+## Jobs for board nuclei_fpga_eval
+.build_nuclei_fpga_eval_job_template: &build_nuclei_fpga_eval_job_def
+    stage: build_nuclei_fpga_eval
+    tags:
+        - env::native
+        - host::xls01
+    script:
+        - SOC=demosoc BOARD=nuclei_fpga_eval nsdk_build_directory    application
+        - SOC=demosoc BOARD=nuclei_fpga_eval nsdk_build_directory    test
+
+# Build For Nuclei FPGA Evaluation Board with N307 Core, with Flash, FlashXIP, ILM, DDR Mode
+build_nuclei_fpga_eval_ilm_n307:
+    variables:
+        DOWNLOAD: "ilm"
+        CORE: "n307"
+    <<: *build_nuclei_fpga_eval_job_def
+
+build_nuclei_fpga_eval_flash_n307:
+    variables:
+        DOWNLOAD: "flash"
+        CORE: "n307"
+    <<: *build_nuclei_fpga_eval_job_def
+
+build_nuclei_fpga_eval_flashxip_n307:
+    variables:
+        DOWNLOAD: "flashxip"
+        CORE: "n307"
+    <<: *build_nuclei_fpga_eval_job_def
+
+build_nuclei_fpga_eval_ddr_n307:
+    variables:
+        DOWNLOAD: "ddr"
+        CORE: "n307"
+    <<: *build_nuclei_fpga_eval_job_def
+
+# Build For N205E, with Flash, FlashXIP, ILM, DDR Mode
+build_nuclei_fpga_eval_ilm_n205e:
+    variables:
+        DOWNLOAD: "ilm"
+        CORE: "n205e"
+        FIND_IGNORE: "! -wholename \"*dsp*\""
+    <<: *build_nuclei_fpga_eval_job_def
+
+build_nuclei_fpga_eval_flash_n205e:
+    variables:
+        DOWNLOAD: "flash"
+        CORE: "n205e"
+        FIND_IGNORE: "! -wholename \"*dsp*\""
+    <<: *build_nuclei_fpga_eval_job_def
+
+build_nuclei_fpga_eval_flashxip_n205e:
+    variables:
+        DOWNLOAD: "flashxip"
+        CORE: "n205e"
+        FIND_IGNORE: "! -wholename \"*dsp*\""
+    <<: *build_nuclei_fpga_eval_job_def
+
+build_nuclei_fpga_eval_ddr_n205e:
+    variables:
+        DOWNLOAD: "ddr"
+        CORE: "n205e"
+        FIND_IGNORE: "! -wholename \"*dsp*\""
+    <<: *build_nuclei_fpga_eval_job_def
+
+# Build For NX600, with Flash, FlashXIP, ILM, DDR Mode
+build_nuclei_fpga_eval_ilm_nx600:
+    variables:
+        DOWNLOAD: "ilm"
+        CORE: "nx600"
+    <<: *build_nuclei_fpga_eval_job_def
+
+build_nuclei_fpga_eval_ddr_nx600:
+    variables:
+        DOWNLOAD: "ddr"
+        CORE: "nx600"
+    <<: *build_nuclei_fpga_eval_job_def
+
+build_nuclei_fpga_eval_flash_nx600:
+    variables:
+        DOWNLOAD: "flash"
+        CORE: "nx600"
+    <<: *build_nuclei_fpga_eval_job_def
+
+build_nuclei_fpga_eval_flashxip_nx600:
+    variables:
+        DOWNLOAD: "flashxip"
+        CORE: "nx600"
+    <<: *build_nuclei_fpga_eval_job_def
+
+## Jobs for board gd32vf103v_eval
+.build_gd32vf103v_eval_job_template: &build_gd32vf103v_eval_job_def
+    stage: build_gd32vf103v_eval
+    tags:
+        - env::native
+        - host::xls01
+    script:
+        - SOC=gd32vf103 BOARD=gd32vf103v_eval nsdk_build_directory      application
+        - SOC=gd32vf103 BOARD=gd32vf103v_eval nsdk_build_directory    test
+
+build_gd32vf103v_eval_flashxip:
+    variables:
+        DOWNLOAD: "flashxip"
+        CORE: "n205"
+    <<: *build_gd32vf103v_eval_job_def
+
+## Jobs for board gd32vf103v_rvstar only flashxip mode
+.build_gd32vf103v_rvstar_job_template: &build_gd32vf103v_rvstar_job_def
+    stage: build_gd32vf103v_rvstar
+    tags:
+        - env::native
+        - host::xls01
+    script:
+        - SOC=gd32vf103 BOARD=gd32vf103v_rvstar nsdk_build_directory    application
+        - SOC=gd32vf103 BOARD=gd32vf103v_rvstar nsdk_build_directory    test
+
+build_gd32vf103v_rvstar_flashxip:
+    variables:
+        DOWNLOAD: "flashxip"
+        CORE: "n205"
+    <<: *build_gd32vf103v_rvstar_job_def
