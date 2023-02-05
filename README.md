@@ -9,7 +9,7 @@ You will need an ARM compiler toolchain (see [pico-sdk](https://github.com/raspb
 sudo apt install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
 ```
 
-You can copy-paste [`pico-template`](example/pico-template) and add this directory as a submodule to get started.
+You can copy-paste [`pico-template`](template) and add the pico-ice-sdk as a submodule to get started.
 
 Make sure to update all submodules before trying the [examples](example):
 
