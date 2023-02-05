@@ -5,7 +5,7 @@
 
 #include "ice_sdk.h"
 #include "ice_usb.h"
-#include "ice_bitstream.h"
+#include "ice_cram.h"
 
 int main(void) {
     // Init the pico-ice-sdk library

@@ -5,12 +5,12 @@ if (NOT TARGET pico_ice_sdk)
     target_sources(pico_ice_core INTERFACE
         ice_fpga.c
         ice_comm.c
-        ice_bitstream.c
+        ice_cram.c
         ice_flash.c
         ice_smem.c
     )
 
-    pico_generate_pio_header(pico_ice_core ${CMAKE_CURRENT_LIST_DIR}/ice_bitstream.pio)
+    pico_generate_pio_header(pico_ice_core ${CMAKE_CURRENT_LIST_DIR}/ice_cram.pio)
 
     target_include_directories(pico_ice_core INTERFACE ../include)
 

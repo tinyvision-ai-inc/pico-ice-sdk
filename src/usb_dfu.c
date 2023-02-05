@@ -7,7 +7,7 @@
 
 #include "ice_fpga.h"
 #include "ice_flash.h"
-#include "ice_bitstream.h"
+#include "ice_cram.h"
 
 #include "tusb.h"
 
@@ -35,7 +35,7 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
         if (alt == 1) {
             ice_flash_init();
         } else {
-            ice_bitstream_open();
+            ice_cram_open();
         }
     }
 
@@ -49,7 +49,7 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
 
             ice_flash_program_page(dest_addr + offset, data + offset);
         } else {
-            ice_bitstream_write(data, length);
+            ice_cram_write(data, length);
         }
     }
 
@@ -71,7 +71,7 @@ void tud_dfu_manifest_cb(uint8_t alt)
         ice_flash_deinit();
         fpga_done = ice_reset();
     } else {
-        fpga_done = ice_bitstream_close();
+        fpga_done = ice_cram_close();
     }
 
     tud_dfu_finish_flashing(fpga_done ? DFU_STATUS_OK : DFU_STATUS_ERR_FIRMWARE);
