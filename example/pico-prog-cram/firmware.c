@@ -5,9 +5,9 @@
 
 #include "ice_sdk.h"
 #include "ice_usb.h"
-#include "ice_bitstream.h"
+#include "ice_cram.h"
 
-// This is a hack for testing. ice_bitstream should have its own example.
+// This is a hack for testing. ice_cram should have its own example.
 int main(void) {
     // Init the pico-ice-sdk library
     ice_sdk_init();
@@ -16,9 +16,9 @@ int main(void) {
     stdio_init_all();
 
     uint8_t bitstream[3] = {1, 2, 3};
-    ice_bitstream_open();
-    ice_bitstream_write(bitstream, sizeof(bitstream));
-    ice_bitstream_close();
+    ice_cram_open();
+    ice_cram_write(bitstream, sizeof(bitstream));
+    ice_cram_close();
 
     // Setup code here.
     for (;;) {
