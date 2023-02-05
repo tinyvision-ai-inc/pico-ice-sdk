@@ -1,5 +1,5 @@
 // Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
-// Copyright (c) 2022 tinyvision-ai-inc
+// Copyright (c) 2023 TinyVision.ai Inc.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //

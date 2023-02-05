@@ -2,14 +2,6 @@
 if (NOT TARGET pico_ice_sdk)
     add_library(pico_ice_core INTERFACE)
 
-    target_sources(pico_ice_core INTERFACE
-        ice_fpga.c
-        ice_comm.c
-        ice_cram.c
-        ice_flash.c
-        ice_smem.c
-    )
-
     pico_generate_pio_header(pico_ice_core ${CMAKE_CURRENT_LIST_DIR}/ice_cram.pio)
 
     target_include_directories(pico_ice_core INTERFACE ../include)
@@ -54,6 +46,17 @@ if (NOT TARGET pico_ice_sdk)
         tinyusb_board
         pico_stdlib
         pico_unique_id
+    )
+
+
+    add_library(pico_ice_led INTERFACE)
+
+    target_sources(pico_ice_led INTERFACE
+        ice_led.c
+    )
+
+    target_link_libraries(pico_ice_led INTERFACE
+        pico_stdlib
     )
 
 
