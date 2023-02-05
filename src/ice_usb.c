@@ -13,87 +13,16 @@ void uf2_init(void);
 // in src/tinyuf2/board_api.h
 void board_init(void);
 
-static bool dfu_download_pending;
-
-/// Forward the data coming from USB CDC 1 UART to the FPGA UART.
-/// Function to be called from tud_cdc_rx_cb().
-void tud_cdc_rx_cb(uint8_t itf) {
-    switch (itf) {
-    case ICE_USB_UART_FPGA_ITF:
-        while (tud_cdc_n_available(ICE_USB_UART_FPGA_ITF))
-            uart_putc(uart_fpga, tud_cdc_n_read_char(ICE_USB_UART_FPGA_ITF));
-        break;
-    }
-}
-
-static void ice_fpga_uart_irq_handler(void) {
+static void ice_fpga_uart_irq_handler(void)
+{
     while (uart_is_readable(uart_fpga)) {
         tud_cdc_n_write_char(1, uart_getc(uart_fpga));
         tud_cdc_n_write_flush(1);
     }
 }
 
-// Invoked right before tud_dfu_download_cb() (state=DFU_DNBUSY) or tud_dfu_manifest_cb() (state=DFU_MANIFEST)
-// Application return timeout in milliseconds (bwPollTimeout) for the next download/manifest operation.
-// During this period, USB host won't try to communicate with us.
-uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state) {
-	return 0; /* Request we are polled in 1ms */
-}
-
-// Invoked when received DFU_DNLOAD (wLength>0) following by DFU_GETSTATUS (state=DFU_DNBUSY) requests
-// This callback could be returned before flashing op is complete (async).
-// Once finished flashing, application must call tud_dfu_finish_flashing()
-void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, uint16_t length) {
-    if (!dfu_download_pending) {
-        dfu_download_pending = true;
-        if (alt == 1) {
-            ice_fpga_flash_init();
-        } else {
-            ice_fpga_bitstream_open();
-        }
-    }
-
-    uint32_t dest_addr = block_num * CFG_TUD_DFU_XFER_BUFSIZE;
-
-    for (uint32_t offset = 0; offset < length; offset += ICE_FLASH_PAGE_SIZE) {
-        if (alt == 1) {
-            if ((dest_addr + offset) % ICE_FLASH_SECTOR_SIZE == 0) {
-                ice_fpga_flash_erase_sector(dest_addr + offset);
-            }
-
-            ice_fpga_flash_program_page(dest_addr + offset, data + offset);
-        } else {
-            ice_fpga_bitstream_write(data, length);
-        }
-    }
-
-    tud_dfu_finish_flashing(DFU_STATUS_OK);
-}
-
-// Invoked when download process is complete, received DFU_DNLOAD (wLength=0) following by DFU_GETSTATUS (state=Manifest)
-// Application can do checksum, or actual flashing if buffered entire image previously.
-// Once finished flashing, application must call tud_dfu_finish_flashing()
-void tud_dfu_manifest_cb(uint8_t alt) {
-    assert(dfu_download_pending);
-    dfu_download_pending = false;
-
-    bool fpga_done;
-    if (alt == 1) {
-        ice_fpga_flash_deinit();
-        fpga_done = ice_fpga_reset();
-    } else {
-        fpga_done = ice_fpga_bitstream_close();
-    }
-
-    tud_dfu_finish_flashing(fpga_done ? DFU_STATUS_OK : DFU_STATUS_ERR_FIRMWARE);
-}
-
-// Called if -R option passed to dfu-util.
-void tud_dfu_detach_cb(void) {
-    watchdog_reboot(0, 0, 0);
-}
-
-static void ice_fpga_init_uart(uint32_t baudrate_hz) {
+static void ice_fpga_init_uart(uint32_t baudrate_hz)
+{
     uart_init(uart_fpga, baudrate_hz);
     gpio_set_function(ICE_FPGA_UART_TX_PIN, GPIO_FUNC_UART);
     gpio_set_function(ICE_FPGA_UART_RX_PIN, GPIO_FUNC_UART);
@@ -104,7 +33,8 @@ static void ice_fpga_init_uart(uint32_t baudrate_hz) {
     irq_set_exclusive_handler(ICE_FPGA_UART_IRQ, ice_fpga_uart_irq_handler);
 }
 
-void ice_usb_init(void) {
+void ice_usb_init(void)
+{
     // TinyUSB
     board_init();
     tusb_init();

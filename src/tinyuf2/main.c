@@ -146,28 +146,3 @@ void board_timer_handler(void)
     default: break; // nothing to do
   }
 }
-
-//--------------------------------------------------------------------+
-// Logger newlib retarget
-//--------------------------------------------------------------------+
-
-// Enable only with LOG is enabled (Note: ESP32-S2 has built-in support already)
-#if CFG_TUSB_DEBUG && (CFG_TUSB_MCU != OPT_MCU_ESP32S2 && CFG_TUSB_MCU != OPT_MCU_RP2040)
-
-#if defined(LOGGER_RTT)
-#include "SEGGER_RTT.h"
-#endif
-
-TU_ATTR_USED int _write (int fhdl, const void *buf, size_t count)
-{
-  (void) fhdl;
-
-#if defined(LOGGER_RTT)
-  SEGGER_RTT_Write(0, (char*) buf, (int) count);
-  return count;
-#else
-  return board_uart_write(buf, count);
-#endif
-}
-
-#endif

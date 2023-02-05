@@ -31,7 +31,9 @@ if (NOT TARGET pico_ice_sdk)
         tinyuf2/board_pico_ice.c
         tinyuf2/ghostfat.c
         tinyuf2/main.c
-        tinyuf2/msc.c
+        usb_msc.c
+        usb_cdc.c
+        usb_dfu.c
         usb_descriptors.c
     )
 
@@ -41,7 +43,10 @@ if (NOT TARGET pico_ice_sdk)
         ice_usb.c
     )
 
-    target_include_directories(pico_ice_usb INTERFACE ../include)
+    target_include_directories(pico_ice_usb INTERFACE
+        ../include
+        tinyuf2
+    )
 
     target_link_libraries(pico_ice_usb INTERFACE
         hardware_flash
