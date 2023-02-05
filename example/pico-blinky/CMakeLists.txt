@@ -12,5 +12,5 @@ pico_sdk_init()
 # CMake configuration of the application
 add_subdirectory(${PICO_ICE_SDK_PATH}/src pico-ice-sdk)
 add_executable(pico_blinky firmware.c)
-target_link_libraries(pico_blinky pico_ice_sdk)
+target_link_libraries(pico_blinky pico_ice_sdk pico_ice_led)
 pico_add_extra_outputs(pico_blinky)

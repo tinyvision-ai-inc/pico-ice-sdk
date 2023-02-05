@@ -1,17 +1,18 @@
 #include "pico/stdlib.h"
-#include "pico/stdio.h"
+#include "ice_led.h"
 
-#include "boards/pico_ice.h"
+int main(void)
+{
+    ice_led_init();
 
-int main(void) {
-    gpio_init(ICE_LED_RED_PIN);
-    gpio_put(ICE_LED_RED_PIN, true); // active-low
-    gpio_set_dir(ICE_LED_RED_PIN, GPIO_OUT);
+    // Note that the FPGA demo might as well making use of the LED.
+    // In that case, the LED "on" state win over the "off" state,
+    // but LEDs work fine nontheless.
 
     for (;;) {
-        gpio_put(ICE_LED_RED_PIN, false);
+        ice_led_red(true); // led bright
         sleep_ms(500);
-        gpio_put(ICE_LED_RED_PIN, true);
+        ice_led_red(false); // led off
         sleep_ms(500);
     }
     return 0;
