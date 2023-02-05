@@ -10,7 +10,7 @@
 #include "ice_usb.h"
 #include "ice_sdk.h"
 #include "ice_fpga.h"
-#include "ice_fpga_comm.h"
+#include "ice_comm.h"
 
 #define DATA_LEN 8
 #define START_ADDR 0xdead
@@ -19,16 +19,16 @@ int main() {
     ice_sdk_init();
     stdio_init_all();
 
-    ice_fpga_init();
-    ice_fpga_comm_init();
+    ice_init();
+    ice_comm_init();
 
     // Dont steal the RGB LED pins from the FPGA
     gpio_set_dir(ICE_LED_RED_PIN, GPIO_IN);
     gpio_set_dir(ICE_LED_GREEN_PIN, GPIO_IN);
     gpio_set_dir(ICE_LED_BLUE_PIN, GPIO_IN);
 
-    ice_fpga_init_clock(12); // Setup the clock to the FPGA
-    ice_fpga_reset(); // Issue a good reset to the FPGA, check if it came up
+    ice_init_clock(12); // Setup the clock to the FPGA
+    ice_reset(); // Issue a good reset to the FPGA, check if it came up
 
     while (1)
     {
@@ -45,8 +45,8 @@ int main() {
 
     for (;;) {
         tud_task();
-        ice_fpga_comm_write(START_ADDR, write_data, sizeof(write_data));
-        ice_fpga_comm_read(read_data, START_ADDR, sizeof(read_data));
+        ice_comm_write(START_ADDR, write_data, sizeof(write_data));
+        ice_comm_read(read_data, START_ADDR, sizeof(read_data));
     }
 */
 }

@@ -27,7 +27,7 @@ static void dma_irq_handler(void) {
     }
 }
 
-void ice_fpga_comm_init(void) {
+void ice_comm_init(void) {
     dma_channel_config cfg;
 
     spi_init(SPI_FPGA, 10 * 1000 * 1000);
@@ -64,7 +64,7 @@ void ice_fpga_comm_init(void) {
     irq_set_enabled(DMA_IRQ_0, true);
 }
 
-void ice_fpga_comm_write(uint32_t dest_addr, const void* src, uint32_t size) {
+void ice_comm_write(uint32_t dest_addr, const void* src, uint32_t size) {
     gpio_put(ICE_RP_SPI_CSN_PIN, false);
 
     // Output 0x02 read sequence command.
@@ -79,7 +79,7 @@ void ice_fpga_comm_write(uint32_t dest_addr, const void* src, uint32_t size) {
     dma_channel_transfer_from_buffer_now(g_tx_dma_channel, src, size);
 }
 
-void ice_fpga_comm_read(void* dest, uint32_t src_addr, uint32_t size) {
+void ice_comm_read(void* dest, uint32_t src_addr, uint32_t size) {
     // Output 0x03 write sequence command. This also ignores data received before and during the command bits
     // and drains the receive FIFO so can start the DMA transfer immediately after.
     uint8_t command[] = { 0x03, src_addr >> 16, src_addr >> 8, src_addr };

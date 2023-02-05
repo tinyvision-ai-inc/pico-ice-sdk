@@ -28,7 +28,7 @@ int main() {
     ice_smem_init(10*1000*1000, DMA_IRQ_1 /* Pass -1 for synchronous mode */);
 
     // Dont let the FPGA on the bus so we get exclusive access
-    ice_fpga_halt();
+    ice_halt();
 
     for (uint16_t i = 0; i < DATA_LEN; i++) {
         write_data[i] = i;

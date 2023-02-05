@@ -2,7 +2,7 @@
 #include "pico/stdlib.h"
 #include "hardware/structs/spi.h"
 
-#include "ice_fpga_flash.h"
+#include "ice_flash.h"
 #include "ice_fpga.h"
 
 #define FLASH_CMD_PROGRAM_PAGE       0x02
@@ -74,7 +74,7 @@ static void soft_spi_write_blocking(uint8_t const *buf, size_t len) {
         soft_spi_xfer_byte(*buf);
 }
 
-void ice_fpga_flash_enable_write(void) {
+void ice_flash_enable_write(void) {
     uint8_t cmds[] = { FLASH_CMD_ENABLE_WRITE };
 
     soft_spi_chip_select();
@@ -82,9 +82,9 @@ void ice_fpga_flash_enable_write(void) {
     soft_spi_chip_deselect();
 }
 
-void ice_fpga_flash_init(void) {
+void ice_flash_init(void) {
     // Hold the FPGA in reset while flashing so that it does not interfer.
-    ice_fpga_halt();
+    ice_halt();
 
     // Setup the associated GPIO pins except CSN
 
@@ -106,10 +106,10 @@ void ice_fpga_flash_init(void) {
     gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_OUT);
 
     // Flash might be asleep as a successful FPGA boot will put it to sleep as the last command!
-    ice_fpga_flash_wakeup();
+    ice_flash_wakeup();
 }
 
-void ice_fpga_flash_deinit(void) {
+void ice_flash_deinit(void) {
     // Setup the associated GPIO pins except CSN
 
     gpio_init(ICE_FLASH_SPI_SCK_PIN);
@@ -125,7 +125,7 @@ void ice_fpga_flash_deinit(void) {
     gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_IN);
 }
 
-static void ice_fpga_flash_wait(void) {
+static void ice_flash_wait(void) {
     uint8_t cmds[] = { FLASH_CMD_STATUS, 0 };
     uint8_t buf[2];
 
@@ -137,36 +137,36 @@ static void ice_fpga_flash_wait(void) {
     } while (buf[1] & FLASH_STATUS_BUSY_MASK);
 }
 
-void ice_fpga_flash_erase_sector(uint32_t addr) {
+void ice_flash_erase_sector(uint32_t addr) {
     uint8_t cmds[] = { FLASH_CMD_SECTOR_ERASE, addr >> 16, addr >> 8, addr };
 
     assert(addr % ICE_FLASH_SECTOR_SIZE == 0);
 
-    ice_fpga_flash_enable_write();
+    ice_flash_enable_write();
 
     soft_spi_chip_select();
     soft_spi_write_blocking(cmds, sizeof cmds);
     soft_spi_chip_deselect();
 
-    ice_fpga_flash_wait();
+    ice_flash_wait();
 }
 
-void ice_fpga_flash_program_page(uint32_t addr, uint8_t const page[ICE_FLASH_PAGE_SIZE]) {
+void ice_flash_program_page(uint32_t addr, uint8_t const page[ICE_FLASH_PAGE_SIZE]) {
     uint8_t cmds[] = { FLASH_CMD_PROGRAM_PAGE, addr >> 16, addr >> 8, addr };
 
     assert(addr % ICE_FLASH_PAGE_SIZE == 0);
 
-    ice_fpga_flash_enable_write();
+    ice_flash_enable_write();
 
     soft_spi_chip_select();
     soft_spi_write_blocking(cmds, sizeof cmds);
     soft_spi_write_blocking(page, ICE_FLASH_PAGE_SIZE);
     soft_spi_chip_deselect();
 
-    ice_fpga_flash_wait();
+    ice_flash_wait();
 }
 
-void ice_fpga_flash_read(uint32_t addr, uint8_t *buf, size_t sz) {
+void ice_flash_read(uint32_t addr, uint8_t *buf, size_t sz) {
     uint8_t cmds[] = { FLASH_CMD_READ, addr >> 16, addr >> 8, addr };
 
     soft_spi_chip_select();
@@ -175,34 +175,34 @@ void ice_fpga_flash_read(uint32_t addr, uint8_t *buf, size_t sz) {
     soft_spi_chip_deselect();
 }
 
-void ice_fpga_flash_erase_chip(void) {
+void ice_flash_erase_chip(void) {
     uint8_t cmds[] = { FLASH_CMD_CHIP_ERASE };
 
-    ice_fpga_flash_enable_write();
+    ice_flash_enable_write();
 
     soft_spi_chip_select();
     soft_spi_write_blocking(cmds, sizeof cmds);
     soft_spi_chip_deselect();
 
-    ice_fpga_flash_wait();
+    ice_flash_wait();
 }
 
-void ice_fpga_flash_wakeup(void) {
+void ice_flash_wakeup(void) {
     uint8_t cmds[] = { FLASH_CMD_RELEASE_POWERDOWN };
 
     soft_spi_chip_select();
     soft_spi_write_blocking(cmds, sizeof cmds);
     soft_spi_chip_deselect();
 
-    ice_fpga_flash_wait();
+    ice_flash_wait();
 }
 
-void ice_fpga_flash_sleep(void) {
+void ice_flash_sleep(void) {
     uint8_t cmds[] = { FLASH_CMD_POWERDOWN };
 
     soft_spi_chip_select();
     soft_spi_write_blocking(cmds, sizeof cmds);
     soft_spi_chip_deselect();
 
-    ice_fpga_flash_wait();
+    ice_flash_wait();
 }

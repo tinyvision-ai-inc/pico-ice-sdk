@@ -6,8 +6,8 @@
 #include "hardware/watchdog.h"
 
 #include "ice_fpga.h"
-#include "ice_fpga_flash.h"
-#include "ice_fpga_bitstream.h"
+#include "ice_flash.h"
+#include "ice_bitstream.h"
 
 #include "tusb.h"
 
@@ -33,9 +33,9 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
     if (!dfu_download_pending) {
         dfu_download_pending = true;
         if (alt == 1) {
-            ice_fpga_flash_init();
+            ice_flash_init();
         } else {
-            ice_fpga_bitstream_open();
+            ice_bitstream_open();
         }
     }
 
@@ -44,12 +44,12 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
     for (uint32_t offset = 0; offset < length; offset += ICE_FLASH_PAGE_SIZE) {
         if (alt == 1) {
             if ((dest_addr + offset) % ICE_FLASH_SECTOR_SIZE == 0) {
-                ice_fpga_flash_erase_sector(dest_addr + offset);
+                ice_flash_erase_sector(dest_addr + offset);
             }
 
-            ice_fpga_flash_program_page(dest_addr + offset, data + offset);
+            ice_flash_program_page(dest_addr + offset, data + offset);
         } else {
-            ice_fpga_bitstream_write(data, length);
+            ice_bitstream_write(data, length);
         }
     }
 
@@ -68,10 +68,10 @@ void tud_dfu_manifest_cb(uint8_t alt)
 
     bool fpga_done;
     if (alt == 1) {
-        ice_fpga_flash_deinit();
-        fpga_done = ice_fpga_reset();
+        ice_flash_deinit();
+        fpga_done = ice_reset();
     } else {
-        fpga_done = ice_fpga_bitstream_close();
+        fpga_done = ice_bitstream_close();
     }
 
     tud_dfu_finish_flashing(fpga_done ? DFU_STATUS_OK : DFU_STATUS_ERR_FIRMWARE);

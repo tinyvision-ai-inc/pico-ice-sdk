@@ -3,8 +3,8 @@
 #include "hardware/watchdog.h"
 
 #include "ice_fpga.h"
-#include "ice_fpga_bitstream.h"
-#include "ice_fpga_flash.h"
+#include "ice_bitstream.h"
+#include "ice_flash.h"
 #include "ice_usb.h"
 
 /*
