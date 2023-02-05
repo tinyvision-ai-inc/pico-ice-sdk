@@ -1,5 +1,7 @@
 # pico-ice-sdk
 
+[doc](https://pico-ice.tinyvision.ai/) - [pcb](https://github.com/tinyvision-ai-inc/pico-ice)
+
 This is a library for using the [pico-ice](https://pico-ice.tinyvision.ai/),
 a board combining a Raspberry Pi RP2040 and an Lattice iCE40.
 
@@ -17,5 +19,3 @@ Make sure to update all submodules before trying the [examples](example):
 git submodule update --init
 git -C pico-sdk submodule update --init
 ```
-
-See the [doc]()
