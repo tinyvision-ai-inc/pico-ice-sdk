@@ -1,5 +1,5 @@
 ; SPI controller capable of transmitting up to one bit per 4 system clocks, ignoring response.
-.program ice_fpga_bitstream
+.program ice_bitstream
 .side_set 1 opt
     ; SDO               SCLK
     nop                 side 1        ; receiver samples on rising SCLK edge

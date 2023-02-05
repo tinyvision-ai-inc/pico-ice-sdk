@@ -5,7 +5,7 @@
 #include "ice_sdk.h"
 #include "ice_usb.h"
 #include "ice_fpga.h"
-#include "ice_fpga_flash.h"
+#include "ice_flash.h"
 
 static void init_rgb_led(void) {
     gpio_init(ICE_LED_RED_PIN);
@@ -24,7 +24,7 @@ void ice_sdk_init(void) {
     ice_usb_init();
     
     // Do not let the Pico control the FPGA flash so the FPGA is free to boot up
-    ice_fpga_flash_deinit();
+    ice_flash_deinit();
 
-    ice_fpga_init();
+    ice_init();
 }

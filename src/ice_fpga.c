@@ -5,10 +5,10 @@
 #include "tusb.h"
 
 #include "ice_fpga.h"
-#include "ice_fpga_flash.h"
+#include "ice_flash.h"
 
-void ice_fpga_init(void) {
-    // Keep the FPGA in reset until ice_fpga_reset() is called.
+void ice_init(void) {
+    // Keep the FPGA in reset until ice_reset() is called.
     gpio_put(ICE_FPGA_CRESET_PIN, false);
     gpio_init(ICE_FPGA_CRESET_PIN);
     gpio_set_dir(ICE_FPGA_CRESET_PIN, GPIO_OUT);
@@ -18,14 +18,14 @@ void ice_fpga_init(void) {
     gpio_set_dir(ICE_FPGA_CDONE_PIN, GPIO_IN);
 
     // Output a clock by default.
-    ice_fpga_init_clock(48);
+    ice_init_clock(48);
 }
 
-void ice_fpga_halt(void) {
+void ice_halt(void) {
     gpio_put(ICE_FPGA_CRESET_PIN, false);
 }
 
-bool ice_fpga_reset(void) {
+bool ice_reset(void) {
     // Issue a reset pulse.
     gpio_put(ICE_FPGA_CRESET_PIN, false);
     sleep_ms(1);
@@ -43,6 +43,6 @@ bool ice_fpga_reset(void) {
     return true;
 }
 
-void ice_fpga_init_clock(uint8_t freq_mhz) {
+void ice_init_clock(uint8_t freq_mhz) {
     clock_gpio_init(ICE_FPGA_CLOCK_PIN, CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_VALUE_CLK_USB, 48 / freq_mhz);
 }

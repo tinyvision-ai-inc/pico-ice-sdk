@@ -61,7 +61,7 @@ int main(void) {
 
     // Don't call ice_sdk_init because that would initialize as a USB device.
     // Instead, initialize individual SDK modules.
-    ice_fpga_init();
+    ice_init();
 
     gpio_init(ICE_LED_RED_PIN);
     gpio_put(ICE_LED_RED_PIN, true); // active-low
