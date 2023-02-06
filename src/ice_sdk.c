@@ -8,7 +8,7 @@
 #include "ice_flash.h"
 
 void ice_sdk_init(void) {
-    init_rgb_led();
+    ice_led_init();
     ice_usb_init();
     
     // Do not let the Pico control the FPGA flash so the FPGA is free to boot up
