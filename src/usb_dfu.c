@@ -69,7 +69,8 @@ void tud_dfu_manifest_cb(uint8_t alt)
     bool fpga_done;
     if (alt == 1) {
         ice_flash_deinit();
-        fpga_done = ice_reset();
+        ice_fpga_halt();
+        fpga_done = ice_fpga_start();
     } else {
         fpga_done = ice_cram_close();
     }

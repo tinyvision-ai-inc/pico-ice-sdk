@@ -3,16 +3,18 @@
 
 #include "boards/pico_ice.h"
 
-#include "ice_sdk.h"
+#include "ice_fpga.h"
 #include "ice_usb.h"
 
-int main(void) {
-    // Init the pico-ice-sdk library
-    ice_sdk_init();
-    ice_usb_init();
-
+int main(void)
+{
     // Enable USB-UART #0 output
     stdio_init_all();
+
+    // Init the pico-ice-sdk library
+    ice_usb_init();
+    ice_fpga_init(48);
+    ice_fpga_start();
 
     // Setup code here.
     for (;;) {

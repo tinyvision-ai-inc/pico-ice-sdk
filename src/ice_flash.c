@@ -1,9 +1,7 @@
 #include "pico/stdio.h"
 #include "pico/stdlib.h"
 #include "hardware/structs/spi.h"
-
 #include "ice_flash.h"
-#include "ice_fpga.h"
 
 #define FLASH_CMD_PROGRAM_PAGE       0x02
 #define FLASH_CMD_READ               0x03
@@ -82,10 +80,8 @@ void ice_flash_enable_write(void) {
     soft_spi_chip_deselect();
 }
 
-void ice_flash_init(void) {
-    // Hold the FPGA in reset while flashing so that it does not interfer.
-    ice_halt();
-
+void ice_flash_init(void)
+{
     // Setup the associated GPIO pins except CSN
 
     gpio_init(ICE_FLASH_SPI_SCK_PIN);

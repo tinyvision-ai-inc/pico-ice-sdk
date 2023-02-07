@@ -1,14 +1,11 @@
 #include "hardware/clocks.h"
 #include "hardware/gpio.h"
-#include "hardware/uart.h"
 #include "pico/stdlib.h"
-#include "tusb.h"
-
 #include "ice_fpga.h"
-#include "ice_flash.h"
 
-void ice_init(void) {
-    // Keep the FPGA in reset until ice_reset() is called.
+void ice_fpga_init(uint8_t freq_mhz)
+{
+    // This keeps the FPGA in reset until ice_fpga_start() is called.
     gpio_put(ICE_FPGA_CRESET_PIN, false);
     gpio_init(ICE_FPGA_CRESET_PIN);
     gpio_set_dir(ICE_FPGA_CRESET_PIN, GPIO_OUT);
@@ -18,14 +15,16 @@ void ice_init(void) {
     gpio_set_dir(ICE_FPGA_CDONE_PIN, GPIO_IN);
 
     // Output a clock by default.
-    ice_init_clock(48);
+    clock_gpio_init(ICE_FPGA_CLOCK_PIN, CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_VALUE_CLK_USB, 48 / freq_mhz);
 }
 
-void ice_halt(void) {
+void ice_fpga_halt(void)
+{
     gpio_put(ICE_FPGA_CRESET_PIN, false);
 }
 
-bool ice_reset(void) {
+bool ice_fpga_start(void)
+{
     // Issue a reset pulse.
     gpio_put(ICE_FPGA_CRESET_PIN, false);
     sleep_ms(1);
@@ -41,8 +40,4 @@ bool ice_reset(void) {
         sleep_ms(1);
     }
     return true;
-}
-
-void ice_init_clock(uint8_t freq_mhz) {
-    clock_gpio_init(ICE_FPGA_CLOCK_PIN, CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_VALUE_CLK_USB, 48 / freq_mhz);
 }
