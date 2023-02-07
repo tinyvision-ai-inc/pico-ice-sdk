@@ -71,10 +71,6 @@ if (NOT TARGET pico_ice_sdk)
 
     add_library(pico_ice_sdk INTERFACE)
 
-    target_sources(pico_ice_sdk INTERFACE
-        ice_sdk.c
-    )
-
     target_link_libraries(pico_ice_sdk INTERFACE
         pico_ice_core
         pico_ice_usb

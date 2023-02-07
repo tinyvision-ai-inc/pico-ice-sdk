@@ -1,8 +1,8 @@
-#include "ice_cram.pio.h"
-
 #include "hardware/gpio.h"
 #include "hardware/pio.h"
 #include "pico/time.h"
+#include "ice_cram.h"
+#include "ice_cram.pio.h"
 
 static PIO pio;
 static int sm;

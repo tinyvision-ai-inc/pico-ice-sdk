@@ -8,10 +8,9 @@
 extern "C" {
 #endif
 
-void ice_init_clock(uint8_t frequency_mhz);
-void ice_init(void);
-bool ice_reset(void);
-void ice_halt(void);
+void ice_fpga_init(uint8_t frequency_mhz);
+bool ice_fpga_start(void);
+void ice_fpga_halt(void);
 
 #ifdef __cplusplus
 }

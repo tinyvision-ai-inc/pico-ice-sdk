@@ -1,10 +1,6 @@
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
 #include "hardware/watchdog.h"
-
-#include "ice_fpga.h"
-#include "ice_cram.h"
-#include "ice_flash.h"
 #include "ice_usb.h"
 
 // in src/tinyuf2/uf2.h
@@ -21,18 +17,6 @@ static void ice_uart_irq_handler(void)
     }
 }
 
-static void ice_init_uart(uint32_t baudrate_hz)
-{
-    uart_init(uart_fpga, baudrate_hz);
-    gpio_set_function(ICE_FPGA_UART_TX_PIN, GPIO_FUNC_UART);
-    gpio_set_function(ICE_FPGA_UART_RX_PIN, GPIO_FUNC_UART);
-
-    // For forwarding UART packets to USB.
-    uart_set_irq_enables(uart_fpga, true, false);
-    irq_set_enabled(ICE_FPGA_UART_IRQ, true);
-    irq_set_exclusive_handler(ICE_FPGA_UART_IRQ, ice_uart_irq_handler);
-}
-
 void ice_usb_init(void)
 {
     // TinyUSB
@@ -43,5 +27,12 @@ void ice_usb_init(void)
     uf2_init();
 
     // Enable the UART by default, allowing early init.
-    ice_init_uart(115200);
+    uart_init(uart_fpga, 115200);
+    gpio_set_function(ICE_FPGA_UART_TX_PIN, GPIO_FUNC_UART);
+    gpio_set_function(ICE_FPGA_UART_RX_PIN, GPIO_FUNC_UART);
+
+    // For forwarding UART packets to USB.
+    uart_set_irq_enables(uart_fpga, true, false);
+    irq_set_enabled(ICE_FPGA_UART_IRQ, true);
+    irq_set_exclusive_handler(ICE_FPGA_UART_IRQ, ice_uart_irq_handler);
 }

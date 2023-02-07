@@ -1,8 +1,8 @@
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
-
 #include "boards/pico_ice.h"
+#include "ice_comm.h"
 
 static uint8_t g_dummy;
 static int g_tx_dma_channel = -1;
