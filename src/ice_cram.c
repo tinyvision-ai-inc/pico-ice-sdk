@@ -1,6 +1,7 @@
 #include "hardware/gpio.h"
 #include "hardware/pio.h"
 #include "pico/time.h"
+#include "ice_fpga.h"
 #include "ice_cram.h"
 #include "ice_cram.pio.h"
 
@@ -77,7 +78,7 @@ static void wait_idle() {
 
 void ice_cram_open(void) {
     // Hold FPGA in reset before doing anything with SPI bus.
-    gpio_put(ICE_FPGA_CRESET_PIN, false);
+    ice_fpga_halt();
 
     state_machine_init();
 
@@ -88,7 +89,7 @@ void ice_cram_open(void) {
 
     // Bring FPGA out of reset after at least 200ns.
     busy_wait_us(2);
-    gpio_put(ICE_FPGA_CRESET_PIN, true);
+    ice_fpga_start();
 
     // At least 1200us for FPGA to clear internal configuration memory.
     busy_wait_us(1300);
