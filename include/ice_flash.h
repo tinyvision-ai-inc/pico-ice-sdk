@@ -13,7 +13,7 @@ extern "C" {
 #define ICE_FLASH_SECTOR_SIZE       4096
 
 void ice_flash_init(void);
-void ice_flash_deinit(void);
+void ice_flash_release(void);
 void static ice_flash_wait(void);
 void ice_flash_read(uint32_t addr, uint8_t *buf, size_t sz);
 void ice_flash_erase_sector(uint32_t addr);

@@ -105,9 +105,8 @@ void ice_flash_init(void)
     ice_flash_wakeup();
 }
 
-void ice_flash_deinit(void) {
-    // Setup the associated GPIO pins except CSN
-
+void ice_flash_release(void)
+{
     gpio_init(ICE_FLASH_SPI_SCK_PIN);
     gpio_set_dir(ICE_FLASH_SPI_SCK_PIN, GPIO_IN);
 

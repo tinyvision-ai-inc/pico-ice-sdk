@@ -4,7 +4,9 @@
 #include "boards/pico_ice.h"
 
 #include "ice_fpga.h"
+#include "ice_flash.h"
 #include "ice_usb.h"
+#include "ice_led.h"
 
 int main(void)
 {
@@ -12,13 +14,15 @@ int main(void)
     stdio_init_all();
 
     // Init the pico-ice-sdk library
+    ice_led_init();
     ice_usb_init();
+    ice_flash_release();
     ice_fpga_init(48);
     ice_fpga_start();
 
-    // Setup code here.
     for (;;) {
         tud_task();
     }
+
     return 0;
 }

@@ -25,9 +25,7 @@ void ice_fpga_halt(void)
 
 bool ice_fpga_start(void)
 {
-    // Issue a reset pulse.
-    gpio_put(ICE_FPGA_CRESET_PIN, false);
-    sleep_ms(1);
+    // Ensure the reset pin is released
     gpio_put(ICE_FPGA_CRESET_PIN, true);
 
     // Wait that the configuration is finished before interferring.
