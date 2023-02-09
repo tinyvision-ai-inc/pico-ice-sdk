@@ -1,4 +1,5 @@
 #include "boards/pico_ice.h"
+#include "ice_usb.h"
 // Allow compilation of TinyUF2 without changing any source file.
 
 #define UF2_VERSION         "0"

@@ -9,14 +9,6 @@ void uf2_init(void);
 // in src/tinyuf2/board_api.h
 void board_init(void);
 
-static void ice_uart_irq_handler(void)
-{
-    while (uart_is_readable(uart_fpga)) {
-        tud_cdc_n_write_char(1, uart_getc(uart_fpga));
-        tud_cdc_n_write_flush(1);
-    }
-}
-
 void ice_usb_init(void)
 {
     // TinyUSB

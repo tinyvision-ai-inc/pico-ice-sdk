@@ -37,8 +37,6 @@ if (NOT TARGET pico_ice_sdk)
         usb_descriptors.c
     )
 
-    target_compile_definitions(pico_ice_usb INTERFACE CFG_TUSB_CONFIG_FILE="pico_ice_tusb_config.h")
-
     target_sources(pico_ice_usb INTERFACE
         ice_usb.c
     )

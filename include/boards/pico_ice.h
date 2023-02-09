@@ -87,9 +87,9 @@
 // --- BOARD SPECIFIC ---
 
 // LED
-#define ICE_LED_R_PIN 13
-#define ICE_LED_G_PIN 12
-#define ICE_LED_B_PIN 15
+#define ICE_LED_RED_PIN 13
+#define ICE_LED_GREEN_PIN 12
+#define ICE_LED_BLUE_PIN 15
 
 // UART
 #ifndef ICE_USB_UART

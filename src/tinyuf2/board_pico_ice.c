@@ -46,7 +46,7 @@ void board_flash_flush(void)
 
 uint32_t board_flash_size(void)
 {
-    return ICE_FPGA_FLASH_SIZE_BYTES;
+    return ICE_FLASH_SIZE_BYTES;
 }
 
 void board_rgb_write(uint8_t const rgb[])

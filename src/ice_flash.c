@@ -15,18 +15,9 @@
 
 #define FLASH_STATUS_BUSY_MASK       0x01
 
-void ice_flash_enable_write(void) {
-    uint8_t cmds[] = { FLASH_CMD_ENABLE_WRITE };
-
-    soft_spi_chip_select();
-    soft_spi_write_blocking(cmds, sizeof cmds);
-    soft_spi_chip_deselect();
-}
-
 void ice_flash_init(void)
 {
     // Setup the CSN pin to GPIO mode for software control
-
     gpio_init(ICE_FLASH_SPI_CSN_PIN);
     gpio_put(ICE_FLASH_SPI_CSN_PIN, true);
     gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_OUT);
@@ -35,99 +26,100 @@ void ice_flash_init(void)
     ice_flash_wakeup();
 }
 
-void ice_flash_release(void)
+void ice_flash_enable_write(void)
 {
-    gpio_init(ICE_FLASH_SPI_SCK_PIN);
-    gpio_set_dir(ICE_FLASH_SPI_SCK_PIN, GPIO_IN);
+    uint8_t cmds[] = { FLASH_CMD_ENABLE_WRITE };
 
-    gpio_init(ICE_FLASH_SPI_TX_PIN);
-    gpio_set_dir(ICE_FLASH_SPI_TX_PIN, GPIO_IN);
-
-    gpio_init(ICE_FLASH_SPI_RX_PIN);
-    gpio_set_dir(ICE_FLASH_SPI_RX_PIN, GPIO_IN);
-
-    gpio_init(ICE_FLASH_SPI_CSN_PIN);
-    gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_IN);
+    ice_spi_chip_select(ICE_FLASH_SPI_CSN_PIN);
+    ice_spi_write_blocking(cmds, sizeof cmds);
+    ice_spi_chip_deselect(ICE_FLASH_SPI_CSN_PIN);
 }
 
-static void ice_flash_wait(void) {
+static void ice_flash_wait(void)
+{
     uint8_t cmds[] = { FLASH_CMD_STATUS, 0 };
     uint8_t buf[2];
 
     do {
-        soft_spi_chip_select();
-        soft_spi_write_read_blocking(cmds, buf, 2);
-        soft_spi_chip_deselect();
-
+        ice_spi_chip_select(ICE_FLASH_SPI_CSN_PIN);
+        ice_spi_write_blocking(cmds, sizeof(cmds));
+        ice_spi_read_blocking(0x00, buf, sizeof(buf));
+        ice_spi_chip_deselect(ICE_FLASH_SPI_CSN_PIN);
     } while (buf[1] & FLASH_STATUS_BUSY_MASK);
 }
 
-void ice_flash_erase_sector(uint32_t addr) {
+void ice_flash_erase_sector(uint32_t addr)
+{
     uint8_t cmds[] = { FLASH_CMD_SECTOR_ERASE, addr >> 16, addr >> 8, addr };
 
     assert(addr % ICE_FLASH_SECTOR_SIZE == 0);
 
     ice_flash_enable_write();
 
-    soft_spi_chip_select();
-    soft_spi_write_blocking(cmds, sizeof cmds);
-    soft_spi_chip_deselect();
+    ice_spi_chip_select(ICE_FLASH_SPI_CSN_PIN);
+    ice_spi_write_blocking(cmds, sizeof cmds);
+    ice_spi_chip_deselect(ICE_FLASH_SPI_CSN_PIN);
 
     ice_flash_wait();
 }
 
-void ice_flash_program_page(uint32_t addr, uint8_t const page[ICE_FLASH_PAGE_SIZE]) {
+void ice_flash_program_page(uint32_t addr, uint8_t const page[ICE_FLASH_PAGE_SIZE])
+{
     uint8_t cmds[] = { FLASH_CMD_PROGRAM_PAGE, addr >> 16, addr >> 8, addr };
 
     assert(addr % ICE_FLASH_PAGE_SIZE == 0);
 
     ice_flash_enable_write();
 
-    soft_spi_chip_select();
-    soft_spi_write_blocking(cmds, sizeof cmds);
-    soft_spi_write_blocking(page, ICE_FLASH_PAGE_SIZE);
-    soft_spi_chip_deselect();
+    ice_spi_chip_select(ICE_FLASH_SPI_CSN_PIN);
+    ice_spi_write_blocking(cmds, sizeof cmds);
+    ice_spi_write_blocking(page, ICE_FLASH_PAGE_SIZE);
+    ice_spi_chip_deselect(ICE_FLASH_SPI_CSN_PIN);
 
     ice_flash_wait();
 }
 
-void ice_flash_read(uint32_t addr, uint8_t *buf, size_t sz) {
+void ice_flash_read(uint32_t addr, uint8_t *buf, size_t sz)
+{
     uint8_t cmds[] = { FLASH_CMD_READ, addr >> 16, addr >> 8, addr };
 
-    soft_spi_chip_select();
-    soft_spi_write_blocking(cmds, sizeof cmds);
-    soft_spi_read_blocking(0x00, buf, sz);
-    soft_spi_chip_deselect();
+    ice_spi_chip_select(ICE_FLASH_SPI_CSN_PIN);
+    ice_spi_write_blocking(cmds, sizeof cmds);
+    ice_spi_read_blocking(0x00, buf, sz);
+    ice_spi_chip_deselect(ICE_FLASH_SPI_CSN_PIN);
 }
 
-void ice_flash_erase_chip(void) {
+void ice_flash_erase_chip(void)
+{
     uint8_t cmds[] = { FLASH_CMD_CHIP_ERASE };
 
     ice_flash_enable_write();
 
-    soft_spi_chip_select();
-    soft_spi_write_blocking(cmds, sizeof cmds);
-    soft_spi_chip_deselect();
+    ice_spi_chip_select(ICE_FLASH_SPI_CSN_PIN);
+    ice_spi_write_blocking(cmds, sizeof cmds);
+    ice_spi_chip_deselect(ICE_FLASH_SPI_CSN_PIN);
 
     ice_flash_wait();
 }
 
-void ice_flash_wakeup(void) {
+void ice_flash_wakeup(void)
+{
     uint8_t cmds[] = { FLASH_CMD_RELEASE_POWERDOWN };
 
-    soft_spi_chip_select();
-    soft_spi_write_blocking(cmds, sizeof cmds);
-    soft_spi_chip_deselect();
+    ice_spi_chip_select(ICE_FLASH_SPI_CSN_PIN);
+    ice_spi_write_blocking(cmds, sizeof cmds);
+    ice_spi_chip_deselect(ICE_FLASH_SPI_CSN_PIN);
 
     ice_flash_wait();
 }
 
-void ice_flash_sleep(void) {
+void ice_flash_sleep(void)
+{
     uint8_t cmds[] = { FLASH_CMD_POWERDOWN };
 
-    soft_spi_chip_select();
-    soft_spi_write_blocking(cmds, sizeof cmds);
-    soft_spi_chip_deselect();
+    ice_spi_chip_select(ICE_FLASH_SPI_CSN_PIN);
+    ice_spi_write_blocking(cmds, sizeof cmds);
+    ice_spi_chip_deselect(ICE_FLASH_SPI_CSN_PIN);
 
     ice_flash_wait();
 }
