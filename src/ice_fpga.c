@@ -23,10 +23,14 @@ void ice_fpga_halt(void)
     gpio_put(ICE_FPGA_CRESET_PIN, false);
 }
 
+/*
+ * Datasheet "iCE40 Programming Configuration" > "3.1. Mode Selection"
+ */
 bool ice_fpga_start(void)
 {
-    // Ensure the reset pin is released
     gpio_put(ICE_FPGA_CRESET_PIN, true);
+    sleep_ms(10);
+    gpio_put(ICE_FPGA_CRESET_PIN, false);
 
     // Wait that the configuration is finished before interferring.
     // This makes sure the SPI bus is not driven by both the FPGA

@@ -16,8 +16,8 @@ int main(void)
     // Init the pico-ice-sdk library
     ice_led_init();
     ice_usb_init();
-    ice_flash_release();
     ice_fpga_init(48);
+    ice_flash_release();
     ice_fpga_start();
 
     for (;;) {

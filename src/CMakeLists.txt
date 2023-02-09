@@ -4,10 +4,8 @@ if (NOT TARGET pico_ice_sdk)
 
     target_sources(pico_ice_core INTERFACE
         ice_fpga.c
-        ice_comm.c
-        ice_cram.c
+        ice_spi.c
         ice_flash.c
-        ice_smem.c
         ice_led.c
     )
 
@@ -23,6 +21,7 @@ if (NOT TARGET pico_ice_sdk)
         hardware_spi
         hardware_uart
         hardware_dma
+        hardware_sync
         pico_time
     )
 
