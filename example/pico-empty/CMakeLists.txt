@@ -21,6 +21,7 @@ target_include_directories(pico_empty PUBLIC
 
 target_link_libraries(pico_empty
     pico_ice_sdk
+    pico_ice_usb
 )
 
 pico_add_extra_outputs(pico_empty)

@@ -24,7 +24,7 @@
 #define ICE_UF2_FAMILY_ID 0x792e7263
 
 // Simplify the declaration of string IDs
-enum string_desc {
+enum {
     STRID_LANGID,
     STRID_MANUFACTURER,
     STRID_PRODUCT,
@@ -36,13 +36,23 @@ enum string_desc {
     STRID_NUM_TOTAL = 40
 };
 
+extern char const *tud_string_desc[STRID_NUM_TOTAL];
 extern char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
+extern uint8_t const tud_desc_configuration[CONFIG_TOTAL_LEN];
+extern const tusb_desc_device_t tud_desc_device;
+extern void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void ice_usb_init(void);
+void ice_usb_uart0_to_cdc0(void);
+void ice_usb_uart0_to_cdc1(void);
+void ice_usb_uart1_to_cdc0(void);
+void ice_usb_uart1_to_cdc1(void);
+void ice_usb_cdc_to_uart0(uint8_t cdc_num);
+void ice_usb_cdc_to_uart0(uint8_t cdc_num);
+void tud_cdc_rx_cb(uint8_t itf);
 
 #ifdef __cplusplus
 }
