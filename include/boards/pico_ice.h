@@ -91,20 +91,6 @@
 #define ICE_LED_GREEN_PIN 12
 #define ICE_LED_BLUE_PIN 15
 
-// UART
-#ifndef ICE_USB_UART
-#define ICE_USB_UART 0
-#endif
-#ifndef ICE_USB_UART_TX_PIN
-#define ICE_USB_UART_TX_PIN 0
-#endif
-#ifndef ICE_USB_UART_RX_PIN
-#define ICE_USB_UART_RX_PIN 1
-#endif
-#ifndef ICE_USB_UART_RX_PIN
-#define ICE_USB_UART_IRQ __CONCAT(__CONCAT(UART, ICE_UART), _IRQ)
-#endif
-
 // SPI
 #ifndef ICE_DEFAULT_SPI
 #define ICE_DEFAULT_SPI 1
@@ -128,6 +114,11 @@
 #define ICE_SSRAM_SPI_CS_PIN 14
 #endif
 
+// FLASH
+#ifndef ICE_FLASH_SIZE_BYTES
+#define ICE_FLASH_SIZE_BYTES (4 * 1024 * 1024)
+#endif
+
 // ICE40
 #ifndef ICE_FPGA_CLOCK_PIN
 #define ICE_FPGA_CLOCK_PIN 24
@@ -137,9 +128,6 @@
 #endif
 #ifndef ICE_FPGA_CRESET_PIN
 #define ICE_FPGA_CRESET_PIN 27
-#endif
-#ifndef ICE_FLASH_SIZE_BYTES
-#define ICE_FLASH_SIZE_BYTES (4 * 1024 * 1024)
 #endif
 
 // GPOUT
