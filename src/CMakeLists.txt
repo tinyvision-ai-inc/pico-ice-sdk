@@ -37,7 +37,7 @@ target_sources(tinyuf2 INTERFACE
     tinyuf2/msc.c
 )
 target_include_directories(pico_ice_usb INTERFACE
-    tinyuf2
+    .
 )
 target_link_libraries(pico_ice_usb INTERFACE
     tinyusb_board

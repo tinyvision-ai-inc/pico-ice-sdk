@@ -4,10 +4,13 @@ set(PICO_SDK_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../pico-sdk)
 set(PICO_ICE_SDK_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 set(PICO_BOARD pico_ice)
 set(PICO_BOARD_HEADER_DIRS ${PICO_ICE_SDK_PATH}/include/boards)
+
 include(${PICO_SDK_PATH}/pico_sdk_init.cmake)
 
 project(pico-empty C CXX ASM)
+
 pico_sdk_init()
+
 add_subdirectory(${PICO_ICE_SDK_PATH}/src pico-ice-sdk)
 
 add_executable(pico_empty

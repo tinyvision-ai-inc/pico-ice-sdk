@@ -135,7 +135,7 @@ void ice_spi_write_blocking(uint8_t const *buf_w, size_t len)
     ice_spi_await_async_completion();
 }
 
-void ice_spi_open(void)
+void ice_spi_request_bus(void)
 {
     gpio_init(ICE_DEFAULT_SPI_SCK_PIN);
     gpio_put(ICE_DEFAULT_SPI_SCK_PIN, false); // SCK should start low
@@ -149,7 +149,7 @@ void ice_spi_open(void)
     gpio_set_dir(ICE_DEFAULT_SPI_RX_PIN, GPIO_IN);
 }
 
-void ice_spi_close(void)
+void ice_spi_release_bus(void)
 {
     gpio_set_dir(ICE_DEFAULT_SPI_SCK_PIN, GPIO_IN);
     gpio_set_dir(ICE_DEFAULT_SPI_TX_PIN, GPIO_IN);

@@ -7,16 +7,25 @@
 #include "ice_flash.h"
 #include "ice_usb.h"
 #include "ice_led.h"
+#include "ice_spi.h"
+#include "tinyuf2/board_api.h"
 
 int main(void)
 {
-    // Enable USB-UART #0 output
+    // Init USB
     stdio_init_all();
+    board_init();
+    tusb_init();
 
-    // Init the pico-ice-sdk library
+    // Init LEDs
     ice_led_init();
+    ice_led_red(true);
+    ice_led_green(true);
+    ice_led_blue(true);
+
+    // Init FPGA
     ice_fpga_init(48);
-    ice_flash_release();
+    ice_spi_release_bus();
     ice_fpga_start();
 
     for (;;) {
