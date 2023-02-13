@@ -126,8 +126,8 @@
 #ifndef ICE_FPGA_CDONE_PIN
 #define ICE_FPGA_CDONE_PIN 26
 #endif
-#ifndef ICE_FPGA_CRESET_PIN
-#define ICE_FPGA_CRESET_PIN 27
+#ifndef ICE_FPGA_CRESET_B_PIN
+#define ICE_FPGA_CRESET_B_PIN 27
 #endif
 
 // GPOUT

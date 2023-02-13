@@ -5,22 +5,23 @@
 
 void ice_fpga_init(uint8_t freq_mhz)
 {
-    // This keeps the FPGA in reset until ice_fpga_start() is called.
-    gpio_put(ICE_FPGA_CRESET_PIN, false);
-    gpio_init(ICE_FPGA_CRESET_PIN);
-    gpio_set_dir(ICE_FPGA_CRESET_PIN, GPIO_OUT);
+    // High impedance mode: do not reset the FPGA: let the user control it
+    gpio_set_dir(ICE_FPGA_CRESET_B_PIN, GPIO_IN);
+    gpio_init(ICE_FPGA_CRESET_B_PIN);
 
     // Input pin for sensing configuration status.
     gpio_init(ICE_FPGA_CDONE_PIN);
     gpio_set_dir(ICE_FPGA_CDONE_PIN, GPIO_IN);
 
-    // Output a clock by default.
+    // Output a clock at chosen frequency
     clock_gpio_init(ICE_FPGA_CLOCK_PIN, CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_VALUE_CLK_USB, 48 / freq_mhz);
 }
 
-void ice_fpga_halt(void)
+void ice_fpga_stop(void)
 {
-    gpio_put(ICE_FPGA_CRESET_PIN, false);
+    ice_led_red(false);
+    gpio_put(ICE_FPGA_CRESET_B_PIN, false);
+    gpio_set_dir(ICE_FPGA_CRESET_B_PIN, GPIO_OUT);
 }
 
 /*
@@ -28,9 +29,9 @@ void ice_fpga_halt(void)
  */
 bool ice_fpga_start(void)
 {
-    gpio_put(ICE_FPGA_CRESET_PIN, true);
-    sleep_ms(10);
-    gpio_put(ICE_FPGA_CRESET_PIN, false);
+    ice_led_red(true);
+    gpio_put(ICE_FPGA_CRESET_B_PIN, true);
+    gpio_set_dir(ICE_FPGA_CRESET_B_PIN, GPIO_OUT);
 
     // Wait that the configuration is finished before interferring.
     // This makes sure the SPI bus is not driven by both the FPGA

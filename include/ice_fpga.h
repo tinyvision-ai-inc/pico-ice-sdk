@@ -10,7 +10,7 @@ extern "C" {
 
 void ice_fpga_init(uint8_t frequency_mhz);
 bool ice_fpga_start(void);
-void ice_fpga_halt(void);
+void ice_fpga_stop(void);
 
 #ifdef __cplusplus
 }

@@ -16,14 +16,13 @@ int main(void) {
     board_init();
     tusb_init();
 
-    // Init LEDs
+    // Init the LEDs
     ice_led_init();
 
-    // Init FPGA
-    ice_spi_release_bus();
+    // Init the FPGA
+    ice_spi_init();
     ice_fpga_init(48);
     ice_fpga_start();
-    ice_spi_init();
 
     // Run USB task
     for (bool sck;;) {

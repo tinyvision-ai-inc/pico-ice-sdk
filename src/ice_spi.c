@@ -66,7 +66,7 @@ static uint8_t transfer_byte(uint8_t tx)
 
 void ice_spi_chip_select(uint8_t csn_pin)
 {
-    // Request the bus
+    // Drive the bus, going out of high-impedance mode
     gpio_put(ICE_DEFAULT_SPI_SCK_PIN, false);
     gpio_put(ICE_DEFAULT_SPI_TX_PIN, true);
     gpio_set_dir(ICE_DEFAULT_SPI_SCK_PIN, GPIO_OUT);
@@ -80,15 +80,13 @@ void ice_spi_chip_select(uint8_t csn_pin)
 
 void ice_spi_chip_deselect(uint8_t csn_pin)
 {
-    gpio_put(csn_pin, false);
-    sleep_us(1);
+    // Terminate the transaction
     gpio_put(csn_pin, true);
-    sleep_us(1);;
 
-    // Release the bus including CSN
+    // Release the bus by putting it high-impedance mode
+    gpio_set_dir(csn_pin, GPIO_IN);
     gpio_set_dir(ICE_DEFAULT_SPI_SCK_PIN, GPIO_IN);
     gpio_set_dir(ICE_DEFAULT_SPI_TX_PIN, GPIO_IN);
-    gpio_set_dir(csn_pin, GPIO_IN);
 }
 
 static void prepare_transfer(void (*callback)(volatile void *), void *context)
@@ -157,12 +155,4 @@ void ice_spi_write_blocking(uint8_t const *buf, size_t len)
 {
     ice_spi_write_async(buf, len, NULL, NULL);
     ice_spi_await_async_completion();
-}
-
-void ice_spi_request_bus(void)
-{
-}
-
-void ice_spi_release_bus(void)
-{
 }

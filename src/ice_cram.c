@@ -78,7 +78,7 @@ static void wait_idle() {
 
 void ice_cram_open(void) {
     // Hold FPGA in reset before doing anything with SPI bus.
-    ice_fpga_halt();
+    ice_fpga_stop();
 
     state_machine_init();
 
