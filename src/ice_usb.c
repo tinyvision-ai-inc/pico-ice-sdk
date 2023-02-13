@@ -148,7 +148,7 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
         ice_spi_init();
 
         if (alt == 0) {
-            //ice_cram_open();
+            ice_cram_open();
         }
         if (alt == 1) {
             ice_flash_init();
@@ -159,7 +159,7 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
 
     for (uint32_t offset = 0; offset < length; offset += ICE_FLASH_PAGE_SIZE) {
         if (alt == 0) {
-            //ice_cram_write(data, length);
+            ice_cram_write(data, length);
         }
         if (alt == 1) {
             if ((dest_addr + offset) % ICE_FLASH_SECTOR_SIZE == 0) {
@@ -181,7 +181,7 @@ void tud_dfu_manifest_cb(uint8_t alt) {
     assert(dfu_download_pending);
     dfu_download_pending = false;
     if (alt == 0) {
-        //fpga_done = ice_cram_close();
+        fpga_done = ice_cram_close();
     }
     if (alt == 1) {
         fpga_done = ice_fpga_start();

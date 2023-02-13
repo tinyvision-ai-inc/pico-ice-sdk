@@ -1,17 +1,22 @@
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 #include "hardware/gpio.h"
-#include "hardware/pio.h"
 #include "pico/time.h"
-#include "ice_fpga.h"
 #include "ice_cram.h"
-#include "ice_cram.pio.h"
+#include "ice_fpga.h"
 #include "ice_spi.h"
+
+static const uint8_t zero = 0x00;
+
+#if 0 // TODO generalize the PIO SPI driver as a separate library
+#include "hardware/pio.h"
+#include "ice_cram.pio.h"
 
 static PIO pio;
 static int sm;
 static uint offset;
 static const int clk_div = 30;  // 1Mbit/sec for debugging, could be much faster
-
-#if 0 // TODO: enable general-purpose PIO-based SPI driver with swapped TX/RX globally
 
 static bool try_add_program(PIO try_pio) {
     if (!pio_can_add_program(try_pio, &ice_cram_program)) {
@@ -85,40 +90,29 @@ static void wait_idle(void) {
 
 #endif
 
+// Datasheet iCE40 Programming Configuration - 8.1. sysCONFIG Pins
 void ice_cram_open(void) {
     // Hold FPGA in reset before doing anything with SPI bus.
     ice_fpga_stop();
-
-    state_machine_init();
 
     // SPI_SS low signals FPGA to receive bitstream.
     gpio_init(ICE_FLASH_SPI_CSN_PIN);
     gpio_put(ICE_FLASH_SPI_CSN_PIN, false);
     gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_OUT);
 
-    // Bring FPGA out of reset after at least 200ns.
+    // The FPGA can be brought out of reset after at least 200ns.
     busy_wait_us(2);
+
     ice_fpga_start();
 
     // At least 1200us for FPGA to clear internal configuration memory.
     busy_wait_us(1300);
 
-    // SPI_SS high for 8 SPI_SCLKs
-    gpio_put(ICE_FLASH_SPI_CSN_PIN, true);
-    put_byte(0);
-    wait_idle();
-    gpio_put(ICE_FLASH_SPI_CSN_PIN, false);
-}
-
-bool ice_cram_write(const uint8_t* bitstream, uint32_t size) {
-    for (uint32_t i = 0; i < size; ++i) {
-        put_byte(bitstream[i]);
-    }
+    // SPI_SS high for 8 SPI_SCLKs: not calling ice_spi_select() here
+    ice_spi_write_blocking(&zero, 1);
 }
 
 bool ice_cram_close(void) {
-    wait_idle();
-
     // Bring SPI_SS high at end of bitstream and leave it pulled up.
     gpio_put(ICE_FLASH_SPI_CSN_PIN, true);
     sleep_us(1);
@@ -127,7 +121,7 @@ bool ice_cram_close(void) {
 
     // Output dummy bytes. CDONE should go high within 100 SCLKs or there was an error with the bitstream.
     for (int i = 0; i < 13; ++i) {
-        put_byte(0);
+        ice_spi_write_blocking(&zero, 1);
         if (gpio_get(ICE_FPGA_CDONE_PIN)) {
             break;
         }
@@ -135,11 +129,13 @@ bool ice_cram_close(void) {
 
     // At least another 49 SCLK cycles once CDONE goes high.
     for (int i = 0; i < 7; ++i) {
-        put_byte(0);
+        ice_spi_write_blocking(&zero, 1);
     }
 
-    wait_idle();
-    state_machine_deinit();
-
     return gpio_get(ICE_FPGA_CDONE_PIN);
+}
+
+void ice_cram_write(const uint8_t *buf, size_t len)
+{
+    ice_spi_write_blocking(buf, len);
 }

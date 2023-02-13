@@ -4,6 +4,7 @@ target_sources(pico_ice_sdk INTERFACE
     ice_spi.c
     ice_flash.c
     ice_led.c
+    ice_cram.c
 )
 target_include_directories(pico_ice_sdk INTERFACE
     ../include
@@ -18,7 +19,7 @@ target_link_libraries(pico_ice_sdk INTERFACE
 )
 
 add_library(pico_ice_usb INTERFACE)
-target_sources(pico_ice_sdk INTERFACE
+target_sources(pico_ice_usb INTERFACE
     ice_usb.c
 )
 target_include_directories(pico_ice_sdk INTERFACE

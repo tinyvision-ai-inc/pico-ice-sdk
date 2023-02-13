@@ -72,7 +72,7 @@ void ice_spi_chip_select(uint8_t csn_pin)
     gpio_set_dir(ICE_DEFAULT_SPI_SCK_PIN, GPIO_OUT);
     gpio_set_dir(ICE_DEFAULT_SPI_TX_PIN, GPIO_OUT);
 
-    // Assert CSN for to select the chip
+    // Start an SPI transaction
     gpio_put(csn_pin, false);
     gpio_set_dir(csn_pin, GPIO_OUT);
     sleep_us(1);

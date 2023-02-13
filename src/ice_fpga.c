@@ -19,17 +19,13 @@ void ice_fpga_init(uint8_t freq_mhz)
 
 void ice_fpga_stop(void)
 {
-    ice_led_red(false);
     gpio_put(ICE_FPGA_CRESET_B_PIN, false);
     gpio_set_dir(ICE_FPGA_CRESET_B_PIN, GPIO_OUT);
 }
 
-/*
- * Datasheet "iCE40 Programming Configuration" > "3.1. Mode Selection"
- */
+// Datasheet iCE40 Programming Configuration - 3.1. Mode Selection
 bool ice_fpga_start(void)
 {
-    ice_led_red(true);
     gpio_put(ICE_FPGA_CRESET_B_PIN, true);
     gpio_set_dir(ICE_FPGA_CRESET_B_PIN, GPIO_OUT);
 
