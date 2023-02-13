@@ -4,17 +4,24 @@
 #include "ice_fpga.h"
 #include "ice_cram.h"
 #include "ice_cram.pio.h"
+#include "ice_spi.h"
 
 static PIO pio;
 static int sm;
 static uint offset;
 static const int clk_div = 30;  // 1Mbit/sec for debugging, could be much faster
 
+#if 0 // TODO: enable general-purpose PIO-based SPI driver with swapped TX/RX globally
+
 static bool try_add_program(PIO try_pio) {
-    if (!pio_can_add_program(try_pio, &ice_cram_program)) return false;
+    if (!pio_can_add_program(try_pio, &ice_cram_program)) {
+        return false;
+    }
 
     sm = pio_claim_unused_sm(try_pio, false);
-    if (sm < 0) return false;
+    if (sm < 0) {
+        return false;
+    }
 
     pio = try_pio;
     offset = pio_add_program(pio, &ice_cram_program);
@@ -22,7 +29,7 @@ static bool try_add_program(PIO try_pio) {
     return true;
 }
 
-static void state_machine_init() {
+static void state_machine_init(void) {
     // Try to fit the program into either PIO bank
     if (!try_add_program(pio1)) {
         if (!try_add_program(pio0)) {
@@ -46,7 +53,7 @@ static void state_machine_init() {
     pio_gpio_init(pio, ICE_FLASH_SPI_SCK_PIN);
 }
 
-static void state_machine_deinit() {
+static void state_machine_deinit(void) {
     pio_sm_set_enabled(pio, sm, false);
     pio_sm_set_consecutive_pindirs(pio, sm, ICE_FLASH_SPI_TX_PIN, 1, false);
     pio_sm_set_consecutive_pindirs(pio, sm, ICE_FLASH_SPI_SCK_PIN, 1, false);
@@ -60,7 +67,7 @@ static void put_byte(uint8_t data) {
     pio_sm_put_blocking(pio, sm, data << 24);
 }
 
-static void wait_idle() {
+static void wait_idle(void) {
     // Wait until the last byte has been pulled from the FIFO.
     while (!pio_sm_is_tx_fifo_empty(pio, sm)) {
         tight_loop_contents();
@@ -75,6 +82,8 @@ static void wait_idle() {
         tight_loop_contents();
     }
 }
+
+#endif
 
 void ice_cram_open(void) {
     // Hold FPGA in reset before doing anything with SPI bus.
@@ -119,7 +128,9 @@ bool ice_cram_close(void) {
     // Output dummy bytes. CDONE should go high within 100 SCLKs or there was an error with the bitstream.
     for (int i = 0; i < 13; ++i) {
         put_byte(0);
-        if (gpio_get(ICE_FPGA_CDONE_PIN)) break;
+        if (gpio_get(ICE_FPGA_CDONE_PIN)) {
+            break;
+        }
     }
 
     // At least another 49 SCLK cycles once CDONE goes high.
