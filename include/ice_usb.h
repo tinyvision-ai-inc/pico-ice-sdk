@@ -15,10 +15,10 @@
 #define CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN \
     + TUD_CDC_DESC_LEN    * CFG_TUD_CDC \
     + TUD_MSC_DESC_LEN    * CFG_TUD_MSC \
-    + TUD_DFU_DESC_LEN(CFG_TUD_DFU_ALT) \
     + TUD_HID_DESC_LEN    * CFG_TUD_HID \
     + TUD_MIDI_DESC_LEN   * CFG_TUD_MIDI \
-    + TUD_VENDOR_DESC_LEN * CFG_TUD_VENDOR)
+    + TUD_VENDOR_DESC_LEN * CFG_TUD_VENDOR \
+    + TUD_DFU_DESC_LEN(CFG_TUD_DFU_ALT))
 
 // Generated at random for the pico-ice as advised by https://github.com/microsoft/uf2/
 #define ICE_UF2_FAMILY_ID 0x792e7263

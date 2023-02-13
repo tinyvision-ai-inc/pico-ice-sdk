@@ -10,8 +10,7 @@
 #include "ice_spi.h"
 #include "tinyuf2/board_api.h"
 
-int main(void)
-{
+int main(void) {
     // Init USB
     stdio_init_all();
     board_init();
@@ -19,16 +18,15 @@ int main(void)
 
     // Init LEDs
     ice_led_init();
-    ice_led_red(true);
-    ice_led_green(true);
-    ice_led_blue(true);
 
     // Init FPGA
-    ice_fpga_init(48);
     ice_spi_release_bus();
+    ice_fpga_init(48);
     ice_fpga_start();
+    ice_spi_init();
 
-    for (;;) {
+    // Run USB task
+    for (bool sck;;) {
         tud_task();
     }
 

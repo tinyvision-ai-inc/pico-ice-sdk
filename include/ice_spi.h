@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+void ice_spi_init(void);
 void ice_spi_chip_select(uint8_t csn_pin);
 void ice_spi_chip_deselect(uint8_t csn_pin);
 void ice_spi_write_async(uint8_t const *buf_w, size_t len, void (*callback)(volatile void *), void *context);

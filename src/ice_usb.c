@@ -51,7 +51,7 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
     static uint16_t utf16[32];
     uint8_t len;
 
-    (void) langid;
+    (void)langid;
 
     // Assign the SN using the unique flash id
     if (!usb_serial_number[0]) {
@@ -133,6 +133,7 @@ void ice_usb_cdc_to_uart1(uint8_t cdc_num) {
 // Application return timeout in milliseconds (bwPollTimeout) for the next download/manifest operation.
 // During this period, USB host won't try to communicate with us.
 uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state) {
+    return 0; // Request we are polled in 1ms
 }
 
 // Invoked when received DFU_DNLOAD (wLength>0) following by DFU_GETSTATUS (state=DFU_DNBUSY) requests
@@ -141,6 +142,11 @@ uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state) {
 void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, uint16_t length) {
     if (!dfu_download_pending) {
         dfu_download_pending = true;
+
+        // make sure the RP2040 have full access to the bus
+        ice_fpga_halt();
+        ice_spi_init();
+
         if (alt == 0) {
             //ice_cram_open();
         }
@@ -170,16 +176,16 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
 // Application can do checksum, or actual flashing if buffered entire image previously.
 // Once finished flashing, application must call tud_dfu_finish_flashing()
 void tud_dfu_manifest_cb(uint8_t alt) {
+    bool fpga_done;
+
     assert(dfu_download_pending);
     dfu_download_pending = false;
-
-    bool fpga_done;
     if (alt == 0) {
         //fpga_done = ice_cram_close();
     }
     if (alt == 1) {
-        ice_spi_release_bus();
         ice_fpga_halt();
+        ice_spi_release_bus();
         fpga_done = ice_fpga_start();
     }
 
