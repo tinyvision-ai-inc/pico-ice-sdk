@@ -22,13 +22,12 @@
  * SOFTWARE.
  */
 
+#include <stdio.h>
 #include "pico/stdlib.h"
-#include "pico/stdio.h"
 #include "boards/pico_ice.h"
-#include "ice_sdk.h"
+#include "ice_spi.h"
 #include "ice_usb.h"
 #include "ice_flash.h"
-#include "ice_fpga.h"
 
 #define MY_BASE_ADDRESS 0x00000
 
@@ -43,15 +42,14 @@ static inline void memdump(uint8_t const *buf, size_t sz) {
 }
 
 int main(void) {
-    uint8_t buf_r[ICE_FLASH_PAGE_SIZE] = {0}, buf_w[ICE_FLASH_PAGE_SIZE] = {0};
-
-    // Let the FPGA boot up from flash
-    ice_sdk_init();
+    uint8_t buf_r[ICE_FLASH_PAGE_SIZE] = {0};
+    uint8_t buf_w[ICE_FLASH_PAGE_SIZE] = {0};
 
     // Enable USB-UART #0 output
     stdio_init_all();
 
     // Booted up, now take control of the Flash
+    ice_spi_init();
     ice_flash_init();
 
     // Write data: known pattern, not very random!
