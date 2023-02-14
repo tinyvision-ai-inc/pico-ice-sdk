@@ -1,5 +1,6 @@
 #pragma once
 #include "tusb.h"
+#include "tusb_config.h"
 #include "pico/unique_id.h"
 
 // Predefined macros to avoid repetitive

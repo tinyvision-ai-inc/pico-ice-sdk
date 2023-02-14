@@ -1,11 +1,11 @@
-#include "pico/stdlib.h"
-#include "hardware/sync.h"
-#include "boards/pico_ice.h"
-#include "ice_spi.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <assert.h>
+#include "hardware/sync.h"
+#include "pico/stdlib.h"
+#include "boards/pico_ice.h"
+#include "ice_spi.h"
 
 volatile bool g_transfer_done = true;
 volatile void (*g_async_callback)(volatile void *);

@@ -1,6 +1,7 @@
 #include "pico/stdio.h"
 #include "pico/stdlib.h"
 #include "hardware/structs/spi.h"
+#include "boards/pico_ice.h"
 #include "ice_spi.h"
 #include "ice_flash.h"
 

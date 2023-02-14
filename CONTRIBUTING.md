@@ -2,7 +2,7 @@ Required:
 - Contributions go to `develop` rather than `main` or `master`
 
 Appreciated:
-- 4 spaces indentation
+- 4 spaces indents
 - `if (...) { single_statement(); }` always with braces
 - `function() {` with the brace on the same line
 - `//` comments everywhere

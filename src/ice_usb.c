@@ -1,6 +1,7 @@
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
 #include "hardware/watchdog.h"
+#include "boards/pico_ice.h"
 #include "ice_usb.h"
 #include "ice_flash.h"
 #include "ice_cram.h"

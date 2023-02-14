@@ -1,6 +1,7 @@
 #include "hardware/clocks.h"
 #include "hardware/gpio.h"
 #include "pico/stdlib.h"
+#include "boards/pico_ice.h"
 #include "ice_fpga.h"
 
 void ice_fpga_init(uint8_t freq_mhz)

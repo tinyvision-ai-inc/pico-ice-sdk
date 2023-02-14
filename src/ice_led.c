@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 #include "hardware/gpio.h"
+#include "boards/pico_ice.h"
 #include "ice_led.h"
 
 /*

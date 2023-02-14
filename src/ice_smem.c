@@ -4,6 +4,7 @@
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
 #include "hardware/sync.h"
+#include "boards/pico_ice.h"
 #include "ice_smem.h"
 
 #define CMD_CHIP_ERASE          0xC7
