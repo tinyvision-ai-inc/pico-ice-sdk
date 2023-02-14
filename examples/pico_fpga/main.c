@@ -25,25 +25,20 @@
 #include "pico/stdlib.h"
 #include "pico/stdio.h"
 #include "boards/pico_ice.h"
-#include "tinyuf2/board_api.h"
 #include "ice_fpga.h"
 #include "ice_flash.h"
-#include "ice_usb.h"
 #include "ice_led.h"
 #include "ice_spi.h"
 
 int main(void) {
-    tusb_init();
-    stdio_init_all();
     ice_led_init();
     ice_spi_init();
     ice_fpga_init(48);
 
     ice_fpga_start();
 
-    for (bool sck;;) {
-        tud_task();
-        printf("hello world\r\n");
+    while (true) {
+        // let the FPGA run
     }
 
     return 0;
