@@ -14,6 +14,5 @@ add_executable(pico_blinky
 )
 target_link_libraries(pico_blinky
     pico_ice_sdk
-    pico_stdio_usb
 )
 pico_add_extra_outputs(pico_blinky)

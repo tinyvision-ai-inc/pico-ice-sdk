@@ -25,7 +25,7 @@
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
 #include "hardware/watchdog.h"
-#include "tusb_config.h"
+#include "tusb.h"
 #include "boards/pico_ice.h"
 #include "ice_usb.h"
 #include "ice_flash.h"
@@ -37,8 +37,6 @@
 #include "tinyuf2/board_api.h"
 
 char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
-
-void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t);
 
 const tusb_desc_device_t tud_desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
@@ -111,6 +109,10 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
     return utf16;
 }
 
+#if CFG_TUD_CDC
+
+void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t);
+
 void tud_cdc_rx_cb(uint8_t itf) {
     if (tud_cdc_rx_cb_table[CFG_TUD_CDC] != NULL) {
         tud_cdc_rx_cb_table[CFG_TUD_CDC](itf);
@@ -153,6 +155,10 @@ void ice_usb_cdc_to_uart0(uint8_t cdc_num) {
 void ice_usb_cdc_to_uart1(uint8_t cdc_num) {
     cdc_to_uart(cdc_num, uart1);
 }
+
+#endif // CFG_TUD_CDC
+
+#if CFG_TUD_DFU
 
 // Invoked right before tud_dfu_download_cb() (state=DFU_DNBUSY) or tud_dfu_manifest_cb() (state=DFU_MANIFEST) Application return timeout in milliseconds (bwPollTimeout) for the next download/manifest operation.
 // During this period, USB host won't try to communicate with us.
@@ -216,3 +222,5 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
 void tud_dfu_detach_cb(void) {
     watchdog_reboot(0, 0, 0);
 }
+
+#endif // CFG_TUD_DFU

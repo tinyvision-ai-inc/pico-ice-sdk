@@ -1,21 +1,22 @@
 cmake_minimum_required(VERSION 3.13)
 
-set(PICO_SDK_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../pico-sdk)
+set(PICO_SDK_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../pico-sdk)
 include(pico_sdk_import.cmake)
 
-project(my_firmware C CXX ASM)
+project(pico_blinky_cplusplus C CXX ASM)
 
 pico_sdk_init()
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/.. pico-ice-sdk)
-pico_add_extra_outputs(my_firmware)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../.. pico-ice-sdk)
 
-add_executable(firmware
-    main.c
+add_executable(pico_blinky_cplusplus
+    main.cpp
 )
-
-target_link_libraries(firmware
+target_link_libraries(pico_blinky_cplusplus
     pico_ice_sdk
-    pico_stdio_usb
+    pico_ice_usb
 )
-
+target_include_directories(pico_blinky_cplusplus PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}
+)
+pico_add_extra_outputs(pico_blinky_cplusplus)
