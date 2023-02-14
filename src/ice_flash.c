@@ -40,24 +40,6 @@
 
 #define FLASH_STATUS_BUSY_MASK       0x01
 
-void ice_flash_init(void) {
-    // Setup the CSN pin to GPIO mode for software control
-    gpio_init(ICE_FLASH_SPI_CSN_PIN);
-    gpio_put(ICE_FLASH_SPI_CSN_PIN, true);
-    gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_OUT);
-
-    // Flash might be asleep as a successful FPGA boot will put it to sleep as the last command!
-    ice_flash_wakeup();
-}
-
-void ice_flash_enable_write(void) {
-    uint8_t cmds[] = { FLASH_CMD_ENABLE_WRITE };
-
-    ice_spi_chip_select(ICE_FLASH_SPI_CSN_PIN);
-    ice_spi_write_blocking(cmds, sizeof cmds);
-    ice_spi_chip_deselect(ICE_FLASH_SPI_CSN_PIN);
-}
-
 static void ice_flash_wait(void) {
     uint8_t cmds[] = { FLASH_CMD_STATUS, 0 };
     uint8_t buf[2];
@@ -68,6 +50,14 @@ static void ice_flash_wait(void) {
         ice_spi_read_blocking(0x00, buf, sizeof(buf));
         ice_spi_chip_deselect(ICE_FLASH_SPI_CSN_PIN);
     } while (buf[1] & FLASH_STATUS_BUSY_MASK);
+}
+
+static void ice_flash_enable_write(void) {
+    uint8_t cmds[] = { FLASH_CMD_ENABLE_WRITE };
+
+    ice_spi_chip_select(ICE_FLASH_SPI_CSN_PIN);
+    ice_spi_write_blocking(cmds, sizeof cmds);
+    ice_spi_chip_deselect(ICE_FLASH_SPI_CSN_PIN);
 }
 
 void ice_flash_erase_sector(uint32_t addr) {
@@ -138,4 +128,14 @@ void ice_flash_sleep(void) {
     ice_spi_chip_deselect(ICE_FLASH_SPI_CSN_PIN);
 
     ice_flash_wait();
+}
+
+void ice_flash_init(void) {
+    // Setup the CSN pin to GPIO mode for software control
+    gpio_init(ICE_FLASH_SPI_CSN_PIN);
+    gpio_put(ICE_FLASH_SPI_CSN_PIN, true);
+    gpio_set_dir(ICE_FLASH_SPI_CSN_PIN, GPIO_OUT);
+
+    // Flash might be asleep as a successful FPGA boot will put it to sleep as the last command!
+    ice_flash_wakeup();
 }

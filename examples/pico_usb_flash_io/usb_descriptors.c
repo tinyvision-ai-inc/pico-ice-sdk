@@ -32,7 +32,7 @@ enum {
 
 uint8_t const tud_desc_configuration[CONFIG_TOTAL_LEN] = {
     TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, 500/*mA*/),
-    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC0, STRID_CDC+0, EPIN+1, 8, EPOUT+2, EPIN+2, 64)
+    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC0, STRID_CDC+0, EPIN+1, 8, EPOUT+2, EPIN+2, 64),
 };
 
 char const *tud_string_desc[STRID_NUM_TOTAL] = {
