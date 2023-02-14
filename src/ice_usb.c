@@ -1,13 +1,37 @@
+/*
+ * MIT License
+ * 
+ * Copyright (c) 2023 tinyVision.ai
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
 #include "hardware/watchdog.h"
+#include "tusb_config.h"
 #include "boards/pico_ice.h"
 #include "ice_usb.h"
 #include "ice_flash.h"
 #include "ice_cram.h"
 #include "ice_spi.h"
 #include "ice_fpga.h"
-#include "tusb_config.h"
 
 #include "tinyuf2/uf2.h"
 #include "tinyuf2/board_api.h"
@@ -130,8 +154,7 @@ void ice_usb_cdc_to_uart1(uint8_t cdc_num) {
     cdc_to_uart(cdc_num, uart1);
 }
 
-// Invoked right before tud_dfu_download_cb() (state=DFU_DNBUSY) or tud_dfu_manifest_cb() (state=DFU_MANIFEST)
-// Application return timeout in milliseconds (bwPollTimeout) for the next download/manifest operation.
+// Invoked right before tud_dfu_download_cb() (state=DFU_DNBUSY) or tud_dfu_manifest_cb() (state=DFU_MANIFEST) Application return timeout in milliseconds (bwPollTimeout) for the next download/manifest operation.
 // During this period, USB host won't try to communicate with us.
 uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state) {
     return 0; // Request we are polled in 1ms
@@ -173,10 +196,8 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
     tud_dfu_finish_flashing(DFU_STATUS_OK);
 }
 
-// Invoked when download process is complete, received DFU_DNLOAD (wLength=0) following by DFU_GETSTATUS (state=Manifest)
-// Application can do checksum, or actual flashing if buffered entire image previously.
-// Once finished flashing, application must call tud_dfu_finish_flashing()
-void tud_dfu_manifest_cb(uint8_t alt) {
+// Invoked when download process is complete, received DFU_DNLOAD (wLength=0) following by DFU_GETSTATUS (state=Manifest) Application can do checksum, or actual flashing if buffered entire image previously.
+// Once finished flashing, application must call tud_dfu_finish_flashing() void tud_dfu_manifest_cb(uint8_t alt) {
     bool fpga_done;
 
     assert(dfu_download_pending);

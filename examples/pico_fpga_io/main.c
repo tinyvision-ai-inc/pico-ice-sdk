@@ -1,12 +1,33 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2023 tinyVision.ai
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include "pico/stdlib.h"
 #include "pico/stdio.h"
-
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
-
 #include "boards/pico_ice.h"
-
 #include "ice_usb.h"
 #include "ice_sdk.h"
 #include "ice_fpga.h"
@@ -15,27 +36,23 @@
 #define DATA_LEN 8
 #define START_ADDR 0xdead
 
-int main() {
+int main(void) {
     ice_sdk_init();
     stdio_init_all();
 
     ice_init();
     ice_comm_init();
 
-    // Dont steal the RGB LED pins from the FPGA
-    gpio_set_dir(ICE_LED_RED_PIN, GPIO_IN);
-    gpio_set_dir(ICE_LED_GREEN_PIN, GPIO_IN);
-    gpio_set_dir(ICE_LED_BLUE_PIN, GPIO_IN);
+    ice_led_init()
 
     ice_init_clock(12); // Setup the clock to the FPGA
     ice_reset(); // Issue a good reset to the FPGA, check if it came up
 
-    while (1)
-    {
+    while (1) {
         tud_task();
     }
-    
-/*
+
+#if 0
     // Example of writing/reading the FPGA SPI port:
     uint8_t write_data[DATA_LEN];
     uint8_t read_data[DATA_LEN];
@@ -48,5 +65,5 @@ int main() {
         ice_comm_write(START_ADDR, write_data, sizeof(write_data));
         ice_comm_read(read_data, START_ADDR, sizeof(read_data));
     }
-*/
+#endif
 }

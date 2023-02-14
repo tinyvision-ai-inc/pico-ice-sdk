@@ -6,13 +6,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
-
 #include "boards/pico_ice.h"
 #include "libuf2.h"
-#include "uf2.h"
 
-void bin2uf2(FILE *in, FILE *out, uint32_t targetAddr, uint32_t familyID)
-{
+void bin2uf2(FILE *in, FILE *out, uint32_t targetAddr, uint32_t familyID) {
     UF2_Block uf2 = { .targetAddr = targetAddr, .flags = UF2_FLAG_FAMILYID_PRESENT, .reserved = familyID };
 
     // compute the number of blocks in the input file, must be seekable
@@ -29,23 +26,22 @@ void bin2uf2(FILE *in, FILE *out, uint32_t targetAddr, uint32_t familyID)
         uf2_write_block(&uf2, out);
     }
 
-    if (ferror(in))
+    if (ferror(in)) {
         uf2_fatal("reading binary data in");
+    }
 }
 
-void usage(char const *arg0)
-{
+void usage(char const *arg0) {
     fprintf(stderr, "usage: %s [-f familyID] [-o file.uf2] file.bin\n", arg0);
     fprintf(stderr, "usage: %s [-f familyID] [-o file.uf2] [0x00000000 file.bin]...\n", arg0);
     exit(1);
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     char const *arg0 = *argv;
     FILE *out = stdout;
     FILE *in;
-    uint32_t familyID = ICE_UF2_FAMILY_ID;
+    uint32_t familyID = UF2_DEFAULT_FAMILY_ID;
     char *p;
 
     arg0 = *argv;
@@ -91,14 +87,16 @@ int main(int argc, char **argv)
         fprintf(stderr, "addr=%s file=%s\n", argv[0], argv[1]);
 
         targetAddr = strtoul(argv[0], &p, 0);
-        if (*p != '\0')
+        if (*p != '\0') {
             uf2_fatal("invalid targetAddr number format");
+        }
 
         if (strcmp(argv[1], "-") == 0) {
             in = stdin;
         } else {
-            if ((in = fopen(argv[1], "r")) == NULL)
+            if ((in = fopen(argv[1], "r")) == NULL) {
                 uf2_fatal(argv[1]);
+            }
         }
         bin2uf2(in, out, targetAddr, familyID);
     }

@@ -1,8 +1,30 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2023 tinyVision.ai
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include "pico/stdio.h"
 #include "pico/stdlib.h"
-
 #include "boards/pico_ice.h"
-
 #include "ice_flash.h"
 #include "ice_sdk.h"
 #include "ice_usb.h"
@@ -24,13 +46,16 @@ static int repl_getchar(void)
     }
 
     // busy-wait with a slow delay: this is for interactive I/O, no need to be fast
-    while ((c = getchar_timeout_us(10000)) == PICO_ERROR_TIMEOUT)
+    while ((c = getchar_timeout_us(10000)) == PICO_ERROR_TIMEOUT) {
         // call tud_task() since we are blocking, similar to preemptive multitasking
         tud_task();
-    if (c == '\r' || c == '\n')
+    }
+
+    if (c == '\r' || c == '\n') {
         printf("\r\n");
-    else
+    } else {
         putchar(c);
+    }
     return c;
 }
 
@@ -52,7 +77,7 @@ static inline bool repl_parse_error(char *msg, char c)
 
 static bool repl_expect(char *str)
 {
-    for (char *s = str; *s != '\0'; s++)
+    for (char *s = str; *s != '\0'; s++);
     return true;
 }
 
@@ -83,11 +108,13 @@ static inline bool repl_parse_u32(uint32_t *u32)
     int c;
 
     *u32 = 0;
-    for (uint8_t u; xdigit(&u, c = repl_getchar()); *u32 = *u32 << 4 | u)
+    for (uint8_t u; xdigit(&u, c = repl_getchar()); *u32 = *u32 << 4 | u) {
         read_anything = true;
+    }
 
-    if (!read_anything)
-            return repl_parse_error("hex digit", c);
+    if (!read_anything) {
+        return repl_parse_error("hex digit", c);
+    }
 
     // At least one hex digit read, valid input
     return true;
@@ -112,8 +139,9 @@ static void repl_command_write(void)
 {
     uint8_t buf[ICE_FLASH_PAGE_SIZE] = {0};
 
-    if (!repl_parse_newline())
+    if (!repl_parse_newline()) {
         return;
+    }
     ice_flash_program_page(repl_address, buf);
     printf("%s 0x%08X done\r\n", __func__, repl_address);
 }
@@ -122,8 +150,9 @@ static inline void memdump(uint8_t const *buf, size_t sz, uint32_t addr)
 {
     while (sz > 0) {
         printf("0x%08X:", addr);
-        for (size_t n = 0x20; sz > 0 && n > 0; sz--, buf++, n--, addr++)
+        for (size_t n = 0x20; sz > 0 && n > 0; sz--, buf++, n--, addr++) {
             printf(" %02X", *buf);
+        }
         printf("\n");
     }
 }
@@ -132,8 +161,9 @@ static void repl_command_read(void)
 {
     uint8_t buf[ICE_FLASH_PAGE_SIZE] = {0};
 
-    if (!repl_parse_newline())
+    if (!repl_parse_newline()) {
         return;
+    }
     ice_flash_read(repl_address, buf, sizeof buf);
     printf("%s 0x%08X done\r\n", __func__, repl_address);
     memdump(buf, sizeof buf, repl_address);
@@ -141,8 +171,9 @@ static void repl_command_read(void)
 
 static void repl_command_erase(void)
 {
-    if (!repl_parse_newline())
+    if (!repl_parse_newline()) {
         return;
+    }
     ice_flash_erase_sector(repl_address);
     printf("%s 0x%08X done\r\n", __func__, repl_address);
 }
@@ -151,32 +182,36 @@ static void repl_command_zero(void)
 {
     uint8_t buf[ICE_FLASH_PAGE_SIZE] = {0};
 
-    if (!repl_parse_newline())
+    if (!repl_parse_newline()) {
         return;
+    }
     ice_flash_program_page(repl_address, buf);
     printf("%s 0x%08X done\r\n", __func__, repl_address);
 }
 
 static void repl_command_sleep(void)
 {
-    if (!repl_parse_newline())
+    if (!repl_parse_newline()) {
         return;
+    }
     ice_flash_sleep();
     printf("%s done\r\n", __func__);
 }
 
 static void repl_command_wakeup(void)
 {
-    if (!repl_parse_newline())
+    if (!repl_parse_newline()) {
         return;
+    }
     ice_flash_wakeup();
     printf("%s done\r\n", __func__);
 }
 
 static void repl_command_init(void)
 {
-    if (!repl_parse_newline())
+    if (!repl_parse_newline()) {
         return;
+    }
     ice_flash_init();
     printf("%s done\r\n", __func__);
 }
@@ -189,10 +224,12 @@ static void repl_set_address(void)
         repl_parse_error("x", c);
         return;
     }
-    if (!repl_parse_u32(&repl_address))
+    if (!repl_parse_u32(&repl_address)) {
         return;
-    if (!repl_parse_newline())
+    }
+    if (!repl_parse_newline()) {
         return;
+    }
 }
 
 static void repl_command_page(void)

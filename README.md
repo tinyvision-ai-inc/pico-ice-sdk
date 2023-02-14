@@ -26,3 +26,25 @@ git -C pico-sdk submodule update --init lib/tinyusb
 
 Then build it like a normal CMake project and upload the `my_firmware.uf2` as described in:
 <https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf>
+
+## Examples
+
+The examples can be built immediately in this repository.
+You will first need to init the `pico-ice` submodule:
+
+```
+git submodule update --init
+git -C pico-sdk submodule update --init lib/tinyusb
+```
+
+And the build any of the example as a normal CMake project:
+
+```
+cd pico_example_dir
+mkdir -p build
+cd build
+cmake ..
+make
+```
+
+This should produce a `.uf2` file to flash onto the pico-ice RP2040 chip.

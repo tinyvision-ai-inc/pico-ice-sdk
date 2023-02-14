@@ -1,7 +1,7 @@
 /*
  * MIT License
- *
- * Copyright (c) 2023 TinyVision.ai Inc.
+ * 
+ * Copyright (c) 2023 tinyVision.ai
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +21,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 #pragma once
+
+#include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void ice_led_init(void);
 void ice_led_red(bool state);
 void ice_led_green(bool state);
 void ice_led_blue(bool state);
+
+#ifdef __cplusplus
+}
+#endif

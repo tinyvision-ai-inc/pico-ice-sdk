@@ -5,6 +5,9 @@
 #include <stdbool.h>
 #include "uf2.h"
 
+// Generated at random for the pico-ice as advised by https://github.com/microsoft/uf2/
+#define UF2_DEFAULT_FAMILY_ID 0x792e7263
+
 #define UF2_PAYLOAD_SIZE 256
 
 #define UF2_FLAG_NOT_MAIN_FLASH            0x00000001

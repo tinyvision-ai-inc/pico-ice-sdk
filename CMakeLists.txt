@@ -53,5 +53,3 @@ target_link_libraries(pico_ice_usb INTERFACE
     tinyusb_board
     tinyusb_device
 )
-
-#add_subdirectory(examples EXCLUDE_FROM_ALL)

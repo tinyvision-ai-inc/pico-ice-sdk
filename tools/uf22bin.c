@@ -3,12 +3,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
-
 #include "uf2.h"
 #include "libuf2.h"
 
-void uf22bin(FILE *in, int fd_out, off_t start_address)
-{
+void uf22bin(FILE *in, int fd_out, off_t start_address) {
     UF2_Block uf2;
     size_t output_len = 0;
 
@@ -28,14 +26,12 @@ void uf22bin(FILE *in, int fd_out, off_t start_address)
     }
 }
 
-void usage(char const *arg0)
-{
+void usage(char const *arg0) {
     fprintf(stderr, "usage: %s [-a 0x01230000] [-o file.bin] [file.uf2]\n", arg0);
     exit(1);
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     char const *arg0 = *argv;
     FILE *in = stdin;
     int out = STDOUT_FILENO;
