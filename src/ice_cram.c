@@ -137,7 +137,7 @@ void ice_cram_open(void) {
     ice_spi_write_blocking(&zero, 1);
 
     // Request the bus access preparing for incoming writes
-    ice_spi_chip_select(ICE_FPGA_SPI_CSN_PIN);
+    ice_spi_chip_select(ICE_FPGA_SPI_CSN_PIN, true);
 }
 
 void ice_cram_write(const uint8_t *buf, size_t len) {

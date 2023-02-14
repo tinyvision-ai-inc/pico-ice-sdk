@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 void ice_spi_init(void);
-void ice_spi_chip_select(uint8_t csn_pin);
+void ice_spi_chip_select(uint8_t csn_pin, bool tx_rx_swapped);
 void ice_spi_chip_deselect(uint8_t csn_pin);
 void ice_spi_write_async(uint8_t const *buf_w, size_t len, void (*callback)(volatile void *), void *context);
 void ice_spi_read_async(uint8_t tx, uint8_t *buf_r, size_t len, void (*callback)(volatile void *), void *context);
