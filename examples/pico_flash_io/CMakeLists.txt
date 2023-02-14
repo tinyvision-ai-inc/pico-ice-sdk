@@ -16,8 +16,10 @@ add_executable(pico_flash_io
 target_link_libraries(pico_flash_io
     pico_ice_sdk
     pico_ice_usb
+    pico_stdio_usb
 )
 target_include_directories(pico_flash_io PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
 )
+pico_enable_stdio_usb(pico_flash_io 1)
 pico_add_extra_outputs(pico_flash_io)

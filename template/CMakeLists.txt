@@ -16,8 +16,10 @@ add_executable(my_firmware
 target_link_libraries(my_firmware
     pico_ice_sdk
     pico_ice_usb
+    pico_stdio_usb
 )
 target_include_directories(my_firmware PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
 )
+pico_enable_stdio_usb(my_firmware 1)
 pico_add_extra_outputs(my_firmware)

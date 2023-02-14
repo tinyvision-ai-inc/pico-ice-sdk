@@ -33,22 +33,17 @@
 #include "ice_spi.h"
 
 int main(void) {
-    // Init USB
-    stdio_init_all();
-    board_init();
     tusb_init();
-
-    // Init the LEDs
+    stdio_init_all();
     ice_led_init();
-
-    // Init the FPGA
     ice_spi_init();
     ice_fpga_init(48);
+
     ice_fpga_start();
 
-    // Run USB task
     for (bool sck;;) {
         tud_task();
+        printf("hello world\r\n");
     }
 
     return 0;

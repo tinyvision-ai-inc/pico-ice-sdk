@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <assert.h>
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
 #include "hardware/watchdog.h"
@@ -113,9 +114,14 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
 
 void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t);
 
-void tud_cdc_rx_cb(uint8_t itf) {
+void tud_cdc_rx_cb(uint8_t cdc_num) {
     if (tud_cdc_rx_cb_table[CFG_TUD_CDC] != NULL) {
-        tud_cdc_rx_cb_table[CFG_TUD_CDC](itf);
+        // dispatch to the handler
+        assert(cdc_num < ARRAY_LENGTH(tud_cdc_rx_cb_table));
+        tud_cdc_rx_cb_table[CFG_TUD_CDC](cdc_num);
+    } else {
+        // discard the output
+        tud_cdc_n_read_char(cdc_num);
     }
 }
 
@@ -203,7 +209,8 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
 }
 
 // Invoked when download process is complete, received DFU_DNLOAD (wLength=0) following by DFU_GETSTATUS (state=Manifest) Application can do checksum, or actual flashing if buffered entire image previously.
-// Once finished flashing, application must call tud_dfu_finish_flashing() void tud_dfu_manifest_cb(uint8_t alt) {
+// Once finished flashing, application must call tud_dfu_finish_flashing()
+void tud_dfu_manifest_cb(uint8_t alt) {
     bool fpga_done;
 
     assert(dfu_download_pending);

@@ -41,10 +41,10 @@
 #define CFG_TUD_MAX_SPEED           OPT_MODE_FULL_SPEED
 
 // Device classes
-#define CFG_TUD_CDC                 2
-#define CFG_TUD_MSC                 1
-#define CFG_TUD_DFU                 1
-#define CFG_TUD_DFU_ALT             2
+#define CFG_TUD_CDC                 1
+#define CFG_TUD_MSC                 0
+#define CFG_TUD_DFU                 0
+#define CFG_TUD_DFU_ALT             0
 #define CFG_TUD_HID                 0
 #define CFG_TUD_MIDI                0
 #define CFG_TUD_VENDOR              0

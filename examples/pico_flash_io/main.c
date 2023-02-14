@@ -41,12 +41,16 @@ static inline void memdump(uint8_t const *buf, size_t sz) {
     printf("\r\n");
 }
 
+#include "ice_led.h" // TODO debug
+
 int main(void) {
     uint8_t buf_r[ICE_FLASH_PAGE_SIZE] = {0};
     uint8_t buf_w[ICE_FLASH_PAGE_SIZE] = {0};
 
-    // Enable USB-UART #0 output
+    // Enable USB-UART 0 output
     stdio_init_all();
+
+    ice_led_init();
 
     // Booted up, now take control of the Flash
     ice_spi_init();
@@ -66,6 +70,10 @@ int main(void) {
         ice_flash_program_page(MY_BASE_ADDRESS, buf_w);
         ice_flash_read(MY_BASE_ADDRESS, buf_r, sizeof buf_r);
         memdump(buf_r, sizeof buf_r);
+
+        ice_led_red(true);
+
+        sleep_ms(10000);
     }
 
     return 0;
