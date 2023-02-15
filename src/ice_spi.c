@@ -45,9 +45,6 @@ volatile static bool g_transfer_done = true;
 volatile static void (*g_async_callback)(volatile void *);
 volatile static void *g_async_context;
 
-static uint8_t g_spi_tx_pin;
-static uint8_t g_spi_rx_pin;
-
 void ice_spi_init(void) {
     // This driver is only focused on one particular SPI bus
     gpio_init(ICE_DEFAULT_SPI_SCK_PIN);
@@ -66,7 +63,7 @@ static uint8_t transfer_byte(uint8_t tx) {
     for (uint8_t i = 0; i < 8; i++) {
         // Update TX and immediately set negative edge.
         gpio_put(ICE_DEFAULT_SPI_SCK_PIN, false);
-        gpio_put(g_spi_tx_pin, tx >> 7);
+        gpio_put(ICE_DEFAULT_SPI_TX_PIN, tx >> 7);
         tx <<= 1;
 
         // stable for a while with clock low
@@ -74,7 +71,7 @@ static uint8_t transfer_byte(uint8_t tx) {
 
         // Sample RX as we set positive edge.
         rx <<= 1;
-        rx |= gpio_get(g_spi_rx_pin);
+        rx |= gpio_get(ICE_DEFAULT_SPI_RX_PIN);
         gpio_put(ICE_DEFAULT_SPI_SCK_PIN, true);
 
         // stable for a while with clock high
@@ -83,21 +80,12 @@ static uint8_t transfer_byte(uint8_t tx) {
     return rx;
 }
 
-void ice_spi_chip_select(uint8_t csn_pin, bool tx_rx_swapped) {
-    // used for device with alternate pinouts in different modes
-    if (tx_rx_swapped) {
-        g_spi_rx_pin = ICE_DEFAULT_SPI_TX_PIN;
-        g_spi_tx_pin = ICE_DEFAULT_SPI_RX_PIN;
-    } else {
-        g_spi_rx_pin = ICE_DEFAULT_SPI_RX_PIN;
-        g_spi_tx_pin = ICE_DEFAULT_SPI_TX_PIN;
-    }
-
+void ice_spi_chip_select(uint8_t csn_pin) {
     // Drive the bus, going out of high-impedance mode
     gpio_put(ICE_DEFAULT_SPI_SCK_PIN, false);
-    gpio_put(g_spi_tx_pin, true);
+    gpio_put(ICE_DEFAULT_SPI_TX_PIN, true);
     gpio_set_dir(ICE_DEFAULT_SPI_SCK_PIN, GPIO_OUT);
-    gpio_set_dir(g_spi_tx_pin, GPIO_OUT);
+    gpio_set_dir(ICE_DEFAULT_SPI_TX_PIN, GPIO_OUT);
 
     // Start an SPI transaction
     gpio_put(csn_pin, false);
@@ -112,7 +100,7 @@ void ice_spi_chip_deselect(uint8_t csn_pin) {
     // Release the bus by putting it high-impedance mode
     gpio_set_dir(csn_pin, GPIO_IN);
     gpio_set_dir(ICE_DEFAULT_SPI_SCK_PIN, GPIO_IN);
-    gpio_set_dir(g_spi_tx_pin, GPIO_IN);
+    gpio_set_dir(ICE_DEFAULT_SPI_TX_PIN, GPIO_IN);
 }
 
 static void prepare_transfer(void (*callback)(volatile void *), void *context) {
