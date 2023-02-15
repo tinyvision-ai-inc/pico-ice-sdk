@@ -41,6 +41,8 @@ int main(void) {
     ice_cram_write(rgb_blink, sizeof(rgb_blink));
     ice_cram_close();
 
+    ice_fpga_start();
+
     while (1);
     return 0;
 }
