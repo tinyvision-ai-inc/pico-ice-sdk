@@ -1,3 +1,8 @@
+## v0.1.0
+
+* (fix) PIO-based CRAM programming works again
+* The bit-banged SPI library does not need any `tx_rx_swapp` parameter anymore.
+
 ## v0.0.0
 
 * (new) USB configuration works,
