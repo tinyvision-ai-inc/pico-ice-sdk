@@ -118,6 +118,8 @@ void ice_spi_chip_deselect(uint8_t csn_pin) {
 static void prepare_transfer(void (*callback)(volatile void *), void *context) {
     uint32_t status;
 
+    ice_spi_await_async_completion();
+
     status = save_and_disable_interrupts();
     g_async_callback = callback;
     g_async_context = context;
