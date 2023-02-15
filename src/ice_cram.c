@@ -1,42 +1,7 @@
-/*
- * MIT License
- * 
- * Copyright (c) 2023 tinyVision.ai
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
 #include "hardware/gpio.h"
+#include "hardware/pio.h"
 #include "pico/time.h"
 #include "boards/pico_ice.h"
-#include "ice_cram.h"
-#include "ice_fpga.h"
-#include "ice_spi.h"
-
-static const uint8_t zero = 0x00;
-
-#if 0 // TODO generalize the PIO SPI driver as a separate library
-
-#include "hardware/pio.h"
 #include "ice_cram.pio.h"
 
 static PIO pio;
@@ -60,7 +25,7 @@ static bool try_add_program(PIO try_pio) {
     return true;
 }
 
-static void state_machine_init(void) {
+static void state_machine_init() {
     // Try to fit the program into either PIO bank
     if (!try_add_program(pio1)) {
         if (!try_add_program(pio0)) {
@@ -69,7 +34,7 @@ static void state_machine_init(void) {
     }
 
     pio_sm_config c = ice_cram_program_get_default_config(offset);
-    sm_config_set_out_pins(&c, ICE_DEFAULT_SPI_TX_PIN, 1);
+    sm_config_set_out_pins(&c, ICE_DEFAULT_SPI_RX_PIN, 1);
     sm_config_set_sideset_pins(&c, ICE_DEFAULT_SPI_SCK_PIN);
     sm_config_set_clkdiv(&c, clk_div);
     sm_config_set_out_shift(&c, false, true, 8);
@@ -77,16 +42,16 @@ static void state_machine_init(void) {
 
     pio_sm_set_enabled(pio, sm, true);
 
-    pio_sm_set_consecutive_pindirs(pio, sm, ICE_DEFAULT_SPI_TX_PIN, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, sm, ICE_DEFAULT_SPI_RX_PIN, 1, true);
     pio_sm_set_consecutive_pindirs(pio, sm, ICE_DEFAULT_SPI_SCK_PIN, 1, true);
 
-    pio_gpio_init(pio, ICE_DEFAULT_SPI_TX_PIN);
+    pio_gpio_init(pio, ICE_DEFAULT_SPI_RX_PIN);
     pio_gpio_init(pio, ICE_DEFAULT_SPI_SCK_PIN);
 }
 
-static void state_machine_deinit(void) {
+static void state_machine_deinit() {
     pio_sm_set_enabled(pio, sm, false);
-    pio_sm_set_consecutive_pindirs(pio, sm, ICE_DEFAULT_SPI_TX_PIN, 1, false);
+    pio_sm_set_consecutive_pindirs(pio, sm, ICE_DEFAULT_SPI_RX_PIN, 1, false);
     pio_sm_set_consecutive_pindirs(pio, sm, ICE_DEFAULT_SPI_SCK_PIN, 1, false);
     pio_remove_program(pio, &ice_cram_program, offset);
     pio_sm_unclaim(pio, sm);
@@ -98,7 +63,7 @@ static void put_byte(uint8_t data) {
     pio_sm_put_blocking(pio, sm, data << 24);
 }
 
-static void wait_idle(void) {
+static void wait_idle() {
     // Wait until the last byte has been pulled from the FIFO.
     while (!pio_sm_is_tx_fifo_empty(pio, sm)) {
         tight_loop_contents();
@@ -114,40 +79,39 @@ static void wait_idle(void) {
     }
 }
 
-#endif
-
-// Datasheet iCE40 Programming Configuration - 8.1. sysCONFIG Pins
 void ice_cram_open(void) {
     // Hold FPGA in reset before doing anything with SPI bus.
-    ice_fpga_stop();
+    gpio_put(ICE_FPGA_CRESET_B_PIN, false);
+
+    state_machine_init();
 
     // SPI_SS low signals FPGA to receive bitstream.
     gpio_init(ICE_FPGA_SPI_CSN_PIN);
     gpio_put(ICE_FPGA_SPI_CSN_PIN, false);
     gpio_set_dir(ICE_FPGA_SPI_CSN_PIN, GPIO_OUT);
 
-    // The FPGA can be brought out of reset after at least 200ns.
+    // Bring FPGA out of reset after at least 200ns.
     busy_wait_us(2);
-    ice_fpga_start();
+    gpio_put(ICE_FPGA_CRESET_B_PIN, true);
 
     // At least 1200us for FPGA to clear internal configuration memory.
     busy_wait_us(1300);
 
-    // Leave SPI_SS high for 8 SPI_SCLKs
-    ice_spi_write_blocking(&zero, 1);
-
-    // Request the bus access preparing for incoming writes
-    ice_spi_chip_select(ICE_FPGA_SPI_CSN_PIN, true);
+    // SPI_SS high for 8 SPI_SCLKs
+    gpio_put(ICE_FPGA_SPI_CSN_PIN, true);
+    put_byte(0);
+    wait_idle();
+    gpio_put(ICE_FPGA_SPI_CSN_PIN, false);
 }
 
-void ice_cram_write(const uint8_t *buf, size_t len) {
-    // CSN is managed by the previous calls
-    ice_spi_write_blocking(buf, len);
+bool ice_cram_write(const uint8_t* bitstream, uint32_t size) {
+    for (uint32_t i = 0; i < size; ++i) {
+        put_byte(bitstream[i]);
+    }
 }
 
 bool ice_cram_close(void) {
-    // Release the SPI bus
-    ice_spi_chip_deselect(ICE_FPGA_SPI_CSN_PIN);
+    wait_idle();
 
     // Bring SPI_SS high at end of bitstream and leave it pulled up.
     gpio_put(ICE_FPGA_SPI_CSN_PIN, true);
@@ -157,7 +121,7 @@ bool ice_cram_close(void) {
 
     // Output dummy bytes. CDONE should go high within 100 SCLKs or there was an error with the bitstream.
     for (int i = 0; i < 13; ++i) {
-        ice_spi_write_blocking(&zero, 1);
+        put_byte(0);
         if (gpio_get(ICE_FPGA_CDONE_PIN)) {
             break;
         }
@@ -165,8 +129,11 @@ bool ice_cram_close(void) {
 
     // At least another 49 SCLK cycles once CDONE goes high.
     for (int i = 0; i < 7; ++i) {
-        ice_spi_write_blocking(&zero, 1);
+        put_byte(0);
     }
+
+    wait_idle();
+    state_machine_deinit();
 
     return gpio_get(ICE_FPGA_CDONE_PIN);
 }

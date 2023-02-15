@@ -20,10 +20,14 @@ target_include_directories(pico_ice_sdk INTERFACE
 target_link_libraries(pico_ice_sdk INTERFACE
     hardware_flash
     hardware_gpio
+    hardware_pio
     hardware_spi
     hardware_uart
     pico_stdlib
     pico_unique_id
+)
+pico_generate_pio_header(pico_ice_sdk
+    ${CMAKE_CURRENT_LIST_DIR}/src/ice_cram.pio
 )
 
 add_library(pico_ice_usb INTERFACE)
