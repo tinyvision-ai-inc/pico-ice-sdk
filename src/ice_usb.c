@@ -39,6 +39,8 @@
 
 char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
 
+#if ICE_USB_USE_DEFAULT_DESCRIPTOR
+
 const tusb_desc_device_t tud_desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
     .bDescriptorType    = TUSB_DESC_DEVICE,
@@ -110,15 +112,19 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
     return utf16;
 }
 
-#if CFG_TUD_CDC
+#endif // TUD_DESCRIPTOR
+
+#if ICE_USB_USE_DEFAULT_CDC && CFG_TUD_CDC
 
 void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t);
 
+#include "ice_led.h"
+
 void tud_cdc_rx_cb(uint8_t cdc_num) {
-    if (tud_cdc_rx_cb_table[CFG_TUD_CDC] != NULL) {
+    if (tud_cdc_rx_cb_table[cdc_num] != NULL) {
         // dispatch to the handler
         assert(cdc_num < ARRAY_LENGTH(tud_cdc_rx_cb_table));
-        tud_cdc_rx_cb_table[CFG_TUD_CDC](cdc_num);
+        tud_cdc_rx_cb_table[cdc_num](cdc_num);
     } else {
         // discard the output
         tud_cdc_n_read_char(cdc_num);
@@ -133,7 +139,9 @@ static void uart_to_cdc(uart_inst_t *uart, uint8_t cdc_num) {
 }
 
 static void cdc_to_uart(uint8_t cdc_num, uart_inst_t *uart) {
+    ice_led_red(true);
     while (tud_cdc_n_available(cdc_num)) {
+        ice_led_green(true);
         uart_putc(uart, tud_cdc_n_read_char(cdc_num));
     }
 }
@@ -162,9 +170,9 @@ void ice_usb_cdc_to_uart1(uint8_t cdc_num) {
     cdc_to_uart(cdc_num, uart1);
 }
 
-#endif // CFG_TUD_CDC
+#endif // ICE_USB_USE_DEFAULT_CDC
 
-#if CFG_TUD_DFU
+#if ICE_USB_USE_DEFAULT_DFU && CFG_TUD_DFU
 
 // Invoked right before tud_dfu_download_cb() (state=DFU_DNBUSY) or tud_dfu_manifest_cb() (state=DFU_MANIFEST) Application return timeout in milliseconds (bwPollTimeout) for the next download/manifest operation.
 // During this period, USB host won't try to communicate with us.
@@ -230,4 +238,4 @@ void tud_dfu_detach_cb(void) {
     watchdog_reboot(0, 0, 0);
 }
 
-#endif // CFG_TUD_DFU
+#endif // ICE_USB_USE_DEFAULT_DFU

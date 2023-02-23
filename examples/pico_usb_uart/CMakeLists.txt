@@ -15,7 +15,7 @@ add_executable(pico_usb_uart
 )
 target_link_libraries(pico_usb_uart
     pico_ice_sdk
-    pico_ice_usb
+    tinyusb_device
 )
 target_include_directories(pico_usb_uart PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
