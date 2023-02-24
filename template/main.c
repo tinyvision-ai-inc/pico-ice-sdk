@@ -18,7 +18,7 @@ int main(void) {
 
     // [...] more setup code here
 
-    for (;;) {
+    while (1) {
         tud_task();
 
         // [...] more application code here

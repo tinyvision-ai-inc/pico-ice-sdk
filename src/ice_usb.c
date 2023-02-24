@@ -170,7 +170,8 @@ void ice_usb_cdc_to_uart1(uint8_t cdc_num) {
 
 #if ICE_USB_USE_DEFAULT_DFU && CFG_TUD_DFU
 
-// Invoked right before tud_dfu_download_cb() (state=DFU_DNBUSY) or tud_dfu_manifest_cb() (state=DFU_MANIFEST) Application return timeout in milliseconds (bwPollTimeout) for the next download/manifest operation.
+// Invoked right before tud_dfu_download_cb() (state=DFU_DNBUSY) or tud_dfu_manifest_cb() (state=DFU_MANIFEST)
+// Application return timeout in milliseconds (bwPollTimeout) for the next download/manifest operation.
 // During this period, USB host won't try to communicate with us.
 uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state) {
     return 0; // Request we are polled in 1ms
