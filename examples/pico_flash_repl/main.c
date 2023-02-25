@@ -24,10 +24,10 @@
 
 #include "pico/stdio.h"
 #include "pico/stdlib.h"
+#include "tusb.h"
 #include "boards/pico_ice.h"
 #include "ice_flash.h"
-#include "ice_sdk.h"
-#include "ice_usb.h"
+#include "ice_fpga.h"
 
 // address to work upon
 uint32_t repl_address;
@@ -244,7 +244,8 @@ static void repl_command_page(void)
 int main(void)
 {
     // Let the FPGA boot up from flash
-    ice_sdk_init();
+    ice_fpga_init(48);
+    ice_fpga_start();
 
     // Enable USB-UART #0 output
     stdio_init_all();

@@ -24,9 +24,9 @@
 
 #include <stdio.h>
 #include "pico/stdlib.h"
+#include "tusb.h"
 #include "boards/pico_ice.h"
 #include "ice_spi.h"
-#include "ice_usb.h"
 #include "ice_flash.h"
 
 #define MY_BASE_ADDRESS 0x00000

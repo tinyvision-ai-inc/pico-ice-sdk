@@ -28,31 +28,21 @@
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
 #include "boards/pico_ice.h"
-#include "ice_usb.h"
-#include "ice_sdk.h"
 #include "ice_fpga.h"
+#include "ice_spi.h"
+#include "ice_led.h"
 #include "ice_comm.h"
 
 #define DATA_LEN 8
 #define START_ADDR 0xdead
 
 int main(void) {
-    ice_sdk_init();
-    stdio_init_all();
+    ice_led_init();
+    ice_fpga_init(48);
+    ice_fpga_start();
 
-    ice_init();
     ice_comm_init();
 
-    ice_led_init()
-
-    ice_init_clock(12); // Setup the clock to the FPGA
-    ice_reset(); // Issue a good reset to the FPGA, check if it came up
-
-    while (1) {
-        tud_task();
-    }
-
-#if 0
     // Example of writing/reading the FPGA SPI port:
     uint8_t write_data[DATA_LEN];
     uint8_t read_data[DATA_LEN];
@@ -65,5 +55,4 @@ int main(void) {
         ice_comm_write(START_ADDR, write_data, sizeof(write_data));
         ice_comm_read(read_data, START_ADDR, sizeof(read_data));
     }
-#endif
 }

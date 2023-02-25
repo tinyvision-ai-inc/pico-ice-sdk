@@ -23,6 +23,7 @@
  */
 
 #include "pico/stdlib.h"
+#include "ice_led.h"
 #include "tusb.h"
 
 #define MAX_REPORT  4
@@ -65,9 +66,9 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, const uint8_
 
             // Output 8-bit key code as short blink for 0 bit, long blink for 1 bit.
             for (int i = 0; i < 8; ++i) {
-                gpio_put(ICE_LED_RED_PIN, false);
+                ice_led_red(false);
                 sleep_ms(key_code & 1 ? 25 : 50);
-                gpio_put(ICE_LED_RED_PIN, true);
+                ice_led_red(true);
                 sleep_ms(50);
 
                 key_code >>= 1;
@@ -79,19 +80,10 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, const uint8_
 }
 
 int main(void) {
-    // Initialize as a USB host.
     tusb_init();
+    ice_led_init();
 
-    // Don't call ice_sdk_init because that would initialize as a USB device.
-    // Instead, initialize individual SDK modules.
-    ice_init();
-
-    gpio_init(ICE_LED_RED_PIN);
-    gpio_put(ICE_LED_RED_PIN, true); // active-low
-    gpio_set_dir(ICE_LED_RED_PIN, GPIO_OUT);
-
-    for (;;) {
-        // Periodically call this to invoke pending TinyUSB callbacks.
+    while (1) {
         tuh_task();
     }
 

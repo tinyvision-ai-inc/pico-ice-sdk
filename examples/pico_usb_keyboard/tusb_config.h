@@ -25,7 +25,6 @@
 #pragma once
 
 #define CFG_TUSB_RHPORT0_MODE       OPT_MODE_HOST
-#define CFG_TUSB_OS                 OPT_OS_NONE
 
 // USB DMA on some MCUs can only access a specific SRAM region with restriction on alignment.
 // Tinyusb use follows macros to declare transferring memory so that they can be put
