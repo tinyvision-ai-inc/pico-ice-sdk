@@ -122,7 +122,7 @@ void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t);
 void tud_cdc_rx_cb(uint8_t cdc_num) {
     if (tud_cdc_rx_cb_table[cdc_num] != NULL) {
         // dispatch to the handler
-        assert(cdc_num < ARRAY_LENGTH(tud_cdc_rx_cb_table));
+        assert(cdc_num < sizeof tud_cdc_rx_cb_table / sizeof *tud_cdc_rx_cb_table);
         tud_cdc_rx_cb_table[cdc_num](cdc_num);
     } else {
         // discard the output
