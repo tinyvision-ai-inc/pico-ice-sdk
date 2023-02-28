@@ -1,6 +1,8 @@
 # pico-ice-sdk
 
-[doc](https://pico-ice.tinyvision.ai/) - [pcb](https://github.com/tinyvision-ai-inc/pico-ice)
+[doc](https://pico-ice.tinyvision.ai/) -
+[pcb](https://github.com/tinyvision-ai-inc/pico-ice) -
+![status](https://github.com/tinyvision-ai-inc/pico-ice-sdk/actions/workflows/main.yml/badge.svg)
 
 This is a library for using the [pico-ice](https://pico-ice.tinyvision.ai/),
 a board combining a Raspberry Pi RP2040 and an Lattice iCE40.
