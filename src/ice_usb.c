@@ -117,8 +117,6 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
 
 void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t);
 
-#include "ice_led.h"
-
 void tud_cdc_rx_cb(uint8_t cdc_num) {
     if (tud_cdc_rx_cb_table[cdc_num] != NULL) {
         // dispatch to the handler
@@ -138,9 +136,7 @@ static void uart_to_cdc(uart_inst_t *uart, uint8_t cdc_num) {
 }
 
 static void cdc_to_uart(uint8_t cdc_num, uart_inst_t *uart) {
-    ice_led_red(true);
     while (tud_cdc_n_available(cdc_num)) {
-        ice_led_green(true);
         uart_putc(uart, tud_cdc_n_read_char(cdc_num));
     }
 }

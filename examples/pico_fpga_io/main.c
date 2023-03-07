@@ -24,14 +24,10 @@
 
 #include "pico/stdlib.h"
 #include "pico/stdio.h"
-#include "hardware/dma.h"
-#include "hardware/gpio.h"
-#include "hardware/spi.h"
 #include "boards/pico_ice.h"
 #include "ice_fpga.h"
 #include "ice_spi.h"
 #include "ice_led.h"
-#include "ice_comm.h"
 
 #define DATA_LEN 8
 #define START_ADDR 0xdead
@@ -41,18 +37,12 @@ int main(void) {
     ice_fpga_init(48);
     ice_fpga_start();
 
-    ice_comm_init();
+    for (uint8_t i = 0;; i++) {
+        uint8_t buffer[1] = { i };
 
-    // Example of writing/reading the FPGA SPI port:
-    uint8_t write_data[DATA_LEN];
-    uint8_t read_data[DATA_LEN];
-    for (uint16_t i = 0; i < DATA_LEN; i++) {
-        write_data[i] = i;
-    }
-
-    for (;;) {
-        tud_task();
-        ice_comm_write(START_ADDR, write_data, sizeof(write_data));
-        ice_comm_read(read_data, START_ADDR, sizeof(read_data));
+        ice_spi_chip_select(ICE_FPGA_SPI_CSN_PIN);
+        ice_spi_write_blocking(buffer, 1);
+        ice_spi_read_blocking(0xFF, buffer, 1);
+        ice_spi_chip_deselect(ICE_FPGA_SPI_CSN_PIN);
     }
 }
