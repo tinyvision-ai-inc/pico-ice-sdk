@@ -5,6 +5,12 @@
 
 int main(void) {
     stdio_init_all();
+    tusb_init();
+
+    // Let the FPGA start and give it a clock
+    ice_fpga_init(48);
+    ice_fpga_start();
+
     // [...] more setup code here
 
     for (;;) {
