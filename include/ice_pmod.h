@@ -29,10 +29,10 @@
 #include <stdbool.h>
 #include "pmod.h"
 
-static const struct pmod_2x ice_pmod3 = {
+static const pmod_2x_t ice_pmod_3 = {
     .gpio = { 0, 1, 2, 3, 4, 5, 6, 7 }
 };
 
-static const struct pmod_2x ice_pmod4 = {
+static const pmod_2x_t ice_pmod_4 = {
     .gpio = { 16, 17, 18, 19, 20, 21, 22, 23 }
 };
