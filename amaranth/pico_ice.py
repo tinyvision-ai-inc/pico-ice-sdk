@@ -30,9 +30,9 @@ class PicoIcePlatform(LatticeICE40Platform):
             attrs=Attrs(IO_STANDARD="SB_LVCMOS"), role="peripheral"),
     ]
     connectors  = [
-        Connector("pmod", 0, "4  2  47 45 - - 3  48 46 44 - -"),
-        Connector("pmod", 1, "43 38 34 31 - - 42 36 32 28 - -"),
-        Connector("pmod", 2, "27 25 21 19 - - 26 23 20 18 - -"),
+        Connector("pmod", 1, "4  2  47 45 - - 3  48 46 44 - -"),
+        Connector("pmod", 2, "43 38 34 31 - - 42 36 32 28 - -"),
+        Connector("pmod", 3, "27 25 21 19 - - 26 23 20 18 - -"),
     ]
 
     def toolchain_program(self, products, name, dfu_vid="1209", dfu_pid="b1c0", dfu_alt=0):
