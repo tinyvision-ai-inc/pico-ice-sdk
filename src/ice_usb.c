@@ -26,6 +26,7 @@
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
 #include "hardware/watchdog.h"
+#include "pico/multicore.h"
 #include "tusb.h"
 #include "boards/pico_ice.h"
 #include "ice_usb.h"
@@ -35,6 +36,8 @@
 #include "ice_fpga.h"
 #include "tinyuf2/uf2.h"
 #include "tinyuf2/board_api.h"
+
+#define WATCHDOG_DELAY 3000
 
 char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
 
@@ -56,8 +59,6 @@ const tusb_desc_device_t tud_desc_device = {
     .iSerialNumber      = STRID_SERIAL_NUMBER,
     .bNumConfigurations = 1
 };
-
-static bool dfu_download_pending;
 
 // Invoked when received GET DEVICE DESCRIPTOR
 // Application return pointer to descriptor
@@ -179,8 +180,21 @@ uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state) {
 // This callback could be returned before flashing op is complete (async).
 // Once finished flashing, application must call tud_dfu_finish_flashing()
 void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, uint16_t length) {
-    if (!dfu_download_pending) {
-        dfu_download_pending = true;
+    static bool started = false;
+    if (!started) {
+        // When this returns, we have reserved use of the serial memory SPI bus.
+        // TODO: uncomment when ice_smem.c is working again.
+        //ice_smem_await_async_completion();
+
+        // Disable all interrupts except USB.
+        irq_set_mask_enabled(~(1 << USBCTRL_IRQ), false);
+
+        // Soft reset core 1.
+        // TODO: if we get unlucky, core 1 might reset while holding a TinyUSB lock, in which case DFU download might hang.
+        multicore_reset_core1();
+
+        // Ensure eventual reboot in case user doesn't pass -R to dfu-util
+        watchdog_enable(WATCHDOG_DELAY, true /* pause_on_debug */);
 
         // make sure the RP2040 have full access to the bus
         ice_fpga_stop();
@@ -193,6 +207,8 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
             ice_flash_init();
         }
     }
+
+    watchdog_update();
 
     uint32_t dest_addr = block_num * CFG_TUD_DFU_XFER_BUFSIZE;
 
@@ -209,6 +225,14 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
     }
 
     tud_dfu_finish_flashing(DFU_STATUS_OK);
+
+    // Never return to the main loop.
+    if (!started) {
+        started = true;
+        for (;;) {
+            tud_task();
+        }
+    }
 }
 
 // Invoked when download process is complete, received DFU_DNLOAD (wLength=0) following by DFU_GETSTATUS (state=Manifest) Application can do checksum, or actual flashing if buffered entire image previously.
@@ -216,8 +240,6 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
 void tud_dfu_manifest_cb(uint8_t alt) {
     bool fpga_done;
 
-    assert(dfu_download_pending);
-    dfu_download_pending = false;
     if (alt == 0) {
         fpga_done = ice_cram_close();
     }

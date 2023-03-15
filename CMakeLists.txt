@@ -40,6 +40,7 @@ target_include_directories(pico_ice_usb INTERFACE
     include
     )
 target_link_libraries(pico_ice_usb INTERFACE
+    pico_multicore
     pico_unique_id
     tinyusb_device
     tinyusb_board
