@@ -82,19 +82,19 @@ struct pmod_2x_i2s {
     uint8_t io7, io8, io9, io10;
 };
 
-union pmod_1x {
+typedef union pmod_1x {
     struct pmod_1x_gpio gpio;
     struct pmod_1x_spi spi;
     struct pmod_1x_uart uart;
     struct pmod_1x_hbridge_feedback hbridge_feedback;
     struct pmod_1x_hbridge_dual hbridge_dual;
     struct pmod_1x_i2c i2c;
-};
+} pmod_1x_t;
 
-union pmod_2x {
+typedef union pmod_2x {
     struct {
-        struct pmod_1x top;
-        struct pmod_1x bottom;
+        union pmod_1x top;
+        union pmod_1x bottom;
     } row;
     struct pmod_2x_gpio gpio;
     struct pmod_2x_spi spi;
@@ -102,4 +102,4 @@ union pmod_2x {
     struct pmod_2x_hbridge hbridge;
     struct pmod_2x_i2c i2c;
     struct pmod_2x_i2s i2s;
-};
+} pmod_2x_t;
