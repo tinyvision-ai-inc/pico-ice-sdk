@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-set(PICO_SDK_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../pico-sdk)
+set(PICO_SDK_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../lib/pico-sdk)
 include(pico_sdk_import.cmake)
 
 project(pico_ice_examples C CXX ASM)

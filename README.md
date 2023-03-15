@@ -43,7 +43,7 @@ You will first need to init the `pico-ice` submodule:
 
 ```
 git submodule update --init
-git -C pico-sdk submodule update --init lib/tinyusb
+git -C lib/pico-sdk submodule update --init lib/tinyusb
 ```
 
 And then build all the examples together:
