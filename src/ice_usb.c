@@ -27,6 +27,7 @@
 #include "hardware/uart.h"
 #include "hardware/watchdog.h"
 #include "pico/multicore.h"
+#include "pico/stdlib.h"
 #include "tusb.h"
 #include "boards/pico_ice.h"
 #include "ice_usb.h"
@@ -59,6 +60,14 @@ const tusb_desc_device_t tud_desc_device = {
     .iSerialNumber      = STRID_SERIAL_NUMBER,
     .bNumConfigurations = 1
 };
+
+// Sleeping without calling tud_task() hangs the USB stack in the meantime.
+void ice_usb_sleep_ms(uint32_t ms) {
+    while (ms-- > 0) {
+        tud_task();
+        sleep_ms(1);
+    }
+}
 
 // Invoked when received GET DEVICE DESCRIPTOR
 // Application return pointer to descriptor
