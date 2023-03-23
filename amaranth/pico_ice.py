@@ -35,7 +35,7 @@ class PicoIcePlatform(LatticeICE40Platform):
         Connector("pmod", 3, "27 25 21 19 - - 26 23 20 18 - -"),
     ]
 
-    def toolchain_program(self, products, name, dfu_vid="1209", dfu_pid="b1c0", dfu_alt=0):
+    def toolchain_program(self, products, name, dfu_vid="1209", dfu_pid="b1c0", dfu_alt=1):
         dfu_util = os.environ.get("DFU_UTIL", "dfu-util")
         dfu_args = ["-d", f"{dfu_vid}:{dfu_pid}", "-a", str(dfu_alt)]
         with products.extract(f"{name}.bin") as bitstream_filename:
