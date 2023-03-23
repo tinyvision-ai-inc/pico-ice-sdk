@@ -120,8 +120,8 @@
 #endif
 
 // MISC
-#define ICE_GPOUT_CLOCK_PIN             25
-#define ICE_BUTTON_PIN                  10
+#define ICE_GPOUT_CLOCK_PIN 25
+#define ICE_BUTTON_PIN 10
 
 // ICE40 FPGA (SYSTEM)
 #ifndef ICE_FPGA_CLOCK_PIN
@@ -135,52 +135,52 @@
 #endif
 
 // ICE40 FPGA IO (PACKAGE NAMES)
-#define ICE_FPGA_27_PIN                 0
-#define ICE_FPGA_25_PIN                 1
-#define ICE_FPGA_21_PIN                 2
-#define ICE_FPGA_19_PIN                 3
-#define ICE_FPGA_26_PIN                 4
-#define ICE_FPGA_23_PIN                 5
-#define ICE_FPGA_20_PIN                 6
-#define ICE_FPGA_18_PIN                 7
+#define ICE_FPGA_27_PIN 0
+#define ICE_FPGA_25_PIN 1
+#define ICE_FPGA_21_PIN 2
+#define ICE_FPGA_19_PIN 3
+#define ICE_FPGA_26_PIN 4
+#define ICE_FPGA_23_PIN 5
+#define ICE_FPGA_20_PIN 6
+#define ICE_FPGA_18_PIN 7
 
 // ICE40 FPGA IO (SILICON DIE NAMES)
-#define ICE_FPGA_IOB_6a_PIN             ICE_FPGA_2_PIN
-#define ICE_FPGA_IOB_9b_PIN             ICE_FPGA_3_PIN
-#define ICE_FPGA_IOB_8a_PIN             ICE_FPGA_4_PIN
-#define ICE_FPGA_IOB_13b_PIN            ICE_FPGA_6_PIN
-#define ICE_FPGA_IOB_16a_PIN            ICE_FPGA_9_PIN
-#define ICE_FPGA_IOB_18a_PIN            ICE_FPGA_10_PIN
-#define ICE_FPGA_IOB_20a_PIN            ICE_FPGA_11_PIN
-#define ICE_FPGA_IOB_31b_PIN            ICE_FPGA_18_PIN
-#define ICE_FPGA_IOB_29b_PIN            ICE_FPGA_19_PIN
-#define ICE_FPGA_IOB_25b_PIN            ICE_FPGA_20_PIN
-#define ICE_FPGA_IOT_23b_PIN            ICE_FPGA_21_PIN
-#define ICE_FPGA_IOT_37a_PIN            ICE_FPGA_23_PIN
-#define ICE_FPGA_IOT_36b_PIN            ICE_FPGA_25_PIN
-#define ICE_FPGA_IOT_39a_PIN            ICE_FPGA_26_PIN
-#define ICE_FPGA_IOT_38b_PIN            ICE_FPGA_27_PIN
-#define ICE_FPGA_IOT_41a_PIN            ICE_FPGA_28_PIN
-#define ICE_FPGA_IOT_42b_PIN            ICE_FPGA_31_PIN
-#define ICE_FPGA_IOT_43a_PIN            ICE_FPGA_32_PIN
-#define ICE_FPGA_IOT_44b_PIN            ICE_FPGA_34_PIN
-#define ICE_FPGA_IOT_46b_PIN            ICE_FPGA_35_PIN
-#define ICE_FPGA_IOT_48b_PIN            ICE_FPGA_36_PIN
-#define ICE_FPGA_IOT_50b_PIN            ICE_FPGA_38_PIN
-#define ICE_FPGA_IOT_51a_PIN            ICE_FPGA_42_PIN
-#define ICE_FPGA_IOT_49a_PIN            ICE_FPGA_43_PIN
-#define ICE_FPGA_IOB_3b_PIN             ICE_FPGA_44_PIN
-#define ICE_FPGA_IOB_5b_PIN             ICE_FPGA_45_PIN
-#define ICE_FPGA_IOB_0a_PIN             ICE_FPGA_46_PIN
-#define ICE_FPGA_IOB_2b_PIN             ICE_FPGA_47_PIN
-#define ICE_FPGA_IOB_4a_PIN             ICE_FPGA_48_PIN
-#define ICE_FPGA_IOB_22a_PIN            ICE_FPGA_12_PIN
-#define ICE_FPGA_IOB_24a_PIN            ICE_FPGA_13_PIN
-#define ICE_FPGA_IOB_18a_PIN            ICE_FPGA_10_PIN
-#define ICE_FPGA_IOB_32a_PIN            ICE_FPGA_14_PIN
-#define ICE_FPGA_IOB_33b_PIN            ICE_FPGA_17_PIN
-#define ICE_FPGA_IOB_34a_PIN            ICE_FPGA_15_PIN
-#define ICE_FPGA_IOB_35b_PIN            ICE_FPGA_16_PIN
-#define ICE_FPGA_IOT_45a_PIN            ICE_FPGA_37_PIN
+#define ICE_FPGA_IOB_6a_PIN  ICE_FPGA_2_PIN
+#define ICE_FPGA_IOB_9b_PIN  ICE_FPGA_3_PIN
+#define ICE_FPGA_IOB_8a_PIN  ICE_FPGA_4_PIN
+#define ICE_FPGA_IOB_13b_PIN ICE_FPGA_6_PIN
+#define ICE_FPGA_IOB_16a_PIN ICE_FPGA_9_PIN
+#define ICE_FPGA_IOB_18a_PIN ICE_FPGA_10_PIN
+#define ICE_FPGA_IOB_20a_PIN ICE_FPGA_11_PIN
+#define ICE_FPGA_IOB_31b_PIN ICE_FPGA_18_PIN
+#define ICE_FPGA_IOB_29b_PIN ICE_FPGA_19_PIN
+#define ICE_FPGA_IOB_25b_PIN ICE_FPGA_20_PIN
+#define ICE_FPGA_IOT_23b_PIN ICE_FPGA_21_PIN
+#define ICE_FPGA_IOT_37a_PIN ICE_FPGA_23_PIN
+#define ICE_FPGA_IOT_36b_PIN ICE_FPGA_25_PIN
+#define ICE_FPGA_IOT_39a_PIN ICE_FPGA_26_PIN
+#define ICE_FPGA_IOT_38b_PIN ICE_FPGA_27_PIN
+#define ICE_FPGA_IOT_41a_PIN ICE_FPGA_28_PIN
+#define ICE_FPGA_IOT_42b_PIN ICE_FPGA_31_PIN
+#define ICE_FPGA_IOT_43a_PIN ICE_FPGA_32_PIN
+#define ICE_FPGA_IOT_44b_PIN ICE_FPGA_34_PIN
+#define ICE_FPGA_IOT_46b_PIN ICE_FPGA_35_PIN
+#define ICE_FPGA_IOT_48b_PIN ICE_FPGA_36_PIN
+#define ICE_FPGA_IOT_50b_PIN ICE_FPGA_38_PIN
+#define ICE_FPGA_IOT_51a_PIN ICE_FPGA_42_PIN
+#define ICE_FPGA_IOT_49a_PIN ICE_FPGA_43_PIN
+#define ICE_FPGA_IOB_3b_PIN  ICE_FPGA_44_PIN
+#define ICE_FPGA_IOB_5b_PIN  ICE_FPGA_45_PIN
+#define ICE_FPGA_IOB_0a_PIN  ICE_FPGA_46_PIN
+#define ICE_FPGA_IOB_2b_PIN  ICE_FPGA_47_PIN
+#define ICE_FPGA_IOB_4a_PIN  ICE_FPGA_48_PIN
+#define ICE_FPGA_IOB_22a_PIN ICE_FPGA_12_PIN
+#define ICE_FPGA_IOB_24a_PIN ICE_FPGA_13_PIN
+#define ICE_FPGA_IOB_18a_PIN ICE_FPGA_10_PIN
+#define ICE_FPGA_IOB_32a_PIN ICE_FPGA_14_PIN
+#define ICE_FPGA_IOB_33b_PIN ICE_FPGA_17_PIN
+#define ICE_FPGA_IOB_34a_PIN ICE_FPGA_15_PIN
+#define ICE_FPGA_IOB_35b_PIN ICE_FPGA_16_PIN
+#define ICE_FPGA_IOT_45a_PIN ICE_FPGA_37_PIN
 
 #endif

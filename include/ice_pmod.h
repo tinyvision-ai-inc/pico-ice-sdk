@@ -34,5 +34,5 @@ static const pmod_2x_t ice_pmod_3 = {
 };
 
 static const pmod_2x_t ice_pmod_4 = {
-    .gpio = { 15, 16, 17, 18, 19, 20, 21, 22 }
+    .gpio = { 16, 17, 18, 19, 20, 21, 22, 23 }
 };
