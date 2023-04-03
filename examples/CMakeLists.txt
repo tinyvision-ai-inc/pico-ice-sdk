@@ -21,3 +21,5 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/pico_usb_uart)
 
 # To be updated and debugged
 #add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/pico_ssram)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
