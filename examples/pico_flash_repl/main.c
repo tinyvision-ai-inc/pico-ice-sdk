@@ -143,13 +143,13 @@ static void repl_command_write(void)
         return;
     }
     ice_flash_program_page(repl_address, buf);
-    printf("%s 0x%08X done\r\n", __func__, repl_address);
+    printf("%s 0x%08lX done\r\n", __func__, repl_address);
 }
 
 static inline void memdump(uint8_t const *buf, size_t sz, uint32_t addr)
 {
     while (sz > 0) {
-        printf("0x%08X:", addr);
+        printf("0x%08lX:", addr);
         for (size_t n = 0x20; sz > 0 && n > 0; sz--, buf++, n--, addr++) {
             printf(" %02X", *buf);
         }
@@ -165,7 +165,7 @@ static void repl_command_read(void)
         return;
     }
     ice_flash_read(repl_address, buf, sizeof buf);
-    printf("%s 0x%08X done\r\n", __func__, repl_address);
+    printf("%s 0x%08lX done\r\n", __func__, repl_address);
     memdump(buf, sizeof buf, repl_address);
 }
 
@@ -175,7 +175,7 @@ static void repl_command_erase(void)
         return;
     }
     ice_flash_erase_sector(repl_address);
-    printf("%s 0x%08X done\r\n", __func__, repl_address);
+    printf("%s 0x%08lX done\r\n", __func__, repl_address);
 }
 
 static void repl_command_zero(void)
@@ -186,7 +186,7 @@ static void repl_command_zero(void)
         return;
     }
     ice_flash_program_page(repl_address, buf);
-    printf("%s 0x%08X done\r\n", __func__, repl_address);
+    printf("%s 0x%08lX done\r\n", __func__, repl_address);
 }
 
 static void repl_command_sleep(void)
@@ -253,7 +253,7 @@ int main(void)
     for (;;) {
         tud_task();
 
-        printf("0x%08X> ", repl_address);
+        printf("0x%08lX> ", repl_address);
 
         switch (repl_getchar()) {
         case '0':

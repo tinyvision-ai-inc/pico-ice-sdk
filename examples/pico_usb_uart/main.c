@@ -49,8 +49,6 @@ int main(void) {
     // Bind UART0 interrupt for piping to USB CDC1
     irq_set_exclusive_handler(UART0_IRQ, ice_usb_uart0_to_cdc1);
 
-    ice_led_init();
-
     while (true) {
         tud_task();
     }
