@@ -70,14 +70,14 @@
 #define ICE_LED_GREEN_PIN 12
 #define ICE_LED_BLUE_PIN 15
 // SPI
-#ifndef ICE_SPI_RX_PIN
-#define ICE_SPI_RX_PIN 8
-#endif
 #ifndef ICE_SPI_SCK_PIN
 #define ICE_SPI_SCK_PIN 10
 #endif
+#ifndef ICE_SPI_RX_PIN
+#define ICE_SPI_RX_PIN 11
+#endif
 #ifndef ICE_SPI_TX_PIN
-#define ICE_SPI_TX_PIN 11
+#define ICE_SPI_TX_PIN 8
 #endif
 #ifndef ICE_FLASH_CSN_PIN
 #define ICE_FLASH_CSN_PIN 9
