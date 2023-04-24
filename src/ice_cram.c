@@ -34,25 +34,25 @@ static void state_machine_init() {
     }
 
     pio_sm_config c = ice_cram_program_get_default_config(offset);
-    sm_config_set_out_pins(&c, ICE_DEFAULT_SPI_RX_PIN, 1);
-    sm_config_set_sideset_pins(&c, ICE_DEFAULT_SPI_SCK_PIN);
+    sm_config_set_out_pins(&c, ICE_SPI_RX_PIN, 1);
+    sm_config_set_sideset_pins(&c, ICE_SPI_SCK_PIN);
     sm_config_set_clkdiv(&c, clk_div);
     sm_config_set_out_shift(&c, false, true, 8);
     pio_sm_init(pio, sm, offset, &c);
 
     pio_sm_set_enabled(pio, sm, true);
 
-    pio_sm_set_consecutive_pindirs(pio, sm, ICE_DEFAULT_SPI_RX_PIN, 1, true);
-    pio_sm_set_consecutive_pindirs(pio, sm, ICE_DEFAULT_SPI_SCK_PIN, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, sm, ICE_SPI_RX_PIN, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, sm, ICE_SPI_SCK_PIN, 1, true);
 
-    pio_gpio_init(pio, ICE_DEFAULT_SPI_RX_PIN);
-    pio_gpio_init(pio, ICE_DEFAULT_SPI_SCK_PIN);
+    pio_gpio_init(pio, ICE_SPI_RX_PIN);
+    pio_gpio_init(pio, ICE_SPI_SCK_PIN);
 }
 
 static void state_machine_deinit() {
     pio_sm_set_enabled(pio, sm, false);
-    pio_sm_set_consecutive_pindirs(pio, sm, ICE_DEFAULT_SPI_RX_PIN, 1, false);
-    pio_sm_set_consecutive_pindirs(pio, sm, ICE_DEFAULT_SPI_SCK_PIN, 1, false);
+    pio_sm_set_consecutive_pindirs(pio, sm, ICE_SPI_RX_PIN, 1, false);
+    pio_sm_set_consecutive_pindirs(pio, sm, ICE_SPI_SCK_PIN, 1, false);
     pio_remove_program(pio, &ice_cram_program, offset);
     pio_sm_unclaim(pio, sm);
 }
@@ -86,9 +86,9 @@ void ice_cram_open(void) {
     state_machine_init();
 
     // SPI_SS low signals FPGA to receive bitstream.
-    gpio_init(ICE_FPGA_SPI_CSN_PIN);
-    gpio_put(ICE_FPGA_SPI_CSN_PIN, false);
-    gpio_set_dir(ICE_FPGA_SPI_CSN_PIN, GPIO_OUT);
+    gpio_init(ICE_FPGA_CSN_PIN);
+    gpio_put(ICE_FPGA_CSN_PIN, false);
+    gpio_set_dir(ICE_FPGA_CSN_PIN, GPIO_OUT);
 
     // Bring FPGA out of reset after at least 200ns.
     busy_wait_us(2);
@@ -98,10 +98,10 @@ void ice_cram_open(void) {
     busy_wait_us(1300);
 
     // SPI_SS high for 8 SPI_SCLKs
-    gpio_put(ICE_FPGA_SPI_CSN_PIN, true);
+    gpio_put(ICE_FPGA_CSN_PIN, true);
     put_byte(0);
     wait_idle();
-    gpio_put(ICE_FPGA_SPI_CSN_PIN, false);
+    gpio_put(ICE_FPGA_CSN_PIN, false);
 }
 
 bool ice_cram_write(const uint8_t* bitstream, uint32_t size) {
@@ -114,10 +114,10 @@ bool ice_cram_close(void) {
     wait_idle();
 
     // Bring SPI_SS high at end of bitstream and leave it pulled up.
-    gpio_put(ICE_FPGA_SPI_CSN_PIN, true);
+    gpio_put(ICE_FPGA_CSN_PIN, true);
     sleep_us(1);
-    gpio_pull_up(ICE_FPGA_SPI_CSN_PIN);
-    gpio_set_dir(ICE_FPGA_SPI_CSN_PIN, GPIO_IN);
+    gpio_pull_up(ICE_FPGA_CSN_PIN);
+    gpio_set_dir(ICE_FPGA_CSN_PIN, GPIO_IN);
 
     // Output dummy bytes. CDONE should go high within 100 SCLKs or there was an error with the bitstream.
     for (int i = 0; i < 13; ++i) {

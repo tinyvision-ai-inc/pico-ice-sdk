@@ -40,9 +40,9 @@ int main(void) {
     for (uint8_t i = 0;; i++) {
         uint8_t buffer[1] = { i };
 
-        ice_spi_chip_select(ICE_FPGA_SPI_CSN_PIN);
+        ice_spi_chip_select(ICE_FPGA_CSN_PIN);
         ice_spi_write_blocking(buffer, 1);
-        ice_spi_read_blocking(0xFF, buffer, 1);
-        ice_spi_chip_deselect(ICE_FPGA_SPI_CSN_PIN);
+        ice_spi_read_blocking(buffer, 1);
+        ice_spi_chip_deselect(ICE_FPGA_CSN_PIN);
     }
 }

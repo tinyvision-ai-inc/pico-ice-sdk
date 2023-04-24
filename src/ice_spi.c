@@ -47,14 +47,20 @@ volatile static void *g_async_context;
 
 void ice_spi_init(void) {
     // This driver is only focused on one particular SPI bus
-    gpio_init(ICE_DEFAULT_SPI_SCK_PIN);
-    gpio_init(ICE_DEFAULT_SPI_TX_PIN);
-    gpio_init(ICE_DEFAULT_SPI_RX_PIN);
+    gpio_init(ICE_SPI_SCK_PIN);
+    gpio_init(ICE_SPI_TX_PIN);
+    gpio_init(ICE_SPI_RX_PIN);
 
     // Everything in high impedance before a transaction occurs
-    gpio_set_dir(ICE_DEFAULT_SPI_SCK_PIN, GPIO_IN);
-    gpio_set_dir(ICE_DEFAULT_SPI_TX_PIN, GPIO_IN);
-    gpio_set_dir(ICE_DEFAULT_SPI_RX_PIN, GPIO_IN);
+    gpio_set_dir(ICE_SPI_SCK_PIN, GPIO_IN);
+    gpio_set_dir(ICE_SPI_TX_PIN, GPIO_IN);
+    gpio_set_dir(ICE_SPI_RX_PIN, GPIO_IN);
+}
+
+void ice_spi_init_cs_pin(uint8_t pin) {
+    gpio_init(pin);
+    gpio_put(pin, true);
+    gpio_set_dir(pin, GPIO_OUT);
 }
 
 static uint8_t transfer_byte(uint8_t tx) {
@@ -62,8 +68,8 @@ static uint8_t transfer_byte(uint8_t tx) {
 
     for (uint8_t i = 0; i < 8; i++) {
         // Update TX and immediately set negative edge.
-        gpio_put(ICE_DEFAULT_SPI_SCK_PIN, false);
-        gpio_put(ICE_DEFAULT_SPI_TX_PIN, tx >> 7);
+        gpio_put(ICE_SPI_SCK_PIN, false);
+        gpio_put(ICE_SPI_TX_PIN, tx >> 7);
         tx <<= 1;
 
         // stable for a while with clock low
@@ -71,8 +77,8 @@ static uint8_t transfer_byte(uint8_t tx) {
 
         // Sample RX as we set positive edge.
         rx <<= 1;
-        rx |= gpio_get(ICE_DEFAULT_SPI_RX_PIN);
-        gpio_put(ICE_DEFAULT_SPI_SCK_PIN, true);
+        rx |= gpio_get(ICE_SPI_RX_PIN);
+        gpio_put(ICE_SPI_SCK_PIN, true);
 
         // stable for a while with clock high
         sleep_us(1);
@@ -81,12 +87,6 @@ static uint8_t transfer_byte(uint8_t tx) {
 }
 
 void ice_spi_chip_select(uint8_t csn_pin) {
-    // Drive the bus, going out of high-impedance mode
-    gpio_put(ICE_DEFAULT_SPI_SCK_PIN, false);
-    gpio_put(ICE_DEFAULT_SPI_TX_PIN, true);
-    gpio_set_dir(ICE_DEFAULT_SPI_SCK_PIN, GPIO_OUT);
-    gpio_set_dir(ICE_DEFAULT_SPI_TX_PIN, GPIO_OUT);
-
     // Start an SPI transaction
     gpio_put(csn_pin, false);
     gpio_set_dir(csn_pin, GPIO_OUT);
@@ -97,16 +97,21 @@ void ice_spi_chip_deselect(uint8_t csn_pin) {
     // Terminate the transaction
     gpio_put(csn_pin, true);
 
+    // Busy wait until SCK goes low
+    while (gpio_get(ICE_SPI_SCK_PIN)) {
+        tight_loop_contents();
+    }
+
     // Release the bus by putting it high-impedance mode
     gpio_set_dir(csn_pin, GPIO_IN);
-    gpio_set_dir(ICE_DEFAULT_SPI_SCK_PIN, GPIO_IN);
-    gpio_set_dir(ICE_DEFAULT_SPI_TX_PIN, GPIO_IN);
+    gpio_set_dir(ICE_SPI_SCK_PIN, GPIO_IN);
+    gpio_set_dir(ICE_SPI_TX_PIN, GPIO_IN);
 }
 
 static void prepare_transfer(void (*callback)(volatile void *), void *context) {
     uint32_t status;
 
-    ice_spi_await_async_completion();
+    ice_spi_wait_completion();
 
     status = save_and_disable_interrupts();
     g_async_callback = callback;
@@ -125,22 +130,22 @@ static void spi_irq_handler(void) {
     }
 }
 
-void ice_spi_write_async(uint8_t const *buf, size_t len, void (*callback)(volatile void *), void *context) {
+void ice_spi_write_async(uint8_t const *data, size_t data_size, void (*callback)(volatile void *), void *context) {
     // TODO: we could just call callback(context) directly but this is to mimick the future behavior
     prepare_transfer(callback, context);
 
-    for (; len > 0; len--, buf++) {
-        transfer_byte(*buf);
+    for (; data_size > 0; data_size--, data++) {
+        transfer_byte(*data);
     }
     spi_irq_handler();
 }
 
-void ice_spi_read_async(uint8_t tx, uint8_t *buf, size_t len, void (*callback)(volatile void *), void *context) {
+void ice_spi_read_async(uint8_t *data, size_t data_size, void (*callback)(volatile void *), void *context) {
     // TODO: we could just call callback(context) directly but this is to mimick the future behavior
     prepare_transfer(callback, context);
 
-    for (; len > 0; len--, buf++) {
-        *buf = transfer_byte(tx);
+    for (; data_size > 0; data_size--, data++) {
+        *data = transfer_byte(0xFF); // dummy data
     }
     spi_irq_handler();
 }
@@ -149,18 +154,18 @@ bool ice_spi_is_async_complete(void) {
     return g_transfer_done;
 }
 
-void ice_spi_await_async_completion(void) {
+void ice_spi_wait_completion(void) {
     while (!ice_spi_is_async_complete()) {
         // _WFE(); // TODO: uncomment this while switching to interrupt-based implementation
     }
 }
 
-void ice_spi_read_blocking(uint8_t tx, uint8_t *buf, size_t len) {
-    ice_spi_read_async(tx, buf, len, NULL, NULL);
-    ice_spi_await_async_completion();
+void ice_spi_read_blocking(uint8_t *data, size_t data_size) {
+    ice_spi_read_async(data, data_size, NULL, NULL);
+    ice_spi_wait_completion();
 }
 
-void ice_spi_write_blocking(uint8_t const *buf, size_t len) {
-    ice_spi_write_async(buf, len, NULL, NULL);
-    ice_spi_await_async_completion();
+void ice_spi_write_blocking(uint8_t const *data, size_t data_size) {
+    ice_spi_write_async(data, data_size, NULL, NULL);
+    ice_spi_wait_completion();
 }

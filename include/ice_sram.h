@@ -26,22 +26,29 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <stdbool.h>
+#include "boards/pico_ice.h"
+
+// This module is not thread safe.
+
+#define ICE_SRAM_STATUS_BUSY_MASK  0x01
+#define ICE_SRAM_FLASH_PAGE_SIZE   0x100
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void ice_spi_init(void);
-void ice_spi_init_cs_pin(uint8_t pin);
-void ice_spi_chip_select(uint8_t csn_pin);
-void ice_spi_chip_deselect(uint8_t csn_pin);
-void ice_spi_write_async(const uint8_t *data, size_t data_size, void (*callback)(volatile void *), void *context);
-void ice_spi_write_blocking(const uint8_t *data, size_t data_size);
-void ice_spi_read_async(uint8_t *data, size_t data_size, void (*callback)(volatile void *), void *context);
-void ice_spi_read_blocking(uint8_t *data, size_t data_size);
-bool ice_spi_is_async_complete(void);
-void ice_spi_wait_completion(void);
+void ice_sram_init(void);
+uint8_t ice_sram_get_status(void);
+void ice_sram_power_on(void);
+void ice_sram_power_off(void);
+void ice_sram_erase_chip(void);
+void ice_sram_erase_sector(uint32_t addr);
+void ice_sram_enable_write(void);
+void ice_sram_disnable_write(void);
+void ice_sram_read_async(uint32_t addr, uint8_t *data, size_t data_size, void (*callback)(volatile void *), void *context);
+void ice_sram_read_blocking(uint32_t addr, uint8_t *data, size_t data_size);
+void ice_sram_write_async(uint32_t addr, const uint8_t *data, size_t data_size, void (*callback)(volatile void *), void *context);
+void ice_sram_write_blocking(uint32_t addr, const uint8_t *data, size_t data_size);
 
 #ifdef __cplusplus
 }

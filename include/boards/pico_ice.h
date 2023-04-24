@@ -56,8 +56,8 @@
 #ifndef PICO_DEFAULT_SPI_RX_PIN
 #define PICO_DEFAULT_SPI_RX_PIN 16
 #endif
-#ifndef PICO_DEFAULT_SPI_CSN_PIN
-#define PICO_DEFAULT_SPI_CSN_PIN 17
+#ifndef PICO_DEFAULT_CSN_PIN
+#define PICO_DEFAULT_CSN_PIN 17
 #endif
 
 // --- FLASH ---
@@ -92,26 +92,23 @@
 #define ICE_LED_BLUE_PIN 15
 
 // SPI
-#ifndef ICE_DEFAULT_SPI
-#define ICE_DEFAULT_SPI 1
+#ifndef ICE_SPI_RX_PIN
+#define ICE_SPI_RX_PIN 8
 #endif
-#ifndef ICE_DEFAULT_SPI_RX_PIN
-#define ICE_DEFAULT_SPI_RX_PIN 8
+#ifndef ICE_SPI_SCK_PIN
+#define ICE_SPI_SCK_PIN 10
 #endif
-#ifndef ICE_DEFAULT_SPI_SCK_PIN
-#define ICE_DEFAULT_SPI_SCK_PIN 10
+#ifndef ICE_SPI_TX_PIN
+#define ICE_SPI_TX_PIN 11
 #endif
-#ifndef ICE_DEFAULT_SPI_TX_PIN
-#define ICE_DEFAULT_SPI_TX_PIN 11
+#ifndef ICE_FLASH_CSN_PIN
+#define ICE_FLASH_CSN_PIN 9
 #endif
-#ifndef ICE_FLASH_SPI_CSN_PIN
-#define ICE_FLASH_SPI_CSN_PIN 9
+#ifndef ICE_FPGA_CSN_PIN
+#define ICE_FPGA_CSN_PIN 9
 #endif
-#ifndef ICE_FPGA_SPI_CSN_PIN
-#define ICE_FPGA_SPI_CSN_PIN 9
-#endif
-#ifndef ICE_SRAM_SPI_CS_PIN
-#define ICE_SRAM_SPI_CS_PIN 14
+#ifndef ICE_SRAM_CS_PIN
+#define ICE_SRAM_CS_PIN 14
 #endif
 
 // FLASH

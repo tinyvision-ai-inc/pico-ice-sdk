@@ -7,7 +7,7 @@
 #include "ice_fpga.h"
 #include "ice_comm.h"
 #include "ice_led.h"
-#include "ice_smem.h"
+#include "ice_sram.h"
 #include "ice_usb.h"
 
 int main(void) {
