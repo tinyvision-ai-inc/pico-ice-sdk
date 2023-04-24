@@ -31,12 +31,18 @@
 // pico-ice-sdk
 #include "boards/pico_ice.h"
 #include "ice_sram.h"
+#include "ice_usb.h"
 
 int main(void) {
-    ice_sram_init();
+    stdio_init_all();
+    tusb_init();
+    //ice_sram_init();
+
+    //ice_sram_power_on();
 
     while (1) {
-        printf("0x%X\n", ice_sram_get_status());
+        tud_task();
+        //printf("0x%02X\n", ice_sram_get_status());
     }
     return 0;
 }

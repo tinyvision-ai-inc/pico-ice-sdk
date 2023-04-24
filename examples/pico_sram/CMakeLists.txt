@@ -5,6 +5,7 @@ add_executable(pico_sram
 target_link_libraries(pico_sram
     pico_ice_sdk
     pico_ice_usb
+    pico_stdio_usb
     )
 target_include_directories(pico_sram PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
