@@ -111,7 +111,6 @@ void ice_spi_chip_deselect(uint8_t csn_pin) {
     //}
 
     // Release the bus by putting it high-impedance mode
-    gpio_set_dir(csn_pin, GPIO_IN);
     gpio_set_dir(ICE_SPI_SCK_PIN, GPIO_IN);
     gpio_set_dir(ICE_SPI_TX_PIN, GPIO_IN);
 }

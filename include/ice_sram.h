@@ -38,6 +38,7 @@ extern "C" {
 #endif
 
 void ice_sram_init(void);
+void ice_sram_get_id(uint8_t id[8]);
 uint8_t ice_sram_get_status(void);
 void ice_sram_power_on(void);
 void ice_sram_power_off(void);

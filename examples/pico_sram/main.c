@@ -36,13 +36,18 @@
 int main(void) {
     stdio_init_all();
     tusb_init();
-    //ice_sram_init();
+    ice_sram_init();
 
-    //ice_sram_power_on();
+    ice_sram_power_on();
 
     while (1) {
         tud_task();
-        //printf("0x%02X\n", ice_sram_get_status());
+
+        uint8_t id[8];
+
+        ice_sram_get_id(id);
+        printf("0x%02X%02X%02X%02X%02X%02X%02X%02X\n",
+                id[0], id[1], id[2], id[3], id[4], id[5], id[6], id[7]);
     }
     return 0;
 }
