@@ -48,14 +48,12 @@
 void ice_sram_init(void) {
     ice_spi_init();
 
-    // Not using the SPI peripheral to control CS because it only knows how to
-    // toggle it every 4-16 bits while we need to keep the PSRAM selected for a
-    // multi-byte read or write sequence.
-    gpio_init(ICE_SRAM_CS_PIN);
-    gpio_put(ICE_SRAM_CS_PIN, true);
-    gpio_set_dir(ICE_SRAM_CS_PIN, GPIO_OUT);
+    // Not using the SPI peripheral to control CS because it only toggles every
+    // 4-16 bits while we need to keep the PSRAM selected for a multi-byte read
+    // or write sequence.
+    ice_spi_init_cs_pin(ICE_SRAM_CS_PIN);
 
-    // The SRAM CS is active low
+    // The SRAM CS is active low: invert its output with hardware.
     gpio_set_outover(ICE_SRAM_CS_PIN, GPIO_OVERRIDE_INVERT);
 }
 
