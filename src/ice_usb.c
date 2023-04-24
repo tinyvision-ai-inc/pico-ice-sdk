@@ -208,7 +208,7 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
 
         // make sure the RP2040 have full access to the bus
         ice_fpga_stop();
-        ice_spi_init();
+        ice_spi_init(1000000);
 
         if (alt == 0) {
             ice_cram_open();

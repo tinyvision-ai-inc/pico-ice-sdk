@@ -21,6 +21,7 @@ target_include_directories(pico_ice_sdk INTERFACE
 target_link_libraries(pico_ice_sdk INTERFACE
     hardware_flash
     hardware_gpio
+    hardware_dma
     hardware_pio
     hardware_spi
     hardware_uart

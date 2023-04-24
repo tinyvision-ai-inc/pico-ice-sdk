@@ -53,7 +53,7 @@ int main(void) {
     ice_led_init();
 
     // Booted up, now take control of the Flash
-    ice_spi_init();
+    ice_spi_init(1000000);
     ice_flash_init();
 
     // Write data: known pattern, not very random!
