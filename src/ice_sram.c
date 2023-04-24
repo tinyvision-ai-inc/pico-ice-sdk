@@ -29,11 +29,12 @@
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
 #include "hardware/sync.h"
-#include "boards/pico_ice.h"
+#include "pico/stdlib.h"
 
 // pico-ice-sdk
 #include "ice_sram.h"
 #include "ice_spi.h"
+#include "boards/pico_ice.h"
 
 #define CMD_GET_ID              0x9F
 #define CMD_GET_STATUS          0x05
