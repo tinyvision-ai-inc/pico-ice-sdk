@@ -87,27 +87,28 @@ static uint8_t transfer_byte(uint8_t tx) {
 }
 
 void ice_spi_chip_select(uint8_t csn_pin) {
-    // Start an SPI transaction
-    gpio_put(csn_pin, false);
 
     // Take control of the bus
-    gpio_set_dir(csn_pin, GPIO_OUT);
+    gpio_put(ICE_SPI_SCK_PIN, false);
+    gpio_put(ICE_SPI_TX_PIN, true);
     gpio_set_dir(ICE_SPI_SCK_PIN, GPIO_OUT);
     gpio_set_dir(ICE_SPI_TX_PIN, GPIO_OUT);
 
+    // Start an SPI transaction
+    gpio_put(csn_pin, false);
+    gpio_set_dir(csn_pin, GPIO_OUT);
     sleep_us(1);
 }
 
 void ice_spi_chip_deselect(uint8_t csn_pin) {
     // Terminate the transaction
     gpio_put(csn_pin, true);
-
     sleep_us(1);
 
-    // Busy wait until SCK goes low
-    while (gpio_get(ICE_SPI_SCK_PIN)) {
-        tight_loop_contents();
-    }
+    // TODO: Busy wait until SCK goes low
+    //while (gpio_get(ICE_SPI_SCK_PIN)) {
+    //    tight_loop_contents();
+    //}
 
     // Release the bus by putting it high-impedance mode
     gpio_set_dir(csn_pin, GPIO_IN);
