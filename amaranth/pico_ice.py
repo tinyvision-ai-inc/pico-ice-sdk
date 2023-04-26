@@ -12,7 +12,7 @@ class PicoIcePlatform(LatticeICE40Platform):
     device      = "iCE40UP5K"
     package     = "SG48"
     default_clk = "SB_HFOSC"
-    hfosc_div   = 3
+    hfosc_div   = 1
     resources   = [
         *LEDResources(pins="39 40 41",
             invert=True, attrs=Attrs(IO_STANDARD="SB_LVCMOS")),
