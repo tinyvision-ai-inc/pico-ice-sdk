@@ -38,14 +38,18 @@
 
 #define CMD_GET_ID              0x9F
 #define CMD_GET_STATUS          0x05
-#define CMD_POWER_ON            0xAB
-#define CMD_POWER_OFF           0xB9
-#define CMD_ERASE_CHIP          0xC7
-#define CMD_ERASE_SECTOR        0x20
-#define CMD_ENABLE_WRITE        0x06
-#define CMD_DISABLE_WRITE       0x04
+#define CMD_RESET_ENABLE        0x66
+#define CMD_RESET               0x99
 #define CMD_READ                0x03
 #define CMD_WRITE               0x02
+
+void ice_sram_reset(void) {
+    const uint8_t command[] = { CMD_RESET_ENABLE, CMD_RESET };
+
+    ice_spi_chip_select(ICE_SRAM_CS_PIN);
+    ice_spi_write_blocking(command, sizeof(command));
+    ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
+}
 
 void ice_sram_init(void) {
     ice_spi_init();
@@ -57,6 +61,10 @@ void ice_sram_init(void) {
 
     // The SRAM CS is active low: invert its output with hardware.
     gpio_set_outover(ICE_SRAM_CS_PIN, GPIO_OVERRIDE_INVERT);
+
+    // Device initialization procedure
+    delay_us(150);
+    ice_sram_reset();
 }
 
 void ice_sram_get_id(uint8_t id[8]) {
@@ -65,69 +73,6 @@ void ice_sram_get_id(uint8_t id[8]) {
     ice_spi_chip_select(ICE_SRAM_CS_PIN);
     ice_spi_write_blocking(command, sizeof(command));
     ice_spi_read_blocking(id, 8);
-    ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
-}
-
-uint8_t ice_sram_get_status(void) {
-    const uint8_t command[] = { CMD_GET_STATUS };
-    uint8_t status;
-
-    ice_spi_chip_select(ICE_SRAM_CS_PIN);
-    ice_spi_write_blocking(command, sizeof(command));
-    ice_spi_read_blocking(&status, sizeof(status));
-    ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
-    return status;
-}
-
-void ice_sram_power_on(void) {
-    const uint8_t command[] = { CMD_POWER_ON };
-
-    ice_spi_chip_select(ICE_SRAM_CS_PIN);
-    ice_spi_write_blocking(command, sizeof(command));
-    ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
-
-    sleep_us(5); // Takes around 3us of delay.
-}
-
-void ice_sram_power_off(void) {
-    const uint8_t command[] = { CMD_POWER_OFF };
-
-    ice_spi_chip_select(ICE_SRAM_CS_PIN);
-    ice_spi_write_blocking(command, sizeof(command));
-    ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
-}
-
-void ice_sram_erase_chip(void) {
-    const uint8_t command[] = { CMD_ERASE_CHIP };
-
-    ice_spi_chip_select(ICE_SRAM_CS_PIN);
-    ice_spi_write_blocking(command, sizeof(command));
-    ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
-}
-
-void ice_sram_erase_sector(uint32_t addr) {
-    const uint8_t command[] = { CMD_ERASE_SECTOR, addr >> 16, addr >> 8, addr };
-
-    assert(addr % ICE_SRAM_FLASH_PAGE_SIZE == 0);
-
-    ice_spi_chip_select(ICE_SRAM_CS_PIN);
-    ice_spi_write_blocking(command, sizeof(command));
-    ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
-}
-
-void ice_sram_enable_write(void) {
-    const uint8_t command[] = { CMD_ENABLE_WRITE };
-
-    ice_spi_chip_select(ICE_SRAM_CS_PIN);
-    ice_spi_write_blocking(command, sizeof(command));
-    ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
-}
-
-void ice_sram_disable_write(void) {
-    const uint8_t command[] = { CMD_DISABLE_WRITE };
-
-    ice_spi_chip_select(ICE_SRAM_CS_PIN);
-    ice_spi_write_blocking(command, sizeof(command));
     ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
 }
 
@@ -151,7 +96,7 @@ void ice_sram_read_async(uint32_t addr, uint8_t *data, size_t data_size,
 
     ice_spi_chip_select(ICE_SRAM_CS_PIN);
     ice_spi_write_blocking(command, sizeof(command));
-    ice_spi_write_async(data, data_size, callback, context);
+    ice_spi_read_async(data, data_size, callback, context);
 }
 
 void ice_sram_read_blocking(uint32_t addr, uint8_t *data, size_t data_size) {

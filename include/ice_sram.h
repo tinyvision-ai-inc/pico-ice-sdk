@@ -39,17 +39,10 @@ extern "C" {
 
 void ice_sram_init(void);
 void ice_sram_get_id(uint8_t id[8]);
-uint8_t ice_sram_get_status(void);
-void ice_sram_power_on(void);
-void ice_sram_power_off(void);
-void ice_sram_erase_chip(void);
-void ice_sram_erase_sector(uint32_t addr);
-void ice_sram_enable_write(void);
-void ice_sram_disnable_write(void);
-void ice_sram_read_async(uint32_t addr, uint8_t *data, size_t data_size, void (*callback)(volatile void *), void *context);
-void ice_sram_read_blocking(uint32_t addr, uint8_t *data, size_t data_size);
-void ice_sram_write_async(uint32_t addr, const uint8_t *data, size_t data_size, void (*callback)(volatile void *), void *context);
+void ice_sram_write_async(uint32_t addr, const uint8_t *data, size_t data_size,
 void ice_sram_write_blocking(uint32_t addr, const uint8_t *data, size_t data_size);
+void ice_sram_read_async(uint32_t addr, uint8_t *data, size_t data_size,
+void ice_sram_read_blocking(uint32_t addr, uint8_t *data, size_t data_size);
 
 #ifdef __cplusplus
 }
