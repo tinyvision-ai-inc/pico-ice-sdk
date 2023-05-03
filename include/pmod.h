@@ -38,11 +38,11 @@ struct pmod_2x_gpio {
 };
 
 struct pmod_1x_spi {
-    uint8_t cs_n, cipo, copi, clk;
+    uint8_t cs_n, copi, cipo, clk;
 };
 
 struct pmod_2x_spi {
-    uint8_t cs_n, cipo, copi, clk;
+    uint8_t cs_n, copi, cipo, clk;
     uint8_t io7, io8, io9, io10;
 };
 
