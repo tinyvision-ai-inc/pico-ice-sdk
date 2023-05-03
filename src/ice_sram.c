@@ -63,7 +63,7 @@ void ice_sram_init(void) {
     gpio_set_outover(ICE_SRAM_CS_PIN, GPIO_OVERRIDE_INVERT);
 
     // Device initialization procedure
-    delay_us(150);
+    sleep_us(150);
     ice_sram_reset();
 }
 
