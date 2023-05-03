@@ -45,7 +45,7 @@
 
 // --- SPI ---
 #ifndef PICO_DEFAULT_SPI
-#define PICO_DEFAULT_SPI 1
+#define PICO_DEFAULT_SPI 0
 #endif
 #ifndef PICO_DEFAULT_SPI_SCK_PIN
 #define PICO_DEFAULT_SPI_SCK_PIN 18
