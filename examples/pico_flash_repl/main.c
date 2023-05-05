@@ -28,6 +28,7 @@
 #include "boards/pico_ice.h"
 #include "ice_flash.h"
 #include "ice_fpga.h"
+#include "ice_spi.h"
 
 // address to work upon
 uint32_t repl_address;
@@ -207,15 +208,6 @@ static void repl_command_wakeup(void)
     printf("%s done\r\n", __func__);
 }
 
-static void repl_command_init(void)
-{
-    if (!repl_parse_newline()) {
-        return;
-    }
-    ice_flash_init();
-    printf("%s done\r\n", __func__);
-}
-
 static void repl_set_address(void)
 {
     uint8_t c;
@@ -250,6 +242,9 @@ int main(void)
     // Enable USB-UART #0 output
     stdio_init_all();
 
+    // initialize the flash driver and its SPI bus
+    ice_flash_init();
+
     for (;;) {
         tud_task();
 
@@ -276,9 +271,6 @@ int main(void)
             break;
         case 'u':
             repl_command_wakeup();
-            break;
-        case 'i':
-            repl_command_init();
             break;
         case '\r':
         case '\n':

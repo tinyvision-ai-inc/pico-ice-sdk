@@ -42,6 +42,7 @@ void ice_fpga_init(uint8_t freq_mhz) {
 }
 
 void ice_fpga_stop(void) {
+    gpio_init(ICE_FPGA_CRESET_B_PIN);
     gpio_put(ICE_FPGA_CRESET_B_PIN, false);
     gpio_set_dir(ICE_FPGA_CRESET_B_PIN, GPIO_OUT);
 }
@@ -56,8 +57,12 @@ bool ice_fpga_start(void) {
     // (reading from flash) and the RP2040 (configuring the flash).
     // Note that if the flash is corrupted, this function will timeout!
     for (uint8_t timeout = 100; !gpio_get(ICE_FPGA_CDONE_PIN); timeout--) {
-        if (timeout == 0)
+        if (timeout == 0) {
+            // if the FPGA could not start, it would keep the clock active,
+            // which disturbs the rest of the signals, including SWD
+            ice_fpga_stop();
             return false;
+        }
         sleep_ms(1);
     }
     return true;

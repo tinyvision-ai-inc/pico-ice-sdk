@@ -23,7 +23,7 @@
  * THE SOFTWARE.
  */
 #pragma once
-#include "hardware/flash.h"
+#include "ice_flash.h"
 
 // RHPort number used for device can be defined by board.mk, port 0 for pico-ice
 #define BOARD_DEVICE_RHPORT_NUM     0
@@ -60,7 +60,7 @@
 #define CFG_TUD_CDC_EP_BUFSIZE      512
 
 // MSC Buffer size of Device Mass storage
-#define CFG_TUD_MSC_BUFSIZE         FLASH_SECTOR_SIZE
+#define CFG_TUD_MSC_BUFSIZE         ICE_FLASH_SECTOR_SIZE
 
 // Must be a multiple of flash page size
 #define CFG_TUD_DFU_XFER_BUFSIZE    256

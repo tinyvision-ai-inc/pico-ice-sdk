@@ -10,8 +10,8 @@
 //       SHOULD ONLY CONSIST OF PREPROCESSOR DIRECTIVES
 // -----------------------------------------------------
 
-#ifndef _BOARDS_PICO_ICE_H
-#define _BOARDS_PICO_ICE_H
+#ifndef PICO_ICE_H_
+#define PICO_ICE_H_
 
 // For board detection
 #define TINYVISION_AI_INC_PICO_ICE
@@ -78,10 +78,6 @@
 
 #ifndef PICO_RP2040_B1_SUPPORTED
 #define PICO_RP2040_B1_SUPPORTED 0
-#endif
-
-#ifndef PICO_SMPS_MODE_PIN
-#define PICO_SMPS_MODE_PIN 15
 #endif
 
 // --- BOARD SPECIFIC ---
