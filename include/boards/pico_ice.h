@@ -120,6 +120,9 @@
 #ifndef ICE_FPGA_CLOCK_PIN
 #define ICE_FPGA_CLOCK_PIN 24
 #endif
+#ifndef ICE_FPGA_CSN_PIN
+#define ICE_FPGA_CSN_PIN 24
+#endif
 #ifndef ICE_FPGA_CDONE_PIN
 #define ICE_FPGA_CDONE_PIN 26
 #endif

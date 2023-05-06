@@ -57,12 +57,6 @@ void ice_spi_init(void) {
     gpio_set_dir(ICE_SPI_RX_PIN, GPIO_IN);
 }
 
-void ice_spi_init_cs_pin(uint8_t pin) {
-    gpio_init(pin);
-    gpio_put(pin, true);
-    gpio_set_dir(pin, GPIO_OUT);
-}
-
 static uint8_t transfer_byte(uint8_t tx) {
     uint8_t rx;
 
@@ -87,7 +81,6 @@ static uint8_t transfer_byte(uint8_t tx) {
 }
 
 void ice_spi_chip_select(uint8_t csn_pin) {
-
     // Take control of the bus
     gpio_put(ICE_SPI_SCK_PIN, false);
     gpio_put(ICE_SPI_TX_PIN, true);
@@ -96,6 +89,7 @@ void ice_spi_chip_select(uint8_t csn_pin) {
 
     // Start an SPI transaction
     gpio_put(csn_pin, false);
+    gpio_set_function(csn_pin, GPIO_FUNC_SIO);
     gpio_set_dir(csn_pin, GPIO_OUT);
     sleep_us(1);
 }

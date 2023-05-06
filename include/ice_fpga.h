@@ -31,13 +31,12 @@
 extern "C" {
 #endif
 
-void ice_fpga_init(void);
 void ice_fpga_clock(uint8_t frequency_mhz);
 bool ice_fpga_start(void);
 void ice_fpga_stop(void);
-void ice_fpga_read(uint8_t *data, size_t data_size);
-void ice_fpga_write(const uint8_t *data, size_t data_size);
-void ice_fpga_serial_bridge(uint8_t byte, void (*tx)(void));
+void ice_fpga_read(uint32_t addr, uint8_t *data, size_t data_size);
+void ice_fpga_write(uint32_t addr, const uint8_t *data, size_t data_size);
+void ice_fpga_serial_bridge(uint8_t byte, void (*tx)(uint8_t));
 
 #ifdef __cplusplus
 }

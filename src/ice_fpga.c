@@ -30,9 +30,7 @@
 // pico-ice-sdk
 #include "boards/pico_ice.h"
 #include "ice_fpga.h"
-
-void ice_fpga_init(void) {
-}
+#include "ice_spi.h"
 
 void ice_fpga_clock(uint8_t freq_mhz) {
     uint src = CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_VALUE_CLK_USB;
@@ -68,7 +66,7 @@ bool ice_fpga_start(void) {
             ice_fpga_stop();
             return false;
         }
-        ice_usb_sleep_ms(1);
+        sleep_ms(1);
     }
     return true;
 }
@@ -79,7 +77,7 @@ bool ice_fpga_start(void) {
 //     Write: 01 | AA | AA | AA | AA
 //     [Wishbone Operation]
 //     Read:  01 | VV | VV | VV | VV
-void ice_fpga_read(uint32_t addr, uint8_t *data, uint8_t data_size) {
+void ice_fpga_read(uint32_t addr, uint8_t *data, size_t data_size) {
     uint8_t header[5] = {
         0x01,
         (addr >> 24) & 0xFF,
@@ -89,14 +87,12 @@ void ice_fpga_read(uint32_t addr, uint8_t *data, uint8_t data_size) {
     };
     uint8_t byte;
 
-    ice_spi_chip_select(ICE_FPGA_CS_PIN);
+    ice_spi_chip_select(ICE_FPGA_CSN_PIN);
     ice_spi_write_blocking(header, sizeof header);
-    while (ice_spi_read_blocking(&byte, 1), byte == 0xFF) {
-        tud_task();
-    }
+    while (ice_spi_read_blocking(&byte, 1), byte == 0xFF);
     assert(byte == 0x01);
-    spi_read_blocking(data, data_size);
-    ice_spi_chip_deselect(ICE_FPGA_CS_PIN);
+    ice_spi_read_blocking(data, data_size);
+    ice_spi_chip_deselect(ICE_FPGA_CSN_PIN);
 }
 
 // Write protocol:
@@ -113,13 +109,11 @@ void ice_fpga_write(uint32_t addr, const uint8_t *data, size_t data_size) {
     };
     uint8_t byte;
 
-    ice_spi_chip_select(ICE_FPGA_CS_PIN);
+    ice_spi_chip_select(ICE_FPGA_CSN_PIN);
     ice_spi_write_blocking(header, sizeof header);
     ice_spi_write_blocking(data, data_size);
-    while (ice_spi_read_blocking(&byte, 1), byte == 0xFF) {
-        tud_task();
-    }
-    ice_spi_chip_deselect(ICE_FPGA_CS_PIN);
+    while (ice_spi_read_blocking(&byte, 1), byte == 0xFF);
+    ice_spi_chip_deselect(ICE_FPGA_CSN_PIN);
     assert(byte == 0x00);
 }
 
@@ -136,11 +130,12 @@ void ice_fpga_serial_bridge(uint8_t byte, void (*tx)(uint8_t)) {
         FPGA_GET_ADDR_2,
         FPGA_GET_ADDR_3,
         FPGA_GET_VALUE,
-    } state = FPGA_GET_IDLE;
+    } state = FPGA_GET_COMMAND;
     static enum {
         FPGA_COMMAND_READ,
         FPGA_COMMAND_WRITE,
     } cmd;
+    static uint32_t addr;
     static uint8_t data_size = 0;
     static uint8_t data[0xFF];
     static uint8_t data_pos;
@@ -149,11 +144,11 @@ void ice_fpga_serial_bridge(uint8_t byte, void (*tx)(uint8_t)) {
     case FPGA_GET_COMMAND:
         ice_spi_write_blocking(&byte, 1);
         if (cmd == FPGA_COMMAND_READ || cmd == FPGA_COMMAND_WRITE) {
-            cmd = byte
+            cmd = byte;
             state++;
         }
         break;
-    case FPGA_GET_VALUE_LENGTH:
+    case FPGA_GET_LENGTH:
         data_size = byte;
         data_pos = 0;
         addr = 0;
@@ -171,9 +166,8 @@ void ice_fpga_serial_bridge(uint8_t byte, void (*tx)(uint8_t)) {
             data[data_pos++] = byte;
             data_size;
             if (data_pos == data_size) {
-                ice_fpga_spibone_write(data, data_size);
+                ice_fpga_write(addr, data, data_size);
                 state = FPGA_GET_COMMAND;
-                (*tx)(0x00); // non-official extension
             }
         }
         break;
@@ -182,7 +176,7 @@ void ice_fpga_serial_bridge(uint8_t byte, void (*tx)(uint8_t)) {
     }
 
     if (state == FPGA_GET_VALUE && cmd == FPGA_COMMAND_READ) {
-        ice_fpga_spibone_read(data, data_size);
+        ice_fpga_read(addr, data, data_size);
         for (uint8_t i = 0; i < data_size; i++) {
             (*tx)(data[i]);
         }

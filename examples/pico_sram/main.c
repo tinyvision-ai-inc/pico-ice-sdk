@@ -36,8 +36,6 @@ int main(void) {
     stdio_init_all();
     ice_sram_init();
 
-    ice_sram_power_on();
-
     while (1) {
         uint8_t id[8];
 

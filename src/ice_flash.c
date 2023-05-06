@@ -132,7 +132,6 @@ void ice_flash_sleep(void) {
 
 void ice_flash_init(void) {
     // Setup the CSN pin to GPIO mode for software control
-    ice_spi_init_cs_pin(ICE_FLASH_CSN_PIN);
     ice_spi_init();
 
     // Flash might be asleep as a successful FPGA boot will put it to sleep as the last command!

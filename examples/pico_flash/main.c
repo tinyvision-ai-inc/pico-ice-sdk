@@ -24,7 +24,6 @@
 
 #include <stdio.h>
 #include "pico/stdlib.h"
-#include "tusb.h"
 #include "boards/pico_ice.h"
 #include "ice_spi.h"
 #include "ice_flash.h"
@@ -62,8 +61,6 @@ int main(void) {
     }
 
     for (uint16_t i = 0;; i++) {
-        tud_task(); 
-
         // Erase a sector, program the page and then read it back.
         // Note that we're using MY_BASE_ADDRESS to avoid erasing the FPGA bitfile which is at 0x0
         ice_flash_erase_sector(MY_BASE_ADDRESS);
