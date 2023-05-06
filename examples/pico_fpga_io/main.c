@@ -34,7 +34,6 @@
 
 int main(void) {
     ice_led_init();
-    ice_fpga_init(48);
     ice_fpga_start();
 
     for (uint8_t i = 0;; i++) {

@@ -34,7 +34,6 @@
 int main(void) {
     ice_led_init();
     ice_spi_init();
-    ice_fpga_init(48);
 
     // Write the whole bitstream to the FPGA CRAM
     ice_cram_open();

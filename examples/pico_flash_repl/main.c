@@ -236,7 +236,6 @@ static void repl_command_page(void)
 int main(void)
 {
     // Let the FPGA boot up from flash
-    ice_fpga_init(48);
     ice_fpga_start();
 
     // Enable USB-UART #0 output

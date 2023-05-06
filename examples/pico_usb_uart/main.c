@@ -33,8 +33,7 @@ int main(void) {
     stdio_init_all(); // uses CDC0, next available is CDC1
     tusb_init();
 
-    // Let the FPGA start and give it a clock
-    ice_fpga_init(48);
+    // Let the FPGA start
     ice_fpga_start();
 
     // Enable the UART
