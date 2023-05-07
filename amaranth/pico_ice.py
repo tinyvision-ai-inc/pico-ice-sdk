@@ -14,23 +14,22 @@ class PicoIcePlatform(LatticeICE40Platform):
     default_clk = "SB_HFOSC"
     hfosc_div   = 1
     resources   = [
-        *LEDResources(pins="39 40 41",
-            invert=True, attrs=Attrs(IO_STANDARD="SB_LVCMOS")),
-        Resource("led_g", 0,
-            PinsN("39", dir="o"), Attrs(IO_STANDARD="SB_LVCMOS")),
-        Resource("led_b", 0,
-            PinsN("40", dir="o"), Attrs(IO_STANDARD="SB_LVCMOS")),
-        Resource("led_r", 0,
-            PinsN("41", dir="o"), Attrs(IO_STANDARD="SB_LVCMOS")),
-        *SPIFlashResources(0,
-            cs_n="16", clk="15", copi="14", cipo="17",
+        *LEDResources(pins="39 40", invert=True, attrs=Attrs(IO_STANDARD="SB_LVCMOS")),
+        Resource("led_g", 0, PinsN("39", dir="o"), Attrs(IO_STANDARD="SB_LVCMOS")),
+        Resource("led_b", 0, PinsN("40", dir="o"), Attrs(IO_STANDARD="SB_LVCMOS")),
+        # led_r is used as a cs_n pin for iCE40 <-> RP2040 I/O
+        #Resource("led_r", 0, PinsN("41", dir="o"), Attrs(IO_STANDARD="SB_LVCMOS")),
+        *ButtonResources(pins="11", invert=True,
             attrs=Attrs(IO_STANDARD="SB_LVCMOS")),
-        SPIResource("spi", 0,
-            cs_n="16", clk="15", copi="14", cipo="17",
+        *SPIFlashResources(0, cs_n="16", clk="15", copi="14", cipo="17",
+            attrs=Attrs(IO_STANDARD="SB_LVCMOS")),
+        *SPIResource("sram", 0, cs_n="37", clk="15", copi="14", cipo="17",
+            attrs=Attrs(IO_STANDARD="SB_LVCMOS"), role="controller"),
+        *SPIResource("spi", 0, cs_n="41", clk="15", copi="14", cipo="17",
             attrs=Attrs(IO_STANDARD="SB_LVCMOS"), role="peripheral"),
     ]
-    connectors  = [
-        Connector("pmod", 1, "4  2  47 45 - - 3  48 46 44 - -"),
+    connectors = [
+        Connector("pmod", 1, " 4  2 47 45 - -  3 48 46 44 - -"),
         Connector("pmod", 2, "43 38 34 31 - - 42 36 32 28 - -"),
         Connector("pmod", 3, "25 19 27 21 - - 23 18 26 20 - -"),
     ]

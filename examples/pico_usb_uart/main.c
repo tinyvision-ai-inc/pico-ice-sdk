@@ -42,7 +42,6 @@ int main(void) {
     gpio_set_function(1, GPIO_FUNC_UART);
 
     // Bind USB CDC1 callback for piping input data to UART0
-    tud_cdc_rx_cb_table[0] = &ice_usb_cdc_to_uart0;
     tud_cdc_rx_cb_table[1] = &ice_usb_cdc_to_uart0;
 
     // Bind UART0 interrupt for piping to USB CDC1

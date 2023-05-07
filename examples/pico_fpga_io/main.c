@@ -37,11 +37,8 @@ int main(void) {
     ice_fpga_start();
 
     for (uint8_t i = 0;; i++) {
-        uint8_t buffer[1] = { i };
+        uint8_t buffer[] = { i };
 
-        ice_spi_chip_select(ICE_FPGA_CSN_PIN);
-        ice_spi_write_blocking(buffer, 1);
-        ice_spi_read_blocking(buffer, 1);
-        ice_spi_chip_deselect(ICE_FPGA_CSN_PIN);
+        ice_fpga_write(0x0000, buffer, sizeof buffer);
     }
 }

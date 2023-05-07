@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-void ice_fpga_clock(uint8_t frequency_mhz);
+void ice_fpga_init(uint8_t freq_mhz);
 bool ice_fpga_start(void);
 void ice_fpga_stop(void);
 void ice_fpga_read(uint32_t addr, uint8_t *data, size_t data_size);
