@@ -53,6 +53,7 @@ void ice_sram_reset(void) {
 
 void ice_sram_init(void) {
     ice_spi_init();
+    ice_spi_init_cs_pin(ICE_SRAM_CS_PIN);
 
     // The SRAM CS is active low: invert its output with hardware.
     gpio_set_outover(ICE_SRAM_CS_PIN, GPIO_OVERRIDE_INVERT);

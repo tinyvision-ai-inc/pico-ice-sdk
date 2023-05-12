@@ -101,10 +101,10 @@
 #define ICE_FLASH_CSN_PIN 9
 #endif
 #ifndef ICE_FPGA_CSN_PIN
-#define ICE_FPGA_CSN_PIN 9
+#define ICE_FPGA_CSN_PIN ICE_LED_RED_PIN // shared usage
 #endif
 #ifndef ICE_SRAM_CS_PIN
-#define ICE_SRAM_CS_PIN 14
+#define ICE_SRAM_CS_PIN 14 // active-high
 #endif
 
 // FLASH
@@ -119,9 +119,6 @@
 // ICE40 FPGA (SYSTEM)
 #ifndef ICE_FPGA_CLOCK_PIN
 #define ICE_FPGA_CLOCK_PIN 24
-#endif
-#ifndef ICE_FPGA_CSN_PIN
-#define ICE_FPGA_CSN_PIN 24
 #endif
 #ifndef ICE_FPGA_CDONE_PIN
 #define ICE_FPGA_CDONE_PIN 26

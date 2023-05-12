@@ -28,17 +28,22 @@
 #include "ice_fpga.h"
 #include "ice_spi.h"
 #include "ice_led.h"
+#include "tusb.h"
 
 #define DATA_LEN 8
 #define START_ADDR 0xdead
 
 int main(void) {
+    tusb_init();
     ice_led_init();
+    ice_fpga_init(48);
     ice_fpga_start();
 
     for (uint8_t i = 0;; i++) {
         uint8_t buffer[] = { i };
 
-        ice_fpga_write(0x0000, buffer, sizeof buffer);
+        tud_task();
+        ice_fpga_write(0x0123, buffer, sizeof buffer);
+        ice_fpga_read(0x0123, buffer, sizeof buffer);
     }
 }

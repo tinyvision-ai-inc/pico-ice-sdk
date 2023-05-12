@@ -23,9 +23,9 @@ class PicoIcePlatform(LatticeICE40Platform):
             attrs=Attrs(IO_STANDARD="SB_LVCMOS")),
         *SPIFlashResources(0, cs_n="16", clk="15", copi="14", cipo="17",
             attrs=Attrs(IO_STANDARD="SB_LVCMOS")),
-        *SPIResource("sram", 0, cs_n="37", clk="15", copi="14", cipo="17",
+        SPIResource("sram", 0, cs_n="37", clk="15", copi="14", cipo="17",
             attrs=Attrs(IO_STANDARD="SB_LVCMOS"), role="controller"),
-        *SPIResource("spi", 0, cs_n="41", clk="15", copi="14", cipo="17",
+        SPIResource("rp2040", 0, cs_n="41", clk="15", copi="14", cipo="17",
             attrs=Attrs(IO_STANDARD="SB_LVCMOS"), role="peripheral"),
     ]
     connectors = [

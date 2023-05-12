@@ -57,6 +57,11 @@ void ice_spi_init(void) {
     gpio_set_dir(ICE_SPI_RX_PIN, GPIO_IN);
 }
 
+void ice_spi_init_cs_pin(uint8_t csn_pin) {
+    gpio_init(csn_pin);
+    ice_spi_chip_deselect(csn_pin);
+}
+
 static uint8_t transfer_byte(uint8_t tx) {
     uint8_t rx;
 
@@ -89,7 +94,6 @@ void ice_spi_chip_select(uint8_t csn_pin) {
 
     // Start an SPI transaction
     gpio_put(csn_pin, false);
-    gpio_set_function(csn_pin, GPIO_FUNC_SIO);
     gpio_set_dir(csn_pin, GPIO_OUT);
     sleep_us(1);
 }
@@ -107,6 +111,17 @@ void ice_spi_chip_deselect(uint8_t csn_pin) {
     // Release the bus by putting it high-impedance mode
     gpio_set_dir(ICE_SPI_SCK_PIN, GPIO_IN);
     gpio_set_dir(ICE_SPI_TX_PIN, GPIO_IN);
+
+    switch (csn_pin) {
+    case ICE_LED_RED_PIN:
+    case ICE_LED_GREEN_PIN:
+    case ICE_LED_BLUE_PIN:
+        gpio_set_dir(csn_pin, GPIO_IN);
+        break;
+    default:
+        gpio_put(csn_pin, true);
+        break;
+    }
 }
 
 static void prepare_transfer(void (*callback)(volatile void *), void *context) {

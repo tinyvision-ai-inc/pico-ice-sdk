@@ -24,7 +24,7 @@ void board_flash_read(uint32_t addr, void *buffer, uint32_t len)
     ice_flash_read(addr, buffer, len);
 }
 
-void board_flash_write(uint32_t addr, void const *data, uint32_t len)
+void board_flash_write(uint32_t addr, const void *data, uint32_t len)
 {
     if (!flash_ready) {
         ice_fpga_stop();
@@ -49,14 +49,9 @@ uint32_t board_flash_size(void)
     return ICE_FLASH_SIZE_BYTES;
 }
 
-void board_rgb_write(uint8_t const rgb[])
+void board_rgb_write(const uint8_t rgb[])
 {
-    ice_led_init();
-
-    // Use a theshold instead of a PWM signal.
-    ice_led_red(rgb[0] > 0x10);
-    ice_led_green(rgb[1] > 0x10);
-    ice_led_blue(rgb[2] > 0x10);
+    (void)rgb;
 }
 
 int64_t board_timer_handler_cb(alarm_id_t id, void *data)

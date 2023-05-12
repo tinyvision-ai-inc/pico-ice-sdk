@@ -32,11 +32,14 @@
 #include "ice_fpga.h"
 #include "ice_spi.h"
 
-void ice_fpga_clock(uint8_t freq_mhz) {
+void ice_fpga_init(uint8_t freq_mhz) {
     uint src = CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_VALUE_CLK_USB;
     float div = 48 / freq_mhz;
 
-    clock_gpio_init(ICE_FPGA_CLOCK_PIN, src, div);
+    clock_gpio_init(ICE_FPGA_CLOCK_PIN, src, 48 / freq_mhz);
+
+    ice_spi_init();
+    ice_spi_init_cs_pin(ICE_FPGA_CSN_PIN);
 }
 
 void ice_fpga_stop(void) {

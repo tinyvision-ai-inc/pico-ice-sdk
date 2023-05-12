@@ -33,7 +33,7 @@
 static inline void memdump(uint8_t const *buf, size_t sz) {
     for (size_t i = 0; i < sz; i++) {
         printf(" %02X", buf[i]);
-        if (i % 0x40 == (0x40 - 1)) {
+        if (i % 0x20 == (0x20 - 1)) {
             printf("\r\n");
         }
     }
@@ -52,7 +52,6 @@ int main(void) {
     ice_led_init();
 
     // Booted up, now take control of the Flash
-    ice_spi_init();
     ice_flash_init();
 
     // Write data: known pattern, not very random!
@@ -62,15 +61,13 @@ int main(void) {
 
     for (uint16_t i = 0;; i++) {
         // Erase a sector, program the page and then read it back.
-        // Note that we're using MY_BASE_ADDRESS to avoid erasing the FPGA bitfile which is at 0x0
+        // Note that the FPGA bitfile which is at 0x000000
         ice_flash_erase_sector(MY_BASE_ADDRESS);
         ice_flash_program_page(MY_BASE_ADDRESS, buf_w);
         ice_flash_read(MY_BASE_ADDRESS, buf_r, sizeof buf_r);
         memdump(buf_r, sizeof buf_r);
 
-        ice_led_red(true);
-
-        sleep_ms(10000);
+        sleep_ms(5000);
     }
 
     return 0;
