@@ -1,6 +1,7 @@
 # amaranth
 from amaranth import *
 from amaranth.hdl.rec import *
+from amaranth.sim import *
 
 
 __all__ = [
@@ -14,6 +15,7 @@ __all__ = [
 
 
 class HandshakeSignature(Record):
+
     def __init__(self, *, width, ack, req, data):
         super().__init__([
             ("data",    width,  data),
@@ -23,6 +25,7 @@ class HandshakeSignature(Record):
 
 
 class HandshakeCtrlInInterface(HandshakeSignature):
+
     def __init__(self, *, width):
         super().__init__(width=width, req=DIR_FANOUT, ack=DIR_FANIN, data=DIR_FANIN)
 
@@ -32,6 +35,7 @@ class HandshakeCtrlInInterface(HandshakeSignature):
 
 
 class HandshakeCtrlOutInterface(HandshakeSignature):
+
     def __init__(self, *, width):
         super().__init__(width=width, req=DIR_FANOUT, ack=DIR_FANIN, data=DIR_FANOUT)
 
@@ -41,21 +45,27 @@ class HandshakeCtrlOutInterface(HandshakeSignature):
 
 
 class HandshakePeriInInterface(HandshakeSignature):
+
     def __init__(self, *, width):
         super().__init__(width=width, ack=DIR_FANOUT, req=DIR_FANIN, data=DIR_FANIN)
 
 
 class HandshakePeriOutInterface(HandshakeSignature):
+
     def __init__(self, *, width):
         super().__init__(width=width, ack=DIR_FANOUT, req=DIR_FANIN, data=DIR_FANOUT)
 
 
 class HandshakeInterconnect(Elaboratable):
+
     def __init__(self, addr=32, data=32):
-        self.ctrl = HandshakeCtrlOutInterface(width=data)
+        self.ctrl = None
         self.peri = {}
         self.addr = Signal(addr)
-        self.ack = self.ctrl.ack
+
+    def set_ctrl(self, ctrl):
+        assert self.ctrl is None
+        self.ctrl = ctrl
 
     def add_peri(self, addr, peri):
         assert addr not in self.peri
@@ -81,8 +91,7 @@ class HandshakeInterconnect(Elaboratable):
 
 if __name__ == "__main__":
     dut = HandshakeInterconnect(addr=8, data=8)
-
-    dut.ctrl.connect(HandshakeCtrlOutInterface(width=8))
+    dut.set_ctrl(HandshakeCtrlOutInterface(width=8))
     dut.add_peri(0xF0, HandshakePeriInInterface(width=8))
     dut.add_peri(0xF1, HandshakePeriInInterface(width=8))
 

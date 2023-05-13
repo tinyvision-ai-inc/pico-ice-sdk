@@ -14,15 +14,16 @@ __all__ = [ "Spibone" ]
 
 
 class Spibone(Elaboratable):
+
     def __init__(self):
-        # Upstream SPI interface
+        # Upstream: SPI interface
         self.rx = HandshakePeriInInterface(width=8)
         self.tx = HandshakeCtrlOutInterface(width=8)
 
-        # Downstream bus interface
+        # Downstream: controller for the read and write bus 
         self.addr = Signal(32)
-        self.rbus = HandshakeCtrlInInterface(width=32)
-        self.wbus = HandshakeCtrlOutInterface(width=32)
+        self.writers = HandshakeCtrlInInterface(width=32)
+        self.readers = HandshakeCtrlOutInterface(width=32)
 
     def elaborate(self, platform):
         m = Module()
@@ -73,7 +74,7 @@ class Spibone(Elaboratable):
 
             with m.State(f"WRITE_BUS_REQUEST"):
                 self.bus_write(m, addr, wdata)
-                with m.If(self.wbus.ack):
+                with m.If(self.readers.ack):
                     m.next = "WRITE_PUT_ACK"
 
             with m.State(f"WRITE_PUT_ACK"):
@@ -85,7 +86,7 @@ class Spibone(Elaboratable):
 
             with m.State(f"READ_BUS_REQUEST"):
                 self.bus_read(m, addr, rdata)
-                with m.If(self.rbus.ack):
+                with m.If(self.writers.ack):
                     m.next = "READ_PUT_ACK"
 
             with m.State("READ_PUT_ACK"):
@@ -107,41 +108,41 @@ class Spibone(Elaboratable):
 
     def bus_read(self, m, addr, data):
         m.d.comb += self.addr.eq(addr)
-        self.rbus.read(m, data)
+        self.writers.read(m, data)
 
     def bus_write(self, m, addr, data):
         m.d.comb += self.addr.eq(addr),
-        self.wbus.write(m, data),
+        self.readers.write(m, data),
+
 
 if __name__ == "__main__":
     dut = Spibone()
-
     dut.tx.connect(HandshakeCtrlOutInterface(width=8))
     dut.rx.connect(HandshakePeriInInterface(width=8))
-    dut.rbus.connect(HandshakePeriOutInterface(width=32))
-    dut.wbus.connect(HandshakePeriInInterface(width=32))
+    dut.writers.connect(HandshakePeriOutInterface(width=32))
+    dut.readers.connect(HandshakePeriInInterface(width=32))
 
     clk_freq_hz = 10e6 # MHz
 
     # Write request
 
-    rx_req      = b"\x00\x01\x00\x01\x01\x01\x00\x01\x01\x01\x01\x00\x01\x00\x00\x00\x00"
-    rx_data     = b"\x00\x00\x00\xF0\xF0\xF0\x00\xF0\x12\x34\x56\x00\x78\x00\x00\x00\x00"
-    tx_ack      = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00"
-    #                    WWW     AAA AAA AAA AAA     DDD DDD DDD     DDD                
-    rbus_ack    = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-    rbus_data   = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-    wbus_ack    = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00"
+    rx_req          = b"\x00\x01\x00\x01\x01\x01\x00\x01\x01\x01\x01\x00\x01\x00\x00\x00\x00"
+    rx_data         = b"\x00\x00\x00\xF0\xF0\xF0\x00\xF0\x12\x34\x56\x00\x78\x00\x00\x00\x00"
+    tx_ack          = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00"
+    #                        WWW     AAA AAA AAA     AAA DDD DDD DDD     DDD                
+    writers_ack     = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    writers_data    = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    readers_ack     = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00"
 
     # Read request                                                              
 
-    rx_req      += b"\x00\x01\x00\x01\x01\x01\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-    rx_data     += b"\x00\x01\x00\xF1\xF1\xF1\x00\xF1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-    tx_ack      += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x01\x01\x01\x01\x00"
-    #                    RRR     AAA AAA AAA     AAA                                     
-    rbus_ack    += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00"
-    rbus_data   += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x55\x00\x00\x00\x00\x00\x00\x00"
-    wbus_ack    += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    rx_req          += b"\x00\x01\x00\x01\x01\x01\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    rx_data         += b"\x00\x01\x00\xF1\xF1\xF1\x00\xF1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    tx_ack          += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x01\x01\x01\x01\x00"
+    #                         RRR     AAA AAA AAA     AAA                                     
+    writers_ack     += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00"
+    writers_data    += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x55\x00\x00\x00\x00\x00\x00\x00"
+    readers_ack     += b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
     def bench():
         global rx_req, rx_data, reader_ack, writer_ack, writer_data
@@ -150,9 +151,9 @@ if __name__ == "__main__":
             yield dut.rx.req.eq(rx_req[i])
             yield dut.rx.data.eq(rx_data[i])
             yield dut.tx.ack.eq(tx_ack[i])
-            yield dut.wbus.ack.eq(wbus_ack[i])
-            yield dut.rbus.data.eq(rbus_data[i])
-            yield dut.rbus.ack.eq(rbus_ack[i])
+            yield dut.readers.ack.eq(readers_ack[i])
+            yield dut.writers.data.eq(Repl(C(writers_data[i], 8), 4))
+            yield dut.writers.ack.eq(writers_ack[i])
             yield
 
     sim = Simulator(dut)
@@ -160,4 +161,3 @@ if __name__ == "__main__":
     sim.add_sync_process(bench)
     with sim.write_vcd(vcd_file=f"{__file__[:-3]}.vcd"):
         sim.run()
-

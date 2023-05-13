@@ -23,9 +23,11 @@ class SPISignature(Record):
             ("cs",      1,  ctrl),
         ])
 
+
 class SPICtrlInterface(SPISignature):
     def __init__(self):
         super().__init__(ctrl=DIR_FANOUT, peri=DIR_FANIN)
+
 
 class SPIPeriInterface(SPISignature):
     def __init__(self):
@@ -106,6 +108,31 @@ class SPIPeri(Elaboratable):
         return m
 
 
+def bench():
+    global cipo, rx_data, tx_data
+
+    n = 0
+
+    yield dut.rx.req.eq(1)
+
+    for i in range(len(clk)):
+        for _ in range(int(clk_freq_hz / spi_freq_hz)):
+            yield
+
+            yield dut.tx.data.eq(tx_data[n])
+            yield dut.tx.ack.eq(1)
+            if (yield dut.tx.req) == 1:
+                n += 1
+            if (yield dut.rx.ack) == 1:
+                rx_data.append((yield dut.rx.data))
+
+        cipo += "#" if (yield dut.spi.cipo) else "_"
+
+        yield dut.spi.copi.eq(copi[i] == "#")
+        yield dut.spi.clk.eq(clk[i] == "#")
+        yield dut.spi.cs.eq(cs[i] == "#")
+
+
 if __name__ == "__main__":
     dut = SPIPeri()
 
@@ -118,32 +145,6 @@ if __name__ == "__main__":
     cipo = ""
     rx_data = bytearray()
     tx_data = b"\xFE\x55\x01\x8F\x00\x00\x00\x00"
-
-    def bench():
-        global cipo
-        global rx_data
-        global tx_data
-
-        n = 0
-
-        yield dut.rx.req.eq(1)
-
-        for i in range(len(clk)):
-            for _ in range(int(clk_freq_hz / spi_freq_hz)):
-                yield
-
-                yield dut.tx.data.eq(tx_data[n])
-                yield dut.tx.ack.eq(1)
-                if (yield dut.tx.req) == 1:
-                    n += 1
-                if (yield dut.rx.ack) == 1:
-                    rx_data.append((yield dut.rx.data))
-
-            cipo += "#" if (yield dut.spi.cipo) else "_"
-
-            yield dut.spi.copi.eq(copi[i] == "#")
-            yield dut.spi.clk.eq(clk[i] == "#")
-            yield dut.spi.cs.eq(cs[i] == "#")
 
     sim = Simulator(dut)
     sim.add_clock(1 / clk_freq_hz)
