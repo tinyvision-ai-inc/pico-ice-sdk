@@ -26,27 +26,24 @@ class HandshakeCtrlInInterface(HandshakeSignature):
     def __init__(self, *, width):
         super().__init__(width=width, req=DIR_FANOUT, ack=DIR_FANIN, data=DIR_FANIN)
 
-    def read(self, data):
-        return [
-            data.eq(self.data),
-            self.req.eq(1),
-        ]
+    def read(self, m, data):
+        m.d.sync += data.eq(self.data),
+        m.d.comb += self.req.eq(1),
 
 
 class HandshakeCtrlOutInterface(HandshakeSignature):
     def __init__(self, *, width):
         super().__init__(width=width, req=DIR_FANOUT, ack=DIR_FANIN, data=DIR_FANOUT)
 
-    def write(self, data):
-        return [
-            self.data.eq(data),
-            self.req.eq(1),
-        ]
+    def write(self, m, data):
+        m.d.comb += self.data.eq(data),
+        m.d.comb += self.req.eq(1),
 
 
 class HandshakePeriInInterface(HandshakeSignature):
     def __init__(self, *, width):
         super().__init__(width=width, ack=DIR_FANOUT, req=DIR_FANIN, data=DIR_FANIN)
+
 
 class HandshakePeriOutInterface(HandshakeSignature):
     def __init__(self, *, width):
@@ -73,17 +70,13 @@ class HandshakeInterconnect(Elaboratable):
                     m.d.comb += self.ctrl.connect(self.peri[addr])
         return m
 
-    def read(self, addr, data):
-        return [
-            self.addr.eq(addr),
-            self.ctrl.read(data),
-        ]
+    def read(self, m, addr, data):
+        m.d.comb += self.addr.eq(addr),
+        self.ctrl.read(data),
 
-    def write(self, addr, data):
-        return [
-            self.addr.eq(addr),
-            self.ctrl.write(data),
-        ]
+    def write(self, m, addr, data):
+        m.d.comb += self.addr.eq(addr),
+        self.ctrl.write(data),
 
 
 if __name__ == "__main__":

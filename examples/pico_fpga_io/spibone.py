@@ -49,9 +49,7 @@ class Spibone(Elaboratable):
                 with m.State(f"GET_ADDR{i}"):
                     with m.If(self.rx.req):
                         m.d.comb += self.rx.ack.eq(1)
-
-                        slice = addr[i * 8 : (i + 1) * 8]
-                        m.d.sync += slice.eq(self.rx.data)
+                        m.d.sync += addr.eq(Cat(addr[0:-8], self.rx.data))
 
                         if i + 1 < 4:
                             m.next = f"GET_ADDR{i + 1}"
@@ -67,60 +65,53 @@ class Spibone(Elaboratable):
                 with m.State(f"WRITE_GET_DATA{i}"):
                     with m.If(self.rx.req):
                         m.d.comb += self.rx.ack.eq(1)
-
-                        slice = wdata[i * 8 : (i + 1) * 8]
-                        m.d.sync += slice.eq(self.rx.data)
-
+                        m.d.sync += wdata.eq(Cat(self.rx.data, wdata[0:-8]))
                         if i + 1 < 4:
                             m.next = f"WRITE_GET_DATA{i + 1}"
                         else:
                             m.next = f"WRITE_BUS_REQUEST"
 
             with m.State(f"WRITE_BUS_REQUEST"):
-                m.d.comb += self.bus_write(addr, wdata)
+                self.bus_write(m, addr, wdata)
                 with m.If(self.wbus.ack):
                     m.next = "WRITE_PUT_ACK"
 
             with m.State(f"WRITE_PUT_ACK"):
-                m.d.comb += self.tx.write(CMD_WRITE)
+                self.tx.write(m, CMD_WRITE)
                 with m.If(self.tx.ack):
                     m.next = "IDLE"
 
             # Read command
 
             with m.State(f"READ_BUS_REQUEST"):
-                m.d.comb += self.bus_read(addr, rdata)
+                self.bus_read(m, addr, rdata)
                 with m.If(self.rbus.ack):
                     m.next = "READ_PUT_ACK"
 
             with m.State("READ_PUT_ACK"):
-                m.d.comb += self.tx.write(CMD_READ)
+                self.tx.write(m, CMD_READ)
                 with m.If(self.tx.ack):
                     m.next = "READ_PUT_DATA0"
 
             for i in range(4):
                 with m.State(f"READ_PUT_DATA{i}"):
-                    slice = rdata[i * 8 : (i + 1) * 8]
-                    m.d.comb += self.tx.write(slice)
+                    self.tx.write(m, rdata[-8:])
                     with m.If(self.tx.ack):
                         if i + 1 < 4:
                             m.next = f"READ_PUT_DATA{i + 1}"
                         else:
                             m.next = "IDLE"
+                        m.d.sync += rdata.eq(Cat(rdata[0:-8], 0x00))
 
         return m
 
-    def bus_read(self, addr, data):
-        return [
-            self.addr.eq(addr),
-            self.rbus.read(data),
-        ]
+    def bus_read(self, m, addr, data):
+        m.d.comb += self.addr.eq(addr)
+        self.rbus.read(m, data)
 
-    def bus_write(self, addr, data):
-        return [
-            self.addr.eq(addr),
-            self.wbus.write(data),
-        ]
+    def bus_write(self, m, addr, data):
+        m.d.comb += self.addr.eq(addr),
+        self.wbus.write(m, data),
 
 if __name__ == "__main__":
     dut = Spibone()
