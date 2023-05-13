@@ -40,17 +40,16 @@ class Spibone(Elaboratable):
 
             with m.State("IDLE"):
                 with m.If(self.rx.req):
-                    m.d.comb += self.rx.ack.eq(1)
+                    self.rx.read(m, cmd)
 
                     with m.If((self.rx.data == CMD_READ) | (self.rx.data == CMD_WRITE)):
-                        m.d.sync += cmd.eq(self.rx.data)
                         m.next = "GET_ADDR0"
 
             for i in range(4):
                 with m.State(f"GET_ADDR{i}"):
                     with m.If(self.rx.req):
-                        m.d.comb += self.rx.ack.eq(1)
-                        m.d.sync += addr.eq(Cat(addr[0:-8], self.rx.data))
+                        self.rx.read(m, addr[-8:])
+                        m.d.sync += addr[0:-8].eq(addr[8:])
 
                         if i + 1 < 4:
                             m.next = f"GET_ADDR{i + 1}"
@@ -65,8 +64,9 @@ class Spibone(Elaboratable):
             for i in range(4):
                 with m.State(f"WRITE_GET_DATA{i}"):
                     with m.If(self.rx.req):
-                        m.d.comb += self.rx.ack.eq(1)
-                        m.d.sync += wdata.eq(Cat(self.rx.data, wdata[0:-8]))
+                        self.rx.read(m, wdata[-8:])
+                        m.d.sync += wdata[8:].eq(wdata[0:-8])
+
                         if i + 1 < 4:
                             m.next = f"WRITE_GET_DATA{i + 1}"
                         else:

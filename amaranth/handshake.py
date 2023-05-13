@@ -49,11 +49,19 @@ class HandshakePeriInInterface(HandshakeSignature):
     def __init__(self, *, width):
         super().__init__(width=width, ack=DIR_FANOUT, req=DIR_FANIN, data=DIR_FANIN)
 
+    def read(self, m, data):
+        m.d.sync += data.eq(self.data)
+        m.d.comb += self.ack.eq(1)
+
 
 class HandshakePeriOutInterface(HandshakeSignature):
 
     def __init__(self, *, width):
         super().__init__(width=width, ack=DIR_FANOUT, req=DIR_FANIN, data=DIR_FANOUT)
+
+    def write(self, m, data):
+        m.d.sync += self.data.eq(data)
+        m.d.comb += self.ack.eq(1)
 
 
 class HandshakeInterconnect(Elaboratable):

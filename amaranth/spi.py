@@ -52,8 +52,7 @@ class SPIPeri(Elaboratable):
         m = Module()
         shift_copi      = Signal(8)
         shift_cipo      = Signal(8)
-        next_cipo       = Signal(8)
-        next_copi       = Signal(8)
+        tx_data         = Signal(8)
         last_clk        = Signal(1)
         last_cs         = Signal(1)
         sampling_edge   = Signal(1)
@@ -75,35 +74,39 @@ class SPIPeri(Elaboratable):
 
         self.tx.req.reset = 1
 
-        # exchange data with the internal valid/ready module
-        with m.If(self.tx.req & self.tx.ack):
-            m.d.sync += next_cipo.eq(self.tx.data)
-            m.d.sync += self.tx.req.eq(0)
-        with m.If(self.rx.req & self.rx.ack):
-            m.d.sync += self.rx.ack.eq(0)
+        # receive data to transmit to SPI
+        with m.FSM() as fsm_tx:
+            with m.State("IDLE"):
+                pass
+            with m.State("GET_TX_DATA"):
+                with m.If(self.rx.req):
+                    self.tx.read(m, tx_data)
+
+        # send data received from SPI
+        with m.FSM() as fsm_rx:
+            with m.State("IDLE"):
+                pass
+            with m.State("PUT_RX_DATA"):
+                self.rx.write(m, rx_data)
+                with m.If(self.rx.ack):
+                    m.next = "IDLE"
 
         # shift data in and out on clock edges
-        m.d.sync += reload_rx.eq(0)
-        m.d.sync += reload_tx.eq(0)
         with m.If(self.spi.cs):
             with m.If(updating_edge):
                 m.d.sync += shift_cipo.eq(Cat(0, shift_cipo))
                 with m.If(shift_count == 0):
-                    m.d.sync += reload_tx.eq(1)
+                    m.d.sync += self.tx.req.eq(1)
+                    m.d.sync += shift_cipo.eq(tx_data)
+                    m.d.sync += tx_data.eq(0xFF)
+                    m.d.sync += fsm_rx.signal.eq(0)
             with m.If(sampling_edge):
                 m.d.sync += shift_copi.eq(Cat(self.spi.copi, shift_copi[0:7]))
                 m.d.sync += shift_count.eq(shift_count + 1)
                 with m.If(shift_count == 7):
-                    m.d.sync += reload_rx.eq(1)
-
-        # refresh the data between the shift registers and valid/ready
-        with m.If(reload_rx):
-            m.d.sync += self.rx.ack.eq(1)
-            m.d.sync += self.rx.data.eq(shift_copi)
-        with m.If(reload_tx):
-            m.d.sync += self.tx.req.eq(1)
-            m.d.sync += shift_cipo.eq(next_cipo)
-            m.d.sync += next_cipo.eq(0xFF)
+                    m.d.sync += self.rx.ack.eq(1)
+                    m.d.sync += self.rx.data.eq(shift_copi)
+                    m.d.sync += fsm_rx.signal.eq(1)
 
         return m
 
