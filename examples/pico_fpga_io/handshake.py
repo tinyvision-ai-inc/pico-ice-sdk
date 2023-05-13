@@ -9,7 +9,7 @@ __all__ = [
     "HandshakeCtrlOutInterface",
     "HandshakePeriInInterface",
     "HandshakePeriOutInterface",
-	"HandshakeInterconnect",
+    "HandshakeInterconnect",
 ]
 
 
@@ -26,22 +26,22 @@ class HandshakeCtrlInInterface(HandshakeSignature):
     def __init__(self, *, width):
         super().__init__(width=width, req=DIR_FANOUT, ack=DIR_FANIN, data=DIR_FANIN)
 
-	def read(self, data):
-		return [
-			data.eq(self.data),
-			self.req.eq(1),
-		]
+    def read(self, data):
+        return [
+            data.eq(self.data),
+            self.req.eq(1),
+        ]
 
 
 class HandshakeCtrlOutInterface(HandshakeSignature):
     def __init__(self, *, width):
         super().__init__(width=width, req=DIR_FANOUT, ack=DIR_FANIN, data=DIR_FANOUT)
 
-	def write(self, data):
-		return [
-			self.data.eq(data),
-			self.req.eq(1),
-		]
+    def write(self, data):
+        return [
+            self.data.eq(data),
+            self.req.eq(1),
+        ]
 
 
 class HandshakePeriInInterface(HandshakeSignature):
@@ -58,7 +58,7 @@ class HandshakeInterconnect(Elaboratable):
         self.ctrl = HandshakeCtrlOutInterface(width=data)
         self.peri = {}
         self.addr = Signal(addr)
-		self.ack = self.ctrl.ack
+        self.ack = self.ctrl.ack
 
     def add_peri(self, addr, peri):
         assert addr not in self.peri
@@ -96,13 +96,10 @@ if __name__ == "__main__":
     clk_freq_hz = 10e6 # MHz
 
     ctrl_req  = b"\x00\x01\x00\x00\x01\x00\x00\x00\x00\x01\x01\x01\x00\x01\x01\x00"
-                       ###         ###                 ### ### ###     ### ###
     ctrl_addr = b"\x00\xF0\x00\x00\xF1\x00\xF0\xF1\x00\xF0\xF0\xF0\x00\xF1\xF0\x00"
-                       ###         ###                 ### ### ###     ### ###
     ctrl_data = b"\x00\x11\x00\x00\x22\x00\x00\x00\x00\x33\x33\x33\x00\x44\x55\x00"
                        ###         ###                 ### ### ###     ### ###
     peri0_ack = b"\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x01\x00"
-                       ###         ###                 ### ### ###     ### ###
     peri1_ack = b"\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00"
 
     def bench():

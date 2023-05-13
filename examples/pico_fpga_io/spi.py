@@ -105,9 +105,6 @@ class SPIPeri(Elaboratable):
 
         return m
 
-    def write(self, data):
-        return self.tx.write(data)
-
 
 if __name__ == "__main__":
     dut = SPIPeri()
