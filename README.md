@@ -38,7 +38,7 @@ make
 
 ## Examples
 
-The examples can be built immediately in this repository.
+The examples can be built independently in their respective repository.
 You will first need to init the `pico-ice` submodule:
 
 ```
@@ -46,13 +46,12 @@ git submodule update --init
 git -C lib/pico-sdk submodule update --init lib/tinyusb
 ```
 
-And then build all the examples together:
+And then build the example of your choice:
 
 ```
-mkdir -p examples/build
-cd examples/build
-cmake ..
-make
+cd examples/pico_hello_world
+mkdir -p build && cd build
+cmake .. && make
 ```
 
 This should produce one `.uf2` per example, able to be flashed onto the pico-ice RP2040 chip.
