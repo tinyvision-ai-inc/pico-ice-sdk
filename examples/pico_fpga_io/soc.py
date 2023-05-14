@@ -9,7 +9,6 @@ from amaranth.sim import *
 from spi import *
 from handshake import *
 from spibone import *
-from debouncer import *
 
 
 __all__ = [ "SoC" ]

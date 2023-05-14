@@ -45,6 +45,7 @@ class SPIPeri(Elaboratable):
         self.spi        = SPIPeriInterface()
         self.tx         = HandshakePeriInInterface(width=8)
         self.rx         = HandshakeCtrlOutInterface(width=8)
+        self.shift_copi = Signal(8)
         self.selected   = Signal(1)
         self.deselected = Signal(1)
 
@@ -61,6 +62,8 @@ class SPIPeri(Elaboratable):
         rx_data         = Signal(8)
         get_tx_data     = Signal(1, reset=1)
         put_rx_data     = Signal(1)
+
+        m.d.comb += self.shift_copi.eq(shift_copi)
 
         # detect the clock edges
         m.d.sync += last_clk.eq(self.spi.clk)
@@ -89,6 +92,10 @@ class SPIPeri(Elaboratable):
                     m.d.sync += rx_data.eq(next_shift_copi)
                     m.d.sync += put_rx_data.eq(1)
 
+        # reset the shift register at the beginning of a transaction
+        with m.If(self.selected):
+            m.d.sync += shift_count.eq(0)
+
         # receive data to transmit to SPI
         with m.If(get_tx_data):
             with m.If(self.tx.req):
@@ -110,9 +117,9 @@ if __name__ == "__main__":
     clk_freq_hz = 10e6 # MHz
     spi_freq_hz = 2e6  # MHz
 
-    copi = "______##__##__##__##__##__##__##__##__########________####____####__________"
-    clk  = "_______#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#______"
     cs   = "_____##################################################################_____"
+    clk  = "_______#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#______"
+    copi = "______##__##__##__##__##__##__##__##__########________####____####__________"
     cipo = ""
     rx = bytearray()
     tx = b"\xFE\x55\x01\x8F\x00\x00\x00\x00"
@@ -130,10 +137,10 @@ if __name__ == "__main__":
                 if (yield dut.tx.ack) == 1:
                     n += 1
 
-                yield dut.rx.ack.eq(0)
+                yield dut.rx.ack.eq(1) # TODO: should be .eq(0)
                 if (yield dut.rx.req) == 1:
                     rx.append((yield dut.rx.data))
-                    yield dut.rx.ack.eq(1) # todo: why is this offset by one clock?
+                    yield dut.rx.ack.eq(1) # TODO: why is this offset by one clock?
 
                 yield
 
