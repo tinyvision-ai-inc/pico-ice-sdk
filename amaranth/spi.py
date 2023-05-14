@@ -51,15 +51,16 @@ class SPIPeri(Elaboratable):
     def elaborate(self, platform):
         m = Module()
         shift_copi      = Signal(8)
-        shift_cipo      = Signal(8)
-        tx_data         = Signal(8)
+        shift_cipo      = Signal(8, reset=0xFF)
+        shift_count     = Signal(range(8))
         last_clk        = Signal(1)
         last_cs         = Signal(1)
         sampling_edge   = Signal(1)
         updating_edge   = Signal(1)
-        shift_count     = Signal(range(8))
-        reload_rx       = Signal(1)
-        reload_tx       = Signal(1)
+        tx_data         = Signal(8, reset=0xFF)
+        rx_data         = Signal(8)
+        get_tx_data     = Signal(1, reset=1)
+        put_rx_data     = Signal(1)
 
         # detect the clock edges
         m.d.sync += last_clk.eq(self.spi.clk)
@@ -72,68 +73,35 @@ class SPIPeri(Elaboratable):
         # bind shift registers to the I/O ports
         m.d.comb += self.spi.cipo.eq(shift_cipo[-1])
 
-        self.tx.req.reset = 1
-
-        # receive data to transmit to SPI
-        with m.FSM() as fsm_tx:
-            with m.State("IDLE"):
-                pass
-            with m.State("GET_TX_DATA"):
-                with m.If(self.rx.req):
-                    self.tx.read(m, tx_data)
-
-        # send data received from SPI
-        with m.FSM() as fsm_rx:
-            with m.State("IDLE"):
-                pass
-            with m.State("PUT_RX_DATA"):
-                self.rx.write(m, rx_data)
-                with m.If(self.rx.ack):
-                    m.next = "IDLE"
-
         # shift data in and out on clock edges
         with m.If(self.spi.cs):
             with m.If(updating_edge):
                 m.d.sync += shift_cipo.eq(Cat(0, shift_cipo))
                 with m.If(shift_count == 0):
-                    m.d.sync += self.tx.req.eq(1)
                     m.d.sync += shift_cipo.eq(tx_data)
                     m.d.sync += tx_data.eq(0xFF)
-                    m.d.sync += fsm_rx.signal.eq(0)
+                    m.d.sync += get_tx_data.eq(1)
             with m.If(sampling_edge):
-                m.d.sync += shift_copi.eq(Cat(self.spi.copi, shift_copi[0:7]))
+                next_shift_copi = Cat(self.spi.copi, shift_copi[0:7])
+                m.d.sync += shift_copi.eq(next_shift_copi)
                 m.d.sync += shift_count.eq(shift_count + 1)
                 with m.If(shift_count == 7):
-                    m.d.sync += self.rx.ack.eq(1)
-                    m.d.sync += self.rx.data.eq(shift_copi)
-                    m.d.sync += fsm_rx.signal.eq(1)
+                    m.d.sync += rx_data.eq(next_shift_copi)
+                    m.d.sync += put_rx_data.eq(1)
+
+        # receive data to transmit to SPI
+        with m.If(get_tx_data):
+            with m.If(self.tx.req):
+                self.tx.read(m, tx_data)
+                m.d.sync += get_tx_data.eq(0)
+
+        # send data received from SPI
+        with m.If(put_rx_data):
+            self.rx.write(m, rx_data)
+            with m.If(self.rx.ack):
+                m.d.sync += put_rx_data.eq(0)
 
         return m
-
-
-def bench():
-    global cipo, rx_data, tx_data
-
-    n = 0
-
-    yield dut.rx.req.eq(1)
-
-    for i in range(len(clk)):
-        for _ in range(int(clk_freq_hz / spi_freq_hz)):
-            yield
-
-            yield dut.tx.data.eq(tx_data[n])
-            yield dut.tx.ack.eq(1)
-            if (yield dut.tx.req) == 1:
-                n += 1
-            if (yield dut.rx.ack) == 1:
-                rx_data.append((yield dut.rx.data))
-
-        cipo += "#" if (yield dut.spi.cipo) else "_"
-
-        yield dut.spi.copi.eq(copi[i] == "#")
-        yield dut.spi.clk.eq(clk[i] == "#")
-        yield dut.spi.cs.eq(cs[i] == "#")
 
 
 if __name__ == "__main__":
@@ -142,12 +110,40 @@ if __name__ == "__main__":
     clk_freq_hz = 10e6 # MHz
     spi_freq_hz = 2e6  # MHz
 
-    copi = "_____ ##__##__##__##__##__##__##__##__########________####____####__________"
+    copi = "______##__##__##__##__##__##__##__##__########________####____####__________"
     clk  = "_______#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#______"
     cs   = "_____##################################################################_____"
     cipo = ""
-    rx_data = bytearray()
-    tx_data = b"\xFE\x55\x01\x8F\x00\x00\x00\x00"
+    rx = bytearray()
+    tx = b"\xFE\x55\x01\x8F\x00\x00\x00\x00"
+
+    def bench():
+        global cs, clk, copi, cipo, rx, tx
+
+        n = 0
+        yield dut.rx.req.eq(1)
+
+        for i in range(len(clk)):
+            for _ in range(int(clk_freq_hz / spi_freq_hz)):
+                yield dut.tx.data.eq(tx[n])
+                yield dut.tx.req.eq(1)
+                if (yield dut.tx.ack) == 1:
+                    n += 1
+
+                yield dut.rx.ack.eq(0)
+                if (yield dut.rx.req) == 1:
+                    rx.append((yield dut.rx.data))
+                    yield dut.rx.ack.eq(1) # todo: why is this offset by one clock?
+
+                yield
+
+
+
+            cipo += "#" if (yield dut.spi.cipo) else "_"
+
+            yield dut.spi.copi.eq(copi[i] == "#")
+            yield dut.spi.clk.eq(clk[i] == "#")
+            yield dut.spi.cs.eq(cs[i] == "#")
 
     sim = Simulator(dut)
     sim.add_clock(1 / clk_freq_hz)
@@ -156,5 +152,5 @@ if __name__ == "__main__":
         sim.run()
 
     print(f"cipo={cipo}")
-    print(f"copi={rx_data}")
-    assert rx_data == b"\xAA\xAA\xF0\xCC"
+    print(f"copi={rx}")
+    assert rx == b"\xAA\xAA\xF0\xCC"
