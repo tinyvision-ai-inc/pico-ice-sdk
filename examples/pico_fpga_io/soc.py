@@ -5,13 +5,14 @@ sys.path.append(os.path.dirname(__file__) + "/pico-ice-sdk/amaranth")
 from amaranth import *
 from amaranth.sim import *
 
-# local
+# pico-ice-sdk
 from spi import *
 from handshake import *
 from spibone import *
+from debouncer import *
 
 
-__all__ = [ "Top" ]
+__all__ = [ "SoC" ]
 
 
 class PeriReader(Elaboratable):
@@ -45,13 +46,14 @@ class PeriWriter(Elaboratable):
 
 
 class SoC(Elaboratable):
+
     def __init__(self):
         self.spi = SPIPeriInterface()
-        self.spibone = None
-        self.readers = None
 
     def elaborate(self, platform):
         m = Module()
+
+        debug = platform.request("debug", 0)
 
         # Add a spi peripheral driving a spibone protocol parser
 
@@ -86,8 +88,34 @@ class SoC(Elaboratable):
         m.submodules.writer1 = m_writer1 = PeriWriter(value=0xF1)
         m_writers.add_peri(0x55551001, m_writer1.peri)
 
-        self.spibone = m_spibone
-        self.readers = m_readers
+        m.d.comb += debug.eq(Cat(
+            ~m_spi.spi.cs,
+            m_spi.spi.clk,
+            m_spi.spi.cipo,
+            m_spi.spi.copi,
+            #m_readers.ctrl.req,
+            #m_readers.ctrl.ack,
+            #m_readers.peri[0x55551000].ack,
+            #m_readers.peri[0x55551001].ack,
+
+            m_spi.shift_copi,
+            #m_spi.tx.data,
+
+            #m_spibone.addr[0:8],
+            #m_spibone.addr[8:16],
+            #m_spibone.addr[16:24]
+            #m_spibone.addr[24:32],
+
+            #m_spibone.addr[0:4] == 0x5,
+            #m_spibone.addr[4:8] == 0x5,
+            #m_spibone.addr[8:12] == 0x5,
+            #m_spibone.addr[12:16] == 0x5,
+            #m_spibone.addr[16:20] == 0x1,
+            #m_spibone.addr[20:24] == 0x0,
+            #m_spibone.addr[24:28] == 0x0,
+            #m_spibone.addr[28:32] == 0x1,
+        ))
+
         return m
 
 
