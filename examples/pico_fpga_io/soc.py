@@ -47,6 +47,8 @@ class PeriWriter(Elaboratable):
 class SoC(Elaboratable):
     def __init__(self):
         self.spi = SPIPeriInterface()
+        self.spibone = None
+        self.readers = None
 
     def elaborate(self, platform):
         m = Module()
@@ -64,24 +66,28 @@ class SoC(Elaboratable):
 
         m.submodules.readers = m_readers = HandshakeInterconnect()
         m_readers.set_ctrl(m_spibone.readers)
+        m.d.comb += m_readers.addr.eq(m_spibone.addr)
 
         m.submodules.writers = m_writers = HandshakeInterconnect()
         m_writers.set_ctrl(m_spibone.writers)
+        m.d.comb += m_writers.addr.eq(m_spibone.addr)
 
         # Add the peripherals to the read and write bus
 
         m.submodules.reader0 = m_reader0 = PeriReader()
-        m_readers.add_peri(0x1000, m_reader0.peri)
+        m_readers.add_peri(0x55551000, m_reader0.peri)
 
         m.submodules.reader1 = m_reader1 = PeriReader()
-        m_readers.add_peri(0x1001, m_reader1.peri)
+        m_readers.add_peri(0x55551001, m_reader1.peri)
 
         m.submodules.writer0 = m_writer0 = PeriWriter(value=0xF0)
-        m_writers.add_peri(0x1000, m_writer0.peri)
+        m_writers.add_peri(0x55551000, m_writer0.peri)
 
         m.submodules.writer1 = m_writer1 = PeriWriter(value=0xF1)
-        m_writers.add_peri(0x1001, m_writer1.peri)
+        m_writers.add_peri(0x55551001, m_writer1.peri)
 
+        self.spibone = m_spibone
+        self.readers = m_readers
         return m
 
 
@@ -92,7 +98,7 @@ def bench():
         byte = data[i]
 
         for ii in range(8):
-            bit = (byte >> ii) & 0x01
+            bit = (byte >> (7 - ii)) & 0x01
 
             yield dut.spi.clk.eq(0)
             yield dut.spi.cs.eq(xfer[i])
@@ -114,7 +120,7 @@ if __name__ == "__main__":
     spi_freq_hz = 2e6  # MHz
 
     xfer    = b"\x00\x01\x00\x01\x01\x01\x00\x01\x01\x01\x01\x00\x01\x00\x00\x00\x00"
-    data    = b"\x00\x00\x00\xF0\xF0\xF0\x00\xF0\x12\x34\x56\x00\x78\x00\x00\x00\x00"
+    data    = b"\x00\x00\x00\x01\x10\x55\x00\x55\x12\x34\x56\x00\x78\x00\x00\x00\x00"
 
     sim = Simulator(dut)
     sim.add_clock(1 / clk_freq_hz)
