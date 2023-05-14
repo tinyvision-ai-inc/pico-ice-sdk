@@ -43,7 +43,7 @@ int main(void) {
         uint8_t buffer[] = { i };
 
         tud_task();
-        ice_fpga_write(0x0123, buffer, sizeof buffer);
-        ice_fpga_read(0x0123, buffer, sizeof buffer);
+        ice_fpga_write(0x55551001, buffer, sizeof buffer);
+        ice_fpga_read(0x55551001, buffer, sizeof buffer);
     }
 }
