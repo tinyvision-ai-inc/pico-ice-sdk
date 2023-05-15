@@ -1,3 +1,10 @@
+# Changelog
+
+## v1.0.0
+
+* Libraries to communicate with each chip of the device
+* All exapmles working except pico_fpga_io and pico_usb_keyboard
+
 ## v0.1.0
 
 * (fix) PIO-based CRAM programming works again
