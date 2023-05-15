@@ -79,6 +79,7 @@ void ice_usb_uart1_to_cdc0(void);
 void ice_usb_uart1_to_cdc1(void);
 void ice_usb_cdc_to_uart0(uint8_t cdc_num);
 void ice_usb_cdc_to_uart1(uint8_t cdc_num);
+void ice_usb_cdc_to_fpga(uint8_t cdc_num);
 
 #ifdef __cplusplus
 }
