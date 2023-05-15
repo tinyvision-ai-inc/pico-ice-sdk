@@ -15,6 +15,7 @@ target_sources(pico_ice_sdk INTERFACE
     src/ice_sram.c
     src/ice_led.c
     src/ice_cram.c
+    src/ice_wishbone.c
     )
 target_include_directories(pico_ice_sdk INTERFACE
     include

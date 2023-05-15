@@ -70,16 +70,9 @@ extern char const *tud_string_desc[STRID_NUM_TOTAL];
 extern char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
 extern uint8_t const tud_desc_configuration[CONFIG_TOTAL_LEN];
 extern const tusb_desc_device_t tud_desc_device;
-extern void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t);
+extern void (*ice_usb_cdc_table[CFG_TUD_CDC])(uint8_t);
 
 void ice_usb_sleep_ms(uint32_t ms);
-void ice_usb_uart0_to_cdc0(void);
-void ice_usb_uart0_to_cdc1(void);
-void ice_usb_uart1_to_cdc0(void);
-void ice_usb_uart1_to_cdc1(void);
-void ice_usb_cdc_to_uart0(uint8_t cdc_num);
-void ice_usb_cdc_to_uart1(uint8_t cdc_num);
-void ice_usb_cdc_to_fpga(uint8_t cdc_num);
 
 #ifdef __cplusplus
 }

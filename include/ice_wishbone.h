@@ -22,39 +22,20 @@
  * SOFTWARE.
  */
 
-// pico-sdk
-#include "hardware/gpio.h"
+#pragma once
 
-// pico-ice-sdk
-#include "boards/pico_ice.h"
-#include "ice_led.h"
+#include <stdint.h>
+#include <stdbool.h>
 
-// Rather than driving LEDs up and down, we always drive the wire down,
-// but connect or disconnect the pin (high-impedance vs pull-down).
-void ice_led_init(void) {
-    gpio_init(ICE_LED_RED_PIN);
-    gpio_init(ICE_LED_GREEN_PIN);
-    gpio_init(ICE_LED_BLUE_PIN);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    // High-impedance by default, leaving LED control to the FPGA.
-    gpio_set_dir(ICE_LED_RED_PIN, GPIO_IN);
-    gpio_set_dir(ICE_LED_GREEN_PIN, GPIO_IN);
-    gpio_set_dir(ICE_LED_BLUE_PIN, GPIO_IN);
+void ice_wishbone_serial(uint8_t rx);
+extern void ice_wishbone_serial_read_cb(uint32_t addr, uint8_t *data, size_t size);
+extern void ice_wishbone_serial_write_cb(uint32_t addr, const uint8_t *data, size_t size);
+extern void ice_wishbone_serial_tx_cb(uint8_t byte);
 
-    // A pull-down, which connects this end of the LED to the ground.
-    gpio_put(ICE_LED_RED_PIN, false);
-    gpio_put(ICE_LED_GREEN_PIN, false);
-    gpio_put(ICE_LED_BLUE_PIN, false);
+#ifdef __cplusplus
 }
-
-void ice_led_red(bool state) {
-    gpio_set_dir(ICE_LED_RED_PIN, state ? GPIO_OUT : GPIO_IN);
-}
-
-void ice_led_green(bool state) {
-    gpio_set_dir(ICE_LED_GREEN_PIN, state ? GPIO_OUT : GPIO_IN);
-}
-
-void ice_led_blue(bool state) {
-    gpio_set_dir(ICE_LED_BLUE_PIN, state ? GPIO_OUT : GPIO_IN);
-}
+#endif
