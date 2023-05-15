@@ -30,9 +30,9 @@
 #include "pmod.h"
 
 static const pmod_2x_t ice_pmod_3 = {
-    .gpio = { 1, 3, 0, 2, 5, 7, 4, 6 }
+    .gpio = { 0, 1, 2, 3, 4, 5, 6, 7 }
 };
 
 static const pmod_2x_t ice_pmod_4 = {
-    .gpio = { 17, 19, 16, 18, 21, 23, 20, 22 }
+    .gpio = { 16, 17, 18, 19, 20, 21, 22, 23 }
 };
