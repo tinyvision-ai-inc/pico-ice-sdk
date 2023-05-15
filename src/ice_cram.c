@@ -86,9 +86,9 @@ void ice_cram_open(void) {
     state_machine_init();
 
     // SPI_SS low signals FPGA to receive bitstream.
-    gpio_init(ICE_FPGA_CSN_PIN);
-    gpio_put(ICE_FPGA_CSN_PIN, false);
-    gpio_set_dir(ICE_FPGA_CSN_PIN, GPIO_OUT);
+    gpio_init(ICE_CRAM_CSN_PIN);
+    gpio_put(ICE_CRAM_CSN_PIN, false);
+    gpio_set_dir(ICE_CRAM_CSN_PIN, GPIO_OUT);
 
     // Bring FPGA out of reset after at least 200ns.
     busy_wait_us(2);
@@ -98,10 +98,10 @@ void ice_cram_open(void) {
     busy_wait_us(1300);
 
     // SPI_SS high for 8 SPI_SCLKs
-    gpio_put(ICE_FPGA_CSN_PIN, true);
+    gpio_put(ICE_CRAM_CSN_PIN, true);
     put_byte(0);
     wait_idle();
-    gpio_put(ICE_FPGA_CSN_PIN, false);
+    gpio_put(ICE_CRAM_CSN_PIN, false);
 }
 
 bool ice_cram_write(const uint8_t* bitstream, uint32_t size) {
@@ -114,10 +114,10 @@ bool ice_cram_close(void) {
     wait_idle();
 
     // Bring SPI_SS high at end of bitstream and leave it pulled up.
-    gpio_put(ICE_FPGA_CSN_PIN, true);
+    gpio_put(ICE_CRAM_CSN_PIN, true);
     sleep_us(1);
-    gpio_pull_up(ICE_FPGA_CSN_PIN);
-    gpio_set_dir(ICE_FPGA_CSN_PIN, GPIO_IN);
+    gpio_pull_up(ICE_CRAM_CSN_PIN);
+    gpio_set_dir(ICE_CRAM_CSN_PIN, GPIO_IN);
 
     // Output dummy bytes. CDONE should go high within 100 SCLKs or there was an error with the bitstream.
     for (int i = 0; i < 13; ++i) {

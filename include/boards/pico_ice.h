@@ -100,6 +100,9 @@
 #ifndef ICE_FLASH_CSN_PIN
 #define ICE_FLASH_CSN_PIN 9
 #endif
+#ifndef ICE_CRAM_CSN_PIN
+#define ICE_CRAM_CSN_PIN ICE_FLASH_CSN_PIN
+#endif
 #ifndef ICE_FPGA_CSN_PIN
 #define ICE_FPGA_CSN_PIN ICE_LED_RED_PIN // shared usage
 #endif
