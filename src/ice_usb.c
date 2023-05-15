@@ -175,6 +175,12 @@ void ice_usb_cdc_to_uart1(uint8_t cdc_num) {
     cdc_to_uart(cdc_num, uart1);
 }
 
+void ice_usb_cdc_to_fpga(uint8_t cdc_num) {
+    while (tud_cdc_n_available(cdc_num)) {
+        ice_fpga_parse_uart_byte();
+    }
+}
+
 #endif // ICE_USB_USE_DEFAULT_CDC
 
 #if ICE_USB_USE_DEFAULT_DFU && CFG_TUD_DFU
