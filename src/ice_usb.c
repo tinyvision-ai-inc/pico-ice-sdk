@@ -175,9 +175,24 @@ void ice_usb_cdc_to_uart1(uint8_t cdc_num) {
     cdc_to_uart(cdc_num, uart1);
 }
 
+static void cdc0_tx(uint8_t byte) {
+    tud_cdc_n_read_char(0);
+}
+
+static void cdc1_tx(uint8_t byte) {
+    tud_cdc_n_read_char(1);
+}
+
 void ice_usb_cdc_to_fpga(uint8_t cdc_num) {
     while (tud_cdc_n_available(cdc_num)) {
-        ice_fpga_parse_uart_byte();
+        switch (cdc_num) {
+        case 0:
+            ice_fpga_serial_bridge(tud_cdc_n_read_char(0), cdc0_tx);
+            break;
+        case 1:
+            ice_fpga_serial_bridge(tud_cdc_n_read_char(1), cdc1_tx);
+            break;
+        }
     }
 }
 
