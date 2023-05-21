@@ -22,10 +22,13 @@
  * SOFTWARE.
  */
 
+// pico-sdk
 #include "pico/stdio.h"
 #include "hardware/irq.h"
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
+
+// pico-ice-sdk
 #include "ice_usb.h"
 #include "ice_fpga.h"
 
@@ -34,7 +37,7 @@ int main(void) {
     tusb_init();
 
     // Let the FPGA start
-    ice_fpga_start();
+    ice_fpga_init();
 
     // Enable the UART
     uart_init(uart0, 115200);
@@ -42,13 +45,17 @@ int main(void) {
     gpio_set_function(1, GPIO_FUNC_UART);
 
     // Bind USB CDC1 callback for piping input data to UART0
-    tud_cdc_rx_cb_table[1] = &ice_usb_cdc_to_uart0;
+    tud_cdc_rx_cb_table[1] = cdc;
 
     // Bind UART0 interrupt for piping to USB CDC1
     irq_set_exclusive_handler(UART0_IRQ, ice_usb_uart0_to_cdc1);
 
     while (true) {
         tud_task();
+        printf("%ld %ld %ld\r\n",
+            tud_cdc_n_available(0),
+            tud_cdc_n_available(1),
+            tud_cdc_n_available(2));
     }
     return 0;
 }
