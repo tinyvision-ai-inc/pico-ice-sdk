@@ -61,32 +61,25 @@
 #endif
 
 // --- FLASH ---
-
 #define PICO_BOOT_STAGE2_CHOOSE_W25Q080 1
-
 #ifndef PICO_FLASH_SIZE_BYTES
 #define PICO_FLASH_SIZE_BYTES (4 * 1024 * 1024)
 #endif
-
 #ifndef PICO_FLASH_SPI_CLKDIV
 #define PICO_FLASH_SPI_CLKDIV 2
 #endif
-
 #ifndef PICO_RP2040_B0_SUPPORTED
 #define PICO_RP2040_B0_SUPPORTED 1
 #endif
-
 #ifndef PICO_RP2040_B1_SUPPORTED
 #define PICO_RP2040_B1_SUPPORTED 0
 #endif
 
 // --- BOARD SPECIFIC ---
-
 // LED
 #define ICE_LED_RED_PIN 13
 #define ICE_LED_GREEN_PIN 12
 #define ICE_LED_BLUE_PIN 15
-
 // SPI
 #ifndef ICE_SPI_RX_PIN
 #define ICE_SPI_RX_PIN 8
@@ -109,16 +102,13 @@
 #ifndef ICE_SRAM_CS_PIN
 #define ICE_SRAM_CS_PIN 14 // active-high
 #endif
-
 // FLASH
 #ifndef ICE_FLASH_SIZE_BYTES
 #define ICE_FLASH_SIZE_BYTES (4 * 1024 * 1024)
 #endif
-
 // MISC
 #define ICE_GPOUT_CLOCK_PIN 25
 #define ICE_RESET_BUTTON_PIN 28
-
 // ICE40 FPGA (SYSTEM)
 #ifndef ICE_FPGA_CLOCK_PIN
 #define ICE_FPGA_CLOCK_PIN 24
@@ -129,7 +119,6 @@
 #ifndef ICE_FPGA_CRESET_B_PIN
 #define ICE_FPGA_CRESET_B_PIN 27
 #endif
-
 // ICE40 FPGA IO (PACKAGE NAMES)
 #define ICE_FPGA_27_PIN 0
 #define ICE_FPGA_25_PIN 1
@@ -139,7 +128,14 @@
 #define ICE_FPGA_23_PIN 5
 #define ICE_FPGA_20_PIN 6
 #define ICE_FPGA_18_PIN 7
-
+#define ICE_FPGA_14_PIN 8
+#define ICE_FPGA_16_PIN 9
+#define ICE_FPGA_15_PIN 10
+#define ICE_FPGA_17_PIN 11
+#define ICE_FPGA_37_PIN 14
+#define ICE_FPGA_35_PIN 24
+#define ICE_FPGA_7_PIN 26 # CDONE
+#define ICE_FPGA_8_PIN 27 # RESET
 // ICE40 FPGA IO (SILICON DIE NAMES)
 #define ICE_FPGA_IOB_6a_PIN  ICE_FPGA_2_PIN
 #define ICE_FPGA_IOB_9b_PIN  ICE_FPGA_3_PIN
