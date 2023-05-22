@@ -22,12 +22,18 @@
  * SOFTWARE.
  */
 
+// libc
+#include <stdio.h>
+
+// pico-sdk
 #include "hardware/structs/spi.h"
-#include "pico/stdio.h"
 #include "pico/stdlib.h"
+
+// pico-ice-sdk
 #include "boards/pico_ice.h"
 #include "ice_spi.h"
 #include "ice_flash.h"
+#include "ice_led.h"
 
 #define FLASH_CMD_PROGRAM_PAGE       0x02
 #define FLASH_CMD_READ               0x03
@@ -131,6 +137,9 @@ void ice_flash_sleep(void) {
 }
 
 void ice_flash_init(void) {
+    // Configure the SPI peripheral if not done already
+    ice_spi_init();
+
     // Setup the CSN pin to GPIO mode for software control
     ice_spi_init();
     ice_spi_init_cs_pin(ICE_FLASH_CSN_PIN);

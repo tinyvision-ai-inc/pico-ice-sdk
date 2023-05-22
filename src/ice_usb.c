@@ -35,8 +35,6 @@
 #include "ice_cram.h"
 #include "ice_spi.h"
 #include "ice_fpga.h"
-#include "tinyuf2/uf2.h"
-#include "tinyuf2/board_api.h"
 
 #define WATCHDOG_DELAY 3000
 

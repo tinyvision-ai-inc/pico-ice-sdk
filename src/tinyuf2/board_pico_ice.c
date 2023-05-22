@@ -1,13 +1,19 @@
+// stdlib
 #include <stdbool.h>
 #include <stdio.h>
+
+// pico-sdk
 #include "pico/stdio.h"
 #include "pico/time.h"
 #include "hardware/watchdog.h"
 #include "hardware/timer.h"
+
+// tinyuf2
 #include "board_api.h"
+
+// pico-ice-sdk
 #include "ice_flash.h"
 #include "ice_fpga.h"
-#include "ice_led.h"
 #include "ice_spi.h"
 
 static alarm_id_t alarm_id;
@@ -20,7 +26,6 @@ void board_flash_read(uint32_t addr, void *buffer, uint32_t len)
         ice_flash_init();
         flash_ready = true;
     }
-
     ice_flash_read(addr, buffer, len);
 }
 
@@ -32,7 +37,6 @@ void board_flash_write(uint32_t addr, const void *data, uint32_t len)
         flash_ready = true;
         ice_flash_erase_chip();
     }
-
     if (len != ICE_FLASH_PAGE_SIZE) {
         printf("%s: expected len=%u got len=%ld\r\n", __func__, ICE_FLASH_PAGE_SIZE, len);
     } else {
@@ -72,6 +76,5 @@ void board_timer_stop(void)
 
 void board_dfu_complete(void)
 {
-    printf("%s: rebooting\r\n", __func__);
     watchdog_reboot(0, 0, 1000);
 }

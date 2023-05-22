@@ -27,6 +27,7 @@
 #include "tusb.h"
 #include "boards/pico_ice.h"
 #include "ice_flash.h"
+#include "ice_spi.h"
 #include "ice_fpga.h"
 #include "ice_spi.h"
 
@@ -236,12 +237,12 @@ static void repl_command_page(void)
 int main(void)
 {
     // Let the FPGA boot up from flash
-    ice_fpga_start();
+    ice_fpga_stop();
 
     // Enable USB-UART #0 output
     stdio_init_all();
 
-    // initialize the flash driver and its SPI bus
+    // Initialize the flash driver and its SPI bus
     ice_flash_init();
 
     for (;;) {
@@ -276,8 +277,15 @@ int main(void)
             repl_command_page();
             break;
         default:
-            printf("\navailable commands: w r e z s u i +\n");
-            printf("or an address: 0x00000000\n");
+            printf("\navailable commands:\n");
+            printf(" w - write data at the current address (TODO: allow custom data)\r\n");
+            printf(" r - read and dump data at the current address\r\n");
+            printf(" e - erase the current page\r\n");
+            printf(" z - fill the page at current address with 0x00\r\n");
+            printf(" s - put the flash chip to sleep\r\n");
+            printf(" u - wake-up the flash chip\r\n");
+            printf(" Enter - print and bump the current address\r\n");
+            printf(" 0x000000 - set the current address\r\n");
             break;
         }
     }
