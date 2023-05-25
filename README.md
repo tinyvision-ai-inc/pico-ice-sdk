@@ -1,57 +1,17 @@
 # pico-ice-sdk
 
-[doc](https://pico-ice.tinyvision.ai/) -
-[pcb](https://github.com/tinyvision-ai-inc/pico-ice) -
-![status](https://github.com/tinyvision-ai-inc/pico-ice-sdk/actions/workflows/main.yml/badge.svg)
+[Doc](http://pico-ice.tinyvision.ai/)
+| [Hardware](https://github.com/tinyvision-ai-inc/pico-ice)
+| [Software](https://github.com/tinyvision-ai-inc/pico-ice-sdk)
+| [Schematic](https://raw.githubusercontent.com/tinyvision-ai-inc/pico-ice/main/Board/Rev3/pico-ice.pdf)
+| [Assembly](https://htmlpreview.github.io/?https://github.com/tinyvision-ai-inc/pico-ice/blob/main/Board/Rev3/bom/ibom.html)
+| [Discord](https://discord.gg/t2CzbAYeD2)
 
-This is a library for using the [pico-ice](https://pico-ice.tinyvision.ai/),
-a board combining a Raspberry Pi RP2040 and an Lattice iCE40.
+[![LectronZ](https://lectronz.com/static/badges/buy-it-on-lectronz-medium.png)](https://lectronz.com/stores/tinyvision-ai-store)
+[![Tindie](https://d2ss6ovg47m0r5.cloudfront.net/badges/tindie-smalls.png)](https://www.tindie.com/stores/tinyvision_ai/?ref=offsite_badges&utm_source=sellers_vr2045&utm_medium=badges&utm_campaign=badge_small%22%3E)
 
-You will need an ARM compiler toolchain (see [pico-sdk](https://github.com/raspberrypi/pico-sdk)):
+This is a library for using the [pico-ice](https://pico-ice.tinyvision.ai/) board.
 
-```sh
-sudo apt install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
-```
+See the [getting started instructions](https://pico-ice.tinyvision.ai/getting_started.html) for a general introduction.
 
-## Template
-
-To start with a new project, you can copy the <template/> directory:
-
-```sh
-cp -r template ~/my-project
-cd ~/my-project
-git init .
-git submodule add https://github.com/raspberrypi/pico-sdk/
-git submodule add https://github.com/tinyvision-ai-inc/pico-ice-sdk/
-git -C pico-sdk submodule update --init lib/tinyusb
-```
-
-Then build it like a normal CMake project and upload the `my_firmware.uf2` as described in:
-<https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf>
-
-```sh
-mkdir build
-cd build
-cmake ..
-make
-```
-
-## Examples
-
-The examples can be built independently in their respective repository.
-You will first need to init the `pico-ice` submodule:
-
-```
-git submodule update --init
-git -C lib/pico-sdk submodule update --init lib/tinyusb
-```
-
-And then build the example of your choice:
-
-```
-cd examples/pico_hello_world
-mkdir -p build && cd build
-cmake .. && make
-```
-
-This should produce one `.uf2` per example, able to be flashed onto the pico-ice RP2040 chip.
+See the [pico-ice-sdk doc](https://pico-ice.tinyvision.ai/pico_ice_sdk.html) to write custom firmware for the pico-ice.
