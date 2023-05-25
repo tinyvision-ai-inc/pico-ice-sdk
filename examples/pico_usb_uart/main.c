@@ -36,20 +36,20 @@ int main(void) {
     stdio_init_all(); // uses CDC0, next available is CDC1
     tusb_init();
 
+    // Configure the piping as configured in <tusb_config.h>
+    ice_usb_init();
+
     // Let the FPGA start
     ice_fpga_init(48);
 
-    // Enable the UART
+    // Enable the UART (not done by ice_usb_init())
     uart_init(uart0, 115200);
     gpio_set_function(0, GPIO_FUNC_UART);
     gpio_set_function(1, GPIO_FUNC_UART);
 
     while (true) {
         tud_task();
-        printf("%ld %ld %ld\r\n",
-            tud_cdc_n_available(0),
-            tud_cdc_n_available(1),
-            tud_cdc_n_available(2));
+        // ice_usb has callbacks for TinyUSB and UART all setup
     }
     return 0;
 }

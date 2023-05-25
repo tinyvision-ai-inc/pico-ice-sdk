@@ -54,8 +54,8 @@
 #define ICE_USB_USE_DEFAULT_CDC     1
 #define ICE_USB_USE_DEFAULT_DFU     1
 
-// Configure USB CDC to UART piping
-#define ICE_USB_UART_CDC_NUM        1
+// Configure piping between USB CDC and UART
+#define ICE_USB_UART_CDC            1
 #define ICE_USB_UART_NUM            0
 
 // CDC FIFO size of TX and RX and Endpoint buffer size
