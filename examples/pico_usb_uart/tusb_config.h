@@ -51,8 +51,12 @@
 
 // Use implementation from the pico-ice-sdk or not
 #define ICE_USB_USE_DEFAULT_DESCRIPTOR 1
-#define ICE_USB_USE_DEFAULT_CDC     2
+#define ICE_USB_USE_DEFAULT_CDC     1
 #define ICE_USB_USE_DEFAULT_DFU     1
+
+// Configure USB CDC to UART piping
+#define ICE_USB_UART_CDC_NUM        1
+#define ICE_USB_UART_NUM            0
 
 // CDC FIFO size of TX and RX and Endpoint buffer size
 #define CFG_TUD_CDC_RX_BUFSIZE      512

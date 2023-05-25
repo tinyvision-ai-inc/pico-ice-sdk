@@ -43,8 +43,10 @@
 #include "ice_spi.h"
 #include "ice_fpga.h"
 
-// tinyuf2
+// microsoft uf2
 #include "uf2.h"
+
+// tinyuf2
 #include "board_api.h"
 
 #define WATCHDOG_DELAY 3000
