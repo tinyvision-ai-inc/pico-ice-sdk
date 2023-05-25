@@ -44,8 +44,8 @@
 #include "ice_fpga.h"
 
 // tinyuf2
-#include "tinyuf2/uf2.h"
-#include "tinyuf2/board_api.h"
+#include "uf2.h"
+#include "board_api.h"
 
 #define WATCHDOG_DELAY 3000
 

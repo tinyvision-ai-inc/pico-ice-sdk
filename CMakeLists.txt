@@ -53,12 +53,13 @@ target_link_libraries(pico_ice_usb INTERFACE
 add_library(tinyuf2 INTERFACE)
 
 target_sources(tinyuf2 INTERFACE
-    src/tinyuf2/board_pico_ice.c
-    src/tinyuf2/ghostfat.c
-    src/tinyuf2/main.c
-    src/tinyuf2/msc.c
+    lib/tinyuf2/src/ghostfat.c
+    lib/tinyuf2/src/msc.c
+    src/tinyuf2_main.c
+    src/tinyuf2_board.c
     )
 target_include_directories(pico_ice_sdk INTERFACE
+    lib/tinyuf2/src
     include
     src
     )
