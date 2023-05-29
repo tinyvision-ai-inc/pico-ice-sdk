@@ -26,9 +26,12 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <assert.h>
 
 // pico-ice-sdk
+#include "boards/pico_ice.h"
 #include "ice_wishbone.h"
+#include "ice_spi.h"
 
 // Parse input data from a serial link (such as CDC uart) and control
 // an SPI peripheral to query the FPGA registers and send an answer back.
@@ -93,4 +96,50 @@ void ice_wishbone_serial(uint8_t byte) {
         }
         state = FPGA_GET_COMMAND;
     }
+}
+
+// https://github.com/xobs/spibone
+
+// Read protocol:
+//     Write: 01 | AA | AA | AA | AA
+//     [Wishbone Operation]
+//     Read:  01 | VV | VV | VV | VV
+void ice_wishbone_spi_read(uint32_t addr, uint8_t *data, size_t data_size) {
+    uint8_t header[5] = {
+        0x01,
+        (addr >> 24) & 0xFF,
+        (addr >> 16) & 0xFF,
+        (addr >> 8) & 0xFF,
+        (addr >> 0) & 0xFF,
+    };
+    uint8_t byte;
+
+    ice_spi_chip_select(ICE_FPGA_CSN_PIN);
+    ice_spi_write_blocking(header, sizeof header);
+    while (ice_spi_read_blocking(&byte, 1), byte == 0xFF);
+    assert(byte == 0x01);
+    ice_spi_read_blocking(data, data_size);
+    ice_spi_chip_deselect(ICE_FPGA_CSN_PIN);
+}
+
+// Write protocol:
+//     Write: 00 | AA | AA | AA | AA | VV | VV | VV | VV
+//     [Wishbone Operation]
+//     Read:  00
+void ice_wishbone_spi_write(uint32_t addr, const uint8_t *data, size_t data_size) {
+    uint8_t header[5] = {
+        0x00,
+        (addr >> 24) & 0xFF,
+        (addr >> 16) & 0xFF,
+        (addr >> 8) & 0xFF,
+        (addr >> 0) & 0xFF,
+    };
+    uint8_t byte;
+
+    ice_spi_chip_select(ICE_FPGA_CSN_PIN);
+    ice_spi_write_blocking(header, sizeof header);
+    ice_spi_write_blocking(data, data_size);
+    while (ice_spi_read_blocking(&byte, 1), byte == 0xFF);
+    ice_spi_chip_deselect(ICE_FPGA_CSN_PIN);
+    assert(byte == 0x00);
 }

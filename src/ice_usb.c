@@ -57,9 +57,6 @@
 
 char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
 
-
-#if ICE_USB_USE_DEFAULT_DESCRIPTOR
-
 const tusb_desc_device_t tud_desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
     .bDescriptorType    = TUSB_DESC_DEVICE,
@@ -136,8 +133,6 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
 
     return utf16;
 }
-
-#endif // ICE_USB_USE_DEFAULT_DESCRIPTOR
 
 
 #if ICE_USB_USE_DEFAULT_CDC && CFG_TUD_CDC

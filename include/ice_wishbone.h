@@ -36,6 +36,9 @@ extern void ice_wishbone_serial_read_cb(uint32_t addr, uint8_t *data, size_t siz
 extern void ice_wishbone_serial_write_cb(uint32_t addr, const uint8_t *data, size_t size);
 extern void ice_wishbone_serial_tx_cb(uint8_t byte);
 
+void ice_wishbone_spi_read(uint32_t addr, uint8_t *data, size_t data_size);
+void ice_wishbone_spi_write(uint32_t addr, const uint8_t *data, size_t data_size);
+
 #ifdef __cplusplus
 }
 #endif

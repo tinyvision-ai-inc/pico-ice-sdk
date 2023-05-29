@@ -56,6 +56,80 @@ uint8_t const RGB_OFF[]           = { 0x00, 0x00, 0x00 };
 static volatile uint32_t _timer_count = 0;
 
 //--------------------------------------------------------------------+
+//
+//--------------------------------------------------------------------+
+static bool check_dfu_mode(void);
+
+// return true if start DFU mode, else App mode
+static bool check_dfu_mode(void)
+{
+  // TODO enable for all port instead of one with double tap
+#if TINYUF2_DFU_DOUBLE_TAP
+  // TUF2_LOG1_HEX(&DBL_TAP_REG);
+
+  // Erase application
+  if (DBL_TAP_REG == DBL_TAP_MAGIC_ERASE_APP)
+  {
+    DBL_TAP_REG = 0;
+
+    indicator_set(STATE_WRITING_STARTED);
+    board_flash_erase_app();
+    indicator_set(STATE_WRITING_FINISHED);
+
+    // TODO maybe reset is better than continue
+  }
+#endif
+
+  // Check if app is valid
+  if ( !board_app_valid() ) return true;
+  if ( board_app_valid2 && !board_app_valid2() ) return true;
+
+#if TINYUF2_DFU_DOUBLE_TAP
+//  TU_LOG1_HEX(DBL_TAP_REG);
+
+  // App want to reboot quickly
+  if (DBL_TAP_REG == DBL_TAP_MAGIC_QUICK_BOOT)
+  {
+    DBL_TAP_REG = 0;
+    return false;
+  }
+
+  if (DBL_TAP_REG == DBL_TAP_MAGIC)
+  {
+    // Double tap occurred
+    DBL_TAP_REG = 0;
+    TU_LOG1("Double Tap Reset\r\n");
+    return true;
+  }
+
+  // Register our first reset for double reset detection
+  DBL_TAP_REG = DBL_TAP_MAGIC;
+
+  _timer_count = 0;
+  board_timer_start(1);
+
+  // neopixel may need a bit of prior delay to work
+  // while(_timer_count < 1) {}
+
+  // Turn on LED/RGB for visual indicator
+  board_led_write(0xff);
+  board_rgb_write(RGB_DOUBLE_TAP);
+
+  // delay a fraction of second if Reset pin is tap during this delay --> we will enter dfu
+  while(_timer_count < DBL_TAP_DELAY) {}
+  board_timer_stop();
+
+  // Turn off indicator
+  board_rgb_write(RGB_OFF);
+  board_led_write(0x00);
+
+  DBL_TAP_REG = 0;
+#endif
+
+  return false;
+}
+
+//--------------------------------------------------------------------+
 // Device callbacks
 //--------------------------------------------------------------------+
 
@@ -69,6 +143,37 @@ void tud_mount_cb(void)
 void tud_umount_cb(void)
 {
   indicator_set(STATE_USB_UNPLUGGED);
+}
+
+//--------------------------------------------------------------------+
+// USB HID
+//--------------------------------------------------------------------+
+
+// Invoked when received GET_REPORT control request
+// Application must fill buffer report's content and return its length.
+// Return zero will cause the stack to STALL request
+uint16_t tud_hid_get_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_type, uint8_t* buffer, uint16_t reqlen)
+{
+  // TODO not Implemented
+  (void) itf;
+  (void) report_id;
+  (void) report_type;
+  (void) buffer;
+  (void) reqlen;
+
+  return 0;
+}
+
+// Invoked when received SET_REPORT control request or
+// received data on OUT endpoint ( Report ID = 0, Type = 0 )
+void tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_type, uint8_t const* buffer, uint16_t bufsize)
+{
+  // This example doesn't use multiple report and report ID
+  (void) itf;
+  (void) report_id;
+  (void) report_type;
+  (void) buffer;
+  (void) bufsize;
 }
 
 //--------------------------------------------------------------------+
@@ -146,3 +251,28 @@ void board_timer_handler(void)
     default: break; // nothing to do
   }
 }
+
+//--------------------------------------------------------------------+
+// Logger newlib retarget
+//--------------------------------------------------------------------+
+
+// Enable only with LOG is enabled (Note: ESP32-S2 has built-in support already)
+#if CFG_TUSB_DEBUG && (CFG_TUSB_MCU != OPT_MCU_ESP32S2 && CFG_TUSB_MCU != OPT_MCU_RP2040)
+
+#if defined(LOGGER_RTT)
+#include "SEGGER_RTT.h"
+#endif
+
+TU_ATTR_USED int _write (int fhdl, const void *buf, size_t count)
+{
+  (void) fhdl;
+
+#if defined(LOGGER_RTT)
+  SEGGER_RTT_Write(0, (char*) buf, (int) count);
+  return count;
+#else
+  return board_uart_write(buf, count);
+#endif
+}
+
+#endif
