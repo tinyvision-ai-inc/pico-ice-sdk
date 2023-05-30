@@ -297,12 +297,14 @@ void tud_dfu_detach_cb(void) {
 void ice_usb_init(void) {
     stdio_init_all(); // uses CDC0, next available is CDC1
 
-    board_init();
     tusb_init();
 
-#ifdef ICE_USB_UART_CDC
+#ifdef ICE_USB_UART_NUM
     irq_set_exclusive_handler(UART0_IRQ + ICE_USB_UART_NUM, ice_usb_uart_to_cdc);
 #endif
 
+#ifdef ICE_USB_USE_TINYUF2_MSC
+    board_init();
     uf2_init();
+#endif
 }
