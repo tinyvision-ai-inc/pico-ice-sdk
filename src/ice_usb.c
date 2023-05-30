@@ -293,9 +293,14 @@ void tud_dfu_detach_cb(void) {
 
 #endif // ICE_USB_USE_DEFAULT_DFU
 
-// Setup the piping as configured in <tusb_config.h>
+// Init everything as declared in <tusb_config.h>
 void ice_usb_init(void) {
+    board_init();
+    tusb_init();
+
 #ifdef ICE_USB_UART_CDC
     irq_set_exclusive_handler(UART0_IRQ + ICE_USB_UART_NUM, ice_usb_uart_to_cdc);
 #endif
+
+    uf2_init();
 }
