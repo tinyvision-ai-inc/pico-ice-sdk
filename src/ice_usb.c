@@ -295,6 +295,8 @@ void tud_dfu_detach_cb(void) {
 
 // Init everything as declared in <tusb_config.h>
 void ice_usb_init(void) {
+    stdio_init_all(); // uses CDC0, next available is CDC1
+
     board_init();
     tusb_init();
 

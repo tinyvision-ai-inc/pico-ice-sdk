@@ -30,8 +30,7 @@
 #include "ice_fpga.h"
 
 int main(void) {
-    stdio_init_all(); // uses CDC0, next available is CDC1
-    tusb_init();
+    ice_usb_init();
 
     // Let the FPGA start
     ice_fpga_start();
