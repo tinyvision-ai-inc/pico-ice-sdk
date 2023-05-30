@@ -72,6 +72,7 @@ extern uint8_t const tud_desc_configuration[CONFIG_TOTAL_LEN];
 extern const tusb_desc_device_t tud_desc_device;
 extern void (*ice_usb_cdc_table[CFG_TUD_CDC])(uint8_t);
 
+void ice_usb_init(void);
 void ice_usb_sleep_ms(uint32_t ms);
 
 #ifdef __cplusplus

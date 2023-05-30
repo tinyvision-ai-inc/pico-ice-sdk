@@ -141,6 +141,8 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
 
 static void ice_usb_cdc_to_uart(uint8_t byte) {
     uart_putc(ICE_USB_UART, byte);
+    //tud_cdc_n_write_char(ICE_USB_UART_CDC, byte);
+    //tud_cdc_n_write_flush(ICE_USB_UART_CDC);
 }
 
 static void ice_usb_uart_to_cdc(void) {
@@ -186,16 +188,13 @@ void (*ice_usb_cdc_table[CFG_TUD_CDC])(uint8_t) = {
 };
 
 void tud_cdc_rx_cb(uint8_t cdc_num) {
-    if (ice_usb_cdc_table[cdc_num] != NULL) {
-        // existing callback for that CDC number, send it all available data
-        assert(cdc_num < sizeof(ice_usb_cdc_table) / sizeof(*ice_usb_cdc_table));
-        while (tud_cdc_n_available(cdc_num)) {
-            ice_usb_cdc_table[cdc_num](tud_cdc_n_read_char(cdc_num));
-        }
-    } else {
-        // nothing is listenning, discard the output
-        while (tud_cdc_n_available(cdc_num)) {
-            tud_cdc_n_read_char(cdc_num);
+    // existing callback for that CDC number, send it all available data
+    assert(cdc_num < sizeof(ice_usb_cdc_table) / sizeof(*ice_usb_cdc_table));
+
+    while (tud_cdc_n_available(cdc_num)) {
+        uint8_t byte = tud_cdc_n_read_char(cdc_num);
+        if (ice_usb_cdc_table[cdc_num] != NULL) {
+            ice_usb_cdc_table[cdc_num](byte);
         }
     }
 }
