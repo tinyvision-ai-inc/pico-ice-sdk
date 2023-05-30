@@ -22,13 +22,20 @@
  * SOFTWARE.
  */
 
+// libc
 #include <assert.h>
+
+// pico-sdk
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
 #include "hardware/watchdog.h"
 #include "pico/multicore.h"
 #include "pico/stdlib.h"
+
+// tinyusb
 #include "tusb.h"
+
+// pico-ice-sdk
 #include "boards/pico_ice.h"
 #include "ice_usb.h"
 #include "ice_flash.h"
@@ -36,11 +43,19 @@
 #include "ice_spi.h"
 #include "ice_fpga.h"
 
+// microsoft uf2
+#include "uf2.h"
+
+// tinyuf2
+#include "board_api.h"
+
 #define WATCHDOG_DELAY 3000
 
-char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
+#define CONCAT(a,b,c,d)     a ## b ## c ## d
+#define CONCAT2(a,b)        CONCAT(a,b,,)
+#define ICE_USB_UART        CONCAT2(uart, ICE_USB_UART_NUM)
 
-#if ICE_USB_USE_DEFAULT_DESCRIPTOR
+char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
 
 const tusb_desc_device_t tud_desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
@@ -119,77 +134,65 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
     return utf16;
 }
 
-#endif // TUD_DESCRIPTOR
 
 #if ICE_USB_USE_DEFAULT_CDC && CFG_TUD_CDC
 
-void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t);
+#ifdef ICE_USB_UART_CDC
+
+static void ice_usb_cdc_to_uart(uint8_t byte) {
+    uart_putc(ICE_USB_UART, byte);
+}
+
+static void ice_usb_uart_to_cdc(void) {
+    while (uart_is_readable(ICE_USB_UART)) {
+        uint8_t byte = uart_getc(ICE_USB_UART);
+        tud_cdc_n_write_char(ICE_USB_UART_CDC, byte);
+        tud_cdc_n_write_flush(ICE_USB_UART_CDC);
+    }
+}
+
+#endif
+
+#ifdef ICE_USB_FPGA_CDC
+
+void ice_wishbone_serial_tx_cb(uint8_t byte) {
+    tud_cdc_n_write_char(ICE_USB_FPGA_CDC, byte);
+    tud_cdc_n_write_flush(ICE_USB_FPGA_CDC);
+}
+
+void ice_wishbone_serial_read_cb(uint32_t addr, uint8_t *buf, size_t size) {
+    ice_fpga_read(addr, buf, size);
+}
+
+void ice_wishbone_serial_write_cb(uint32_t addr, uint8_t *buf, size_t size) {
+    ice_fpga_write(addr, buf, size);
+}
+
+// Parse input data from a serial link (such as CDC uart) and control
+// an SPI peripheral to query the FPGA registers and send an answer back.
+void ice_usb_cdc_to_fpga(uint8_t byte) {
+    ice_wishbone_serial(byte);
+}
+
+#endif
+
+void (*ice_usb_cdc_table[CFG_TUD_CDC])(uint8_t) = {
+#ifdef ICE_USB_UART_CDC
+    [ICE_USB_UART_CDC] = &ice_usb_cdc_to_uart,
+#endif
+#ifdef ICE_USB_FPGA_CDC
+    [ICE_USB_FPGA_CDC] = &ice_usb_cdc_to_fpga,
+#endif
+};
 
 void tud_cdc_rx_cb(uint8_t cdc_num) {
-    if (tud_cdc_rx_cb_table[cdc_num] != NULL) {
-        // dispatch to the handler
-        assert(cdc_num < sizeof tud_cdc_rx_cb_table / sizeof *tud_cdc_rx_cb_table);
-        tud_cdc_rx_cb_table[cdc_num](cdc_num);
-    } else {
-        // discard the output
-        tud_cdc_n_read_char(cdc_num);
-    }
-}
+    // existing callback for that CDC number, send it all available data
+    assert(cdc_num < sizeof(ice_usb_cdc_table) / sizeof(*ice_usb_cdc_table));
 
-static void uart_to_cdc(uart_inst_t *uart, uint8_t cdc_num) {
-    while (uart_is_readable(uart)) {
-        tud_cdc_n_write_char(cdc_num, uart_getc(uart0));
-        tud_cdc_n_write_flush(cdc_num);
-    }
-}
-
-static void cdc_to_uart(uint8_t cdc_num, uart_inst_t *uart) {
     while (tud_cdc_n_available(cdc_num)) {
-        uart_putc(uart, tud_cdc_n_read_char(cdc_num));
-    }
-}
-
-void ice_usb_uart0_to_cdc0(void) {
-    uart_to_cdc(uart0, 0);
-}
-
-void ice_usb_uart0_to_cdc1(void) {
-    uart_to_cdc(uart0, 1);
-}
-
-void ice_usb_uart1_to_cdc0(void) {
-    uart_to_cdc(uart1, 0);
-}
-
-void ice_usb_uart1_to_cdc1(void) {
-    uart_to_cdc(uart1, 1);
-}
-
-void ice_usb_cdc_to_uart0(uint8_t cdc_num) {
-    cdc_to_uart(cdc_num, uart0);
-}
-
-void ice_usb_cdc_to_uart1(uint8_t cdc_num) {
-    cdc_to_uart(cdc_num, uart1);
-}
-
-static void cdc0_tx(uint8_t byte) {
-    tud_cdc_n_read_char(0);
-}
-
-static void cdc1_tx(uint8_t byte) {
-    tud_cdc_n_read_char(1);
-}
-
-void ice_usb_cdc_to_fpga(uint8_t cdc_num) {
-    while (tud_cdc_n_available(cdc_num)) {
-        switch (cdc_num) {
-        case 0:
-            ice_fpga_serial_bridge(tud_cdc_n_read_char(0), cdc0_tx);
-            break;
-        case 1:
-            ice_fpga_serial_bridge(tud_cdc_n_read_char(1), cdc1_tx);
-            break;
+        uint8_t byte = tud_cdc_n_read_char(cdc_num);
+        if (ice_usb_cdc_table[cdc_num] != NULL) {
+            ice_usb_cdc_table[cdc_num](byte);
         }
     }
 }
@@ -285,3 +288,22 @@ void tud_dfu_detach_cb(void) {
 }
 
 #endif // ICE_USB_USE_DEFAULT_DFU
+
+// Init everything as declared in <tusb_config.h>
+void ice_usb_init(void) {
+    stdio_init_all(); // uses CDC0, next available is CDC1
+
+    tusb_init();
+
+#ifdef ICE_USB_UART_NUM
+    irq_set_exclusive_handler(UART0_IRQ + ICE_USB_UART_NUM, ice_usb_uart_to_cdc);
+    irq_set_enabled(UART0_IRQ + ICE_USB_UART_NUM, true);
+    uart_set_fifo_enabled(ICE_USB_UART, false);
+    uart_set_irq_enables(ICE_USB_UART, true, false);
+#endif
+
+#ifdef ICE_USB_USE_TINYUF2_MSC
+    board_init();
+    uf2_init();
+#endif
+}

@@ -15,6 +15,7 @@ target_sources(pico_ice_sdk INTERFACE
     src/ice_sram.c
     src/ice_led.c
     src/ice_cram.c
+    src/ice_wishbone.c
     )
 target_include_directories(pico_ice_sdk INTERFACE
     include
@@ -30,15 +31,22 @@ target_link_libraries(pico_ice_sdk INTERFACE
 pico_generate_pio_header(pico_ice_sdk
     ${CMAKE_CURRENT_LIST_DIR}/src/ice_cram.pio
     )
+target_include_directories(pico_ice_sdk INTERFACE
+    include
+    )
 
 
 add_library(pico_ice_usb INTERFACE)
 
 target_sources(pico_ice_usb INTERFACE
     src/ice_usb.c
+    src/tinyuf2_main.c
+    src/tinyuf2_board.c
+    src/tinyuf2_include.c
     )
 target_include_directories(pico_ice_usb INTERFACE
     include
+    lib/tinyuf2/src
     )
 target_link_libraries(pico_ice_usb INTERFACE
     pico_multicore
@@ -46,18 +54,4 @@ target_link_libraries(pico_ice_usb INTERFACE
     tinyusb_device
     tinyusb_board
     pico_ice_sdk
-    )
-
-
-add_library(tinyuf2 INTERFACE)
-
-target_sources(tinyuf2 INTERFACE
-    src/tinyuf2/board_pico_ice.c
-    src/tinyuf2/ghostfat.c
-    src/tinyuf2/main.c
-    src/tinyuf2/msc.c
-    )
-target_include_directories(pico_ice_sdk INTERFACE
-    include
-    src
     )

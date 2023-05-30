@@ -22,33 +22,31 @@
  * SOFTWARE.
  */
 
+// pico-sdk
 #include "pico/stdio.h"
 #include "hardware/irq.h"
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
+
+// pico-ice-sdk
 #include "ice_usb.h"
 #include "ice_fpga.h"
 
 int main(void) {
-    stdio_init_all(); // uses CDC0, next available is CDC1
-    tusb_init();
+    // Enable the UART (not done by ice_usb_init())
+    uart_init(uart0, 115200);
+    gpio_set_function(16, GPIO_FUNC_UART);
+    gpio_set_function(17, GPIO_FUNC_UART);
+
+    // Configure the piping as configured in <tusb_config.h>
+    ice_usb_init();
 
     // Let the FPGA start
-    ice_fpga_start();
-
-    // Enable the UART
-    uart_init(uart0, 115200);
-    gpio_set_function(0, GPIO_FUNC_UART);
-    gpio_set_function(1, GPIO_FUNC_UART);
-
-    // Bind USB CDC1 callback for piping input data to UART0
-    tud_cdc_rx_cb_table[1] = &ice_usb_cdc_to_uart0;
-
-    // Bind UART0 interrupt for piping to USB CDC1
-    irq_set_exclusive_handler(UART0_IRQ, ice_usb_uart0_to_cdc1);
+    ice_fpga_init(48);
 
     while (true) {
         tud_task();
+        // ice_usb has already callbacks for UART forwarding
     }
     return 0;
 }

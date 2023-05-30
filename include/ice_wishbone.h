@@ -1,18 +1,18 @@
 /*
  * MIT License
- *
+ * 
  * Copyright (c) 2023 tinyVision.ai
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,21 +22,23 @@
  * SOFTWARE.
  */
 
-#include "pico/stdio.h"
-#include "hardware/irq.h"
-#include "hardware/gpio.h"
-#include "hardware/uart.h"
-#include "ice_usb.h"
-#include "ice_fpga.h"
+#pragma once
 
-int main(void) {
-    ice_usb_init();
+#include <stdint.h>
+#include <stdbool.h>
 
-    // Let the FPGA start
-    ice_fpga_start();
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    while (true) {
-        tud_task();
-    }
-    return 0;
+void ice_wishbone_serial(uint8_t rx);
+extern void ice_wishbone_serial_read_cb(uint32_t addr, uint8_t *data, size_t size);
+extern void ice_wishbone_serial_write_cb(uint32_t addr, const uint8_t *data, size_t size);
+extern void ice_wishbone_serial_tx_cb(uint8_t byte);
+
+void ice_wishbone_spi_read(uint32_t addr, uint8_t *data, size_t data_size);
+void ice_wishbone_spi_write(uint32_t addr, const uint8_t *data, size_t data_size);
+
+#ifdef __cplusplus
 }
+#endif

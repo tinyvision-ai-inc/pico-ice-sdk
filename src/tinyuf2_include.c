@@ -1,18 +1,18 @@
 /*
  * MIT License
- *
+ * 
  * Copyright (c) 2023 tinyVision.ai
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,21 +22,14 @@
  * SOFTWARE.
  */
 
-#include "pico/stdio.h"
-#include "hardware/irq.h"
-#include "hardware/gpio.h"
-#include "hardware/uart.h"
+// pico-ice-sdk
 #include "ice_usb.h"
-#include "ice_fpga.h"
 
-int main(void) {
-    ice_usb_init();
+#if ICE_USB_USE_TINYUF2_MSC
 
-    // Let the FPGA start
-    ice_fpga_start();
+// TinyUF2 source guarded by an #ifdef
+#include "../lib/tinyuf2/src/images.c"
+#include "../lib/tinyuf2/src/ghostfat.c"
+#include "../lib/tinyuf2/src/msc.c"
 
-    while (true) {
-        tud_task();
-    }
-    return 0;
-}
+#endif
