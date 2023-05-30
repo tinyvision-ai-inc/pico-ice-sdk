@@ -33,16 +33,16 @@
 #include "ice_fpga.h"
 
 int main(void) {
+    // Enable the UART (not done by ice_usb_init())
+    uart_init(uart0, 115200);
+    gpio_set_function(16, GPIO_FUNC_UART);
+    gpio_set_function(17, GPIO_FUNC_UART);
+
     // Configure the piping as configured in <tusb_config.h>
     ice_usb_init();
 
     // Let the FPGA start
     ice_fpga_init(48);
-
-    // Enable the UART (not done by ice_usb_init())
-    uart_init(uart0, 115200);
-    gpio_set_function(16, GPIO_FUNC_UART);
-    gpio_set_function(17, GPIO_FUNC_UART);
 
     while (true) {
         tud_task();

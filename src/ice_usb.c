@@ -141,8 +141,6 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
 
 static void ice_usb_cdc_to_uart(uint8_t byte) {
     uart_putc(ICE_USB_UART, byte);
-    //tud_cdc_n_write_char(ICE_USB_UART_CDC, byte);
-    //tud_cdc_n_write_flush(ICE_USB_UART_CDC);
 }
 
 static void ice_usb_uart_to_cdc(void) {
@@ -200,7 +198,6 @@ void tud_cdc_rx_cb(uint8_t cdc_num) {
 }
 
 #endif // ICE_USB_USE_DEFAULT_CDC
-
 
 #if ICE_USB_USE_DEFAULT_DFU && CFG_TUD_DFU
 
@@ -300,6 +297,9 @@ void ice_usb_init(void) {
 
 #ifdef ICE_USB_UART_NUM
     irq_set_exclusive_handler(UART0_IRQ + ICE_USB_UART_NUM, ice_usb_uart_to_cdc);
+    irq_set_enabled(UART0_IRQ + ICE_USB_UART_NUM, true);
+    uart_set_fifo_enabled(ICE_USB_UART, false);
+    uart_set_irq_enables(ICE_USB_UART, true, false);
 #endif
 
 #ifdef ICE_USB_USE_TINYUF2_MSC

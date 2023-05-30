@@ -29,8 +29,8 @@
 #include "pico/unique_id.h"
 
 // Predefined macros to avoid repetitive
-#define USB_VID 0x1209      // InterBiometrics - https://pid.codes/
-#define USB_PID 0xB1C0      // Reserved for pico-ice - https://github.com/pidcodes/pidcodes.github.com/pull/801/files
+#define USB_VID             0x1209  // https://pid.codes/1209/
+#define USB_PID             0xB1C0  // https://pid.codes/1209/B1C0/
 #define USB_MANUFACTURER    "tinyVision.ai Inc."
 #define USB_PRODUCT         "pico-ice"
 #define USB_LANG_EN         (const char[]){ 0x09, 0x04 }

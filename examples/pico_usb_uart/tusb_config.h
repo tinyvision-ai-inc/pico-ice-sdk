@@ -54,7 +54,7 @@
 #define ICE_USB_USE_DEFAULT_CDC     1
 #define ICE_USB_USE_DEFAULT_DFU     1
 
-// Configure piping between USB CDC and UART
+// Configure forwarding between USB CDC and UART
 #define ICE_USB_UART_CDC            1
 #define ICE_USB_UART_NUM            0
 

@@ -20,6 +20,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     pico_ice_sdk
     pico_ice_usb
     pico_stdio_usb
+    hardware_uart
     )
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
