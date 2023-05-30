@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.1.0
+
+* Fix TinyUF2 on Windows
+* Easier USB configuration only requiring to change `tusb_config.h`.
+
 ## v1.0.0
 
 * Libraries to communicate with each chip of the device
