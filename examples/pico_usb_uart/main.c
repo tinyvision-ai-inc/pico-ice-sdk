@@ -32,11 +32,14 @@
 #include "ice_usb.h"
 #include "ice_fpga.h"
 
+#define UART_TX_PIN 0
+#define UART_RX_PIN 1
+
 int main(void) {
-    // Enable the UART (not done by ice_usb_init())
+    // Enable the UART
     uart_init(uart0, 115200);
-    gpio_set_function(16, GPIO_FUNC_UART);
-    gpio_set_function(17, GPIO_FUNC_UART);
+    gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART);
+    gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
 
     // Configure the piping as configured in <tusb_config.h>
     ice_usb_init();
@@ -46,7 +49,6 @@ int main(void) {
 
     while (true) {
         tud_task();
-        // ice_usb has already callbacks for UART forwarding
     }
     return 0;
 }

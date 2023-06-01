@@ -291,14 +291,11 @@ void tud_dfu_detach_cb(void) {
 
 // Init everything as declared in <tusb_config.h>
 void ice_usb_init(void) {
-    stdio_init_all(); // uses CDC0, next available is CDC1
-
     tusb_init();
 
 #ifdef ICE_USB_UART_NUM
     irq_set_exclusive_handler(UART0_IRQ + ICE_USB_UART_NUM, ice_usb_uart_to_cdc);
     irq_set_enabled(UART0_IRQ + ICE_USB_UART_NUM, true);
-    uart_set_fifo_enabled(ICE_USB_UART, false);
     uart_set_irq_enables(ICE_USB_UART, true, false);
 #endif
 
