@@ -24,6 +24,9 @@
  */
 #pragma once
 
+// pico-ice-sdk
+#include "boards/pico_ice.h"
+
 #define CFG_TUSB_RHPORT0_MODE       OPT_MODE_HOST
 
 // USB DMA on some MCUs can only access a specific SRAM region with restriction on alignment.
