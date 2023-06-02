@@ -24,8 +24,11 @@
 
 #pragma once
 
+// TinyUSB
 #include "tusb.h"
 #include "tusb_config.h"
+
+// pico-sdk
 #include "pico/unique_id.h"
 
 // Predefined macros to avoid repetitive
