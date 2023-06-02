@@ -73,6 +73,9 @@ const tusb_desc_device_t tud_desc_device = {
     .bNumConfigurations = 1
 };
 
+// Also used in usb_descriptors.c.
+char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
+
 // Sleeping without calling tud_task() hangs the USB stack in the meantime.
 void ice_usb_sleep_ms(uint32_t ms) {
     while (ms-- > 0) {
@@ -96,7 +99,6 @@ const uint8_t *tud_descriptor_configuration_cb(uint8_t index) {
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
 uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
     static uint16_t utf16[32];
-    static char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1] = {0};
     uint8_t len;
 
     (void)langid;
