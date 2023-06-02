@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.1.1
+
+* Fix UART forwarding in the SDK and example.
+
 ## v1.1.0
 
 * Fix TinyUF2 on Windows
