@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.1.2
+
+* Fix TinyUF2 stopping the FPGA while being read, which happens at every boot
+  with the operating system peeking at the various files in the USB drive out
+  of curiosity.
+
+* Fix UART forwarding in the SDK while used in combination with the TinyUF2
+  firmware, which takes over the default UART for logging.
+
 ## v1.1.1
 
 * Fix UART forwarding in the SDK and example.
