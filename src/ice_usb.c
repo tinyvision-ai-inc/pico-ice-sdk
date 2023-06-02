@@ -55,8 +55,7 @@
 #define CONCAT2(a,b)        CONCAT(a,b,,)
 #define ICE_USB_UART        CONCAT2(uart, ICE_USB_UART_NUM)
 
-char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
-
+// Provide a default config where some fields come be customized in <tusb_config.h>
 const tusb_desc_device_t tud_desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
     .bDescriptorType    = TUSB_DESC_DEVICE,
@@ -97,12 +96,13 @@ const uint8_t *tud_descriptor_configuration_cb(uint8_t index) {
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
 uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
     static uint16_t utf16[32];
+    static char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1] = {0};
     uint8_t len;
 
     (void)langid;
 
     // Assign the SN using the unique flash id
-    if (!usb_serial_number[0]) {
+    if (usb_serial_number[0] == '\0') {
         pico_get_unique_board_id_string(usb_serial_number, sizeof(usb_serial_number));
     }
 
@@ -135,12 +135,14 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
 }
 
 
-#if ICE_USB_USE_DEFAULT_CDC && CFG_TUD_CDC
+#if ICE_USB_USE_DEFAULT_CDC
 
 #ifdef ICE_USB_UART_CDC
 
 static void ice_usb_cdc_to_uart(uint8_t byte) {
-    uart_putc(ICE_USB_UART, byte);
+    if (uart_is_writable(ICE_USB_UART)) {
+        uart_putc(ICE_USB_UART, byte);
+    }
 }
 
 static void ice_usb_uart_to_cdc(void) {
@@ -199,7 +201,8 @@ void tud_cdc_rx_cb(uint8_t cdc_num) {
 
 #endif // ICE_USB_USE_DEFAULT_CDC
 
-#if ICE_USB_USE_DEFAULT_DFU && CFG_TUD_DFU
+
+#if ICE_USB_USE_DEFAULT_DFU
 
 // Invoked right before tud_dfu_download_cb() (state=DFU_DNBUSY) or tud_dfu_manifest_cb() (state=DFU_MANIFEST)
 // Application return timeout in milliseconds (bwPollTimeout) for the next download/manifest operation.
@@ -288,6 +291,7 @@ void tud_dfu_detach_cb(void) {
 }
 
 #endif // ICE_USB_USE_DEFAULT_DFU
+
 
 // Init everything as declared in <tusb_config.h>
 void ice_usb_init(void) {

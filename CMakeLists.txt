@@ -27,7 +27,6 @@ target_link_libraries(pico_ice_sdk INTERFACE
     hardware_spi
     hardware_uart
     pico_stdlib
-    pico_stdio_usb
     )
 pico_generate_pio_header(pico_ice_sdk
     ${CMAKE_CURRENT_LIST_DIR}/src/ice_cram.pio
@@ -54,5 +53,4 @@ target_link_libraries(pico_ice_usb INTERFACE
     pico_unique_id
     tinyusb_device
     tinyusb_board
-    pico_ice_sdk
     )
