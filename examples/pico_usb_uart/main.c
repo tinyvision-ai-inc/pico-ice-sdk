@@ -47,6 +47,9 @@ int main(void) {
     // Let the FPGA start
     ice_fpga_init(48);
 
+    // Let the FPGA start
+    ice_fpga_start();    
+    
     while (true) {
         tud_task();
     }
