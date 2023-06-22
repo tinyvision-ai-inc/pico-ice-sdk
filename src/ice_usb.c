@@ -180,7 +180,7 @@ void ice_usb_cdc_to_fpga(uint8_t byte) {
 
 #endif
 
-void (*ice_usb_cdc_table[CFG_TUD_CDC])(uint8_t) = {
+void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t) = {
 #ifdef ICE_USB_UART_CDC
     [ICE_USB_UART_CDC] = &ice_usb_cdc_to_uart,
 #endif
@@ -191,12 +191,12 @@ void (*ice_usb_cdc_table[CFG_TUD_CDC])(uint8_t) = {
 
 void tud_cdc_rx_cb(uint8_t cdc_num) {
     // existing callback for that CDC number, send it all available data
-    assert(cdc_num < sizeof(ice_usb_cdc_table) / sizeof(*ice_usb_cdc_table));
+    assert(cdc_num < sizeof(tud_cdc_rx_cb_table) / sizeof(*tud_cdc_rx_cb_table));
 
     while (tud_cdc_n_available(cdc_num)) {
         uint8_t byte = tud_cdc_n_read_char(cdc_num);
-        if (ice_usb_cdc_table[cdc_num] != NULL) {
-            ice_usb_cdc_table[cdc_num](byte);
+        if (tud_cdc_rx_cb_table[cdc_num] != NULL) {
+            tud_cdc_rx_cb_table[cdc_num](byte);
         }
     }
 }
