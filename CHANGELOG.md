@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.1
+
+* With the default firmware, the FPGA was rebooting after a few seconds due
+  to the operating system reading the USB interface. We now let the FPGA run
+  even when that happens, and only reset it on write calls.
+
 ## v1.2.0
 
 * Fix UART forwarding in the SDK while used in combination with the TinyUF2
