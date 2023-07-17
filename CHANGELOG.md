@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.2.0
+
+* Fix UART forwarding in the SDK while used in combination with the TinyUF2
+  firmware, which resurfced again.
+
+* Offer a reduced API for configuring forwarding of UART among other things.
+  Improved documentation in parallel.
+
 ## v1.1.2
 
 * Fix TinyUF2 stopping the FPGA while being read, which happens at every boot
