@@ -16,18 +16,6 @@
 // For board detection
 #define TINYVISION_AI_INC_PICO_ICE
 
-// --- UART ---
-#ifdef PICO_DEFAULT_UART
-#undef PICO_DEFAULT_UART
-#define PICO_DEFAULT_UART 1
-#endif
-#ifndef PICO_DEFAULT_UART_TX_PIN
-#define PICO_DEFAULT_UART_TX_PIN 8
-#endif
-#ifndef PICO_DEFAULT_UART_RX_PIN
-#define PICO_DEFAULT_UART_RX_PIN 9
-#endif
-
 // --- LED ---
 #ifndef PICO_DEFAULT_LED_PIN
 #define PICO_DEFAULT_LED_PIN 15

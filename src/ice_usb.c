@@ -49,11 +49,23 @@
 // tinyuf2
 #include "board_api.h"
 
-#define WATCHDOG_DELAY 3000
+#ifdef ICE_USB_UART_CDC
+#error ICE_USB_UART_CDC is now ICE_USB_UARTx_CDC with 'x' the UART number
+#endif
 
-#define CONCAT(a,b,c,d)     a ## b ## c ## d
-#define CONCAT2(a,b)        CONCAT(a,b,,)
-#define ICE_USB_UART        CONCAT2(uart, ICE_USB_UART_NUM)
+#ifdef ICE_USB_UART_NUM
+#error ICE_USB_UART_NUM is now implicit, no need to define it
+#endif
+
+#ifdef ICE_USB_USE_DEFAULT_CDC
+#error ICE_USB_USE_DEFAULT_CDC is now implicit, no need to define it
+#endif
+
+#ifdef ICE_USB_USE_DEFAULT_DFU
+#error ICE_USB_USE_DEFAULT_DFU is now implicit, no need to define it
+#endif
+
+#define WATCHDOG_DELAY 3000
 
 // Provide a default config where some fields come be customized in <tusb_config.h>
 const tusb_desc_device_t tud_desc_device = {
@@ -136,59 +148,65 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
     return utf16;
 }
 
-
-#if ICE_USB_USE_DEFAULT_CDC
-
-#ifdef ICE_USB_UART_CDC
-
-static void ice_usb_cdc_to_uart(uint8_t byte) {
-    if (uart_is_writable(ICE_USB_UART)) {
-        uart_putc(ICE_USB_UART, byte);
+#ifdef ICE_USB_UART0_CDC
+static void ice_usb_cdc_to_uart0(uint8_t byte) {
+    if (uart_is_writable(uart0)) {
+        uart_putc(uart0, byte);
     }
 }
-
-static void ice_usb_uart_to_cdc(void) {
-    while (uart_is_readable(ICE_USB_UART)) {
-        uint8_t byte = uart_getc(ICE_USB_UART);
-        tud_cdc_n_write_char(ICE_USB_UART_CDC, byte);
-        tud_cdc_n_write_flush(ICE_USB_UART_CDC);
+static void ice_usb_uart0_to_cdc(void) {
+    while (uart_is_readable(uart0)) {
+        uint8_t byte = uart_getc(uart0);
+        tud_cdc_n_write_char(ICE_USB_UART0_CDC, byte);
+        tud_cdc_n_write_flush(ICE_USB_UART0_CDC);
     }
 }
+#endif
 
+#ifdef ICE_USB_UART1_CDC
+static void ice_usb_cdc_to_uart1(uint8_t byte) {
+    if (uart_is_writable(uart1)) {
+        uart_putc(uart1, byte);
+    }
+}
+static void ice_usb_uart1_to_cdc(void) {
+    while (uart_is_readable(uart1)) {
+        uint8_t byte = uart_getc(uart1);
+        tud_cdc_n_write_char(ICE_USB_UART1_CDC, byte);
+        tud_cdc_n_write_flush(ICE_USB_UART1_CDC);
+    }
+}
 #endif
 
 #ifdef ICE_USB_FPGA_CDC
-
 void ice_wishbone_serial_tx_cb(uint8_t byte) {
     tud_cdc_n_write_char(ICE_USB_FPGA_CDC, byte);
     tud_cdc_n_write_flush(ICE_USB_FPGA_CDC);
 }
-
 void ice_wishbone_serial_read_cb(uint32_t addr, uint8_t *buf, size_t size) {
     ice_fpga_read(addr, buf, size);
 }
-
 void ice_wishbone_serial_write_cb(uint32_t addr, uint8_t *buf, size_t size) {
     ice_fpga_write(addr, buf, size);
 }
-
-// Parse input data from a serial link (such as CDC uart) and control
-// an SPI peripheral to query the FPGA registers and send an answer back.
 void ice_usb_cdc_to_fpga(uint8_t byte) {
     ice_wishbone_serial(byte);
 }
-
 #endif
 
 void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t) = {
-#ifdef ICE_USB_UART_CDC
-    [ICE_USB_UART_CDC] = &ice_usb_cdc_to_uart,
+#ifdef ICE_USB_UART0_CDC
+    [ICE_USB_UART0_CDC] = &ice_usb_cdc_to_uart0,
+#endif
+#ifdef ICE_USB_UART1_CDC
+    [ICE_USB_UART1_CDC] = &ice_usb_cdc_to_uart1,
 #endif
 #ifdef ICE_USB_FPGA_CDC
     [ICE_USB_FPGA_CDC] = &ice_usb_cdc_to_fpga,
 #endif
 };
 
+#if ICE_USB_UART0_CDC || ICE_USB_UART1_CDC || ICE_USB_FPGA_CDC
 void tud_cdc_rx_cb(uint8_t cdc_num) {
     // existing callback for that CDC number, send it all available data
     assert(cdc_num < sizeof(tud_cdc_rx_cb_table) / sizeof(*tud_cdc_rx_cb_table));
@@ -200,11 +218,7 @@ void tud_cdc_rx_cb(uint8_t cdc_num) {
         }
     }
 }
-
-#endif // ICE_USB_USE_DEFAULT_CDC
-
-
-#if ICE_USB_USE_DEFAULT_DFU
+#endif
 
 // Invoked right before tud_dfu_download_cb() (state=DFU_DNBUSY) or tud_dfu_manifest_cb() (state=DFU_MANIFEST)
 // Application return timeout in milliseconds (bwPollTimeout) for the next download/manifest operation.
@@ -292,17 +306,20 @@ void tud_dfu_detach_cb(void) {
     watchdog_reboot(0, 0, 0);
 }
 
-#endif // ICE_USB_USE_DEFAULT_DFU
-
-
 // Init everything as declared in <tusb_config.h>
 void ice_usb_init(void) {
     tusb_init();
 
-#ifdef ICE_USB_UART_NUM
-    irq_set_exclusive_handler(UART0_IRQ + ICE_USB_UART_NUM, ice_usb_uart_to_cdc);
-    irq_set_enabled(UART0_IRQ + ICE_USB_UART_NUM, true);
-    uart_set_irq_enables(ICE_USB_UART, true, false);
+#ifdef ICE_USB_UART0_CDC
+    irq_set_exclusive_handler(UART0_IRQ, ice_usb_uart0_to_cdc);
+    irq_set_enabled(UART0_IRQ, true);
+    uart_set_irq_enables(uart0, true, false);
+#endif
+
+#ifdef ICE_USB_UART1_CDC
+    irq_set_exclusive_handler(UART1_IRQ, ice_usb_uart1_to_cdc);
+    irq_set_enabled(UART1_IRQ, true);
+    uart_set_irq_enables(uart1, true, false);
 #endif
 
 #ifdef ICE_USB_USE_TINYUF2_MSC

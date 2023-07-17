@@ -28,7 +28,6 @@
 #if ICE_USB_USE_TINYUF2_MSC
 
 // TinyUF2 source guarded by an #ifdef
-#include "../lib/tinyuf2/src/images.c"
 #include "../lib/tinyuf2/src/ghostfat.c"
 #include "../lib/tinyuf2/src/msc.c"
 

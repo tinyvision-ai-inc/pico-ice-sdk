@@ -1,9 +1,7 @@
 // stdlib
 #include <stdbool.h>
-#include <stdio.h>
 
 // pico-sdk
-#include "pico/stdio.h"
 #include "pico/time.h"
 #include "hardware/watchdog.h"
 #include "hardware/timer.h"
