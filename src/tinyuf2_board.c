@@ -20,7 +20,6 @@ static bool flash_ready;
 void board_flash_read(uint32_t addr, void *buffer, uint32_t len)
 {
     if (!flash_ready) {
-        ice_fpga_stop();
         ice_flash_init();
         flash_ready = true;
     }
@@ -30,6 +29,7 @@ void board_flash_read(uint32_t addr, void *buffer, uint32_t len)
 void board_flash_write(uint32_t addr, const void *data, uint32_t len)
 {
     if (!flash_ready) {
+        ice_fpga_stop();
         ice_flash_init();
         flash_ready = true;
         ice_flash_erase_chip();
