@@ -45,11 +45,6 @@ void ice_led_init(void) {
     gpio_set_dir(ICE_LED_RED_PIN, GPIO_IN);
     gpio_set_dir(ICE_LED_GREEN_PIN, GPIO_IN);
     gpio_set_dir(ICE_LED_BLUE_PIN, GPIO_IN);
-
-    // A pull-down, which connects this end of the LED to the ground.
-    gpio_put(ICE_LED_RED_PIN, false);
-    gpio_put(ICE_LED_GREEN_PIN, false);
-    gpio_put(ICE_LED_BLUE_PIN, false);
 }
 
 void ice_led_red(bool state) {
