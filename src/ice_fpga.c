@@ -34,7 +34,6 @@
 
 void ice_fpga_init(uint8_t freq_mhz) {
     uint src = CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_VALUE_CLK_USB;
-    float div = 48 / freq_mhz;
 
     clock_gpio_init(ICE_FPGA_CLOCK_PIN, src, 48 / freq_mhz);
 
