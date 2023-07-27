@@ -36,20 +36,20 @@ void ice_led_init(void) {
     gpio_init(ICE_LED_GREEN_PIN);
     gpio_init(ICE_LED_BLUE_PIN);
 
-    //Disable pulls-downs on LED PINS otherwise leds will glow very dim
+    // Disable pulls-downs on LED PINS otherwise leds will glow very dim
     gpio_disable_pulls(ICE_LED_RED_PIN);
     gpio_disable_pulls(ICE_LED_GREEN_PIN);
     gpio_disable_pulls(ICE_LED_BLUE_PIN);
-    
+
+    // When in output mode, low-voltage to connect connects the LEDs to ground
+    gpio_put(ICE_LED_RED_PIN, false);
+    gpio_put(ICE_LED_GREEN_PIN, false);
+    gpio_put(ICE_LED_BLUE_PIN, false);
+
     // High-impedance by default, leaving LED control to the FPGA.
     gpio_set_dir(ICE_LED_RED_PIN, GPIO_IN);
     gpio_set_dir(ICE_LED_GREEN_PIN, GPIO_IN);
     gpio_set_dir(ICE_LED_BLUE_PIN, GPIO_IN);
-
-    // A pull-down, which connects this end of the LED to the ground.
-    gpio_put(ICE_LED_RED_PIN, false);
-    gpio_put(ICE_LED_GREEN_PIN, false);
-    gpio_put(ICE_LED_BLUE_PIN, false);
 }
 
 void ice_led_red(bool state) {
