@@ -22,28 +22,33 @@
  * SOFTWARE.
  */
 
-// TODO: For now, this is a bit-banged library which is sub-optimal.
-// We could use the hardware SPI for when in forward pin order, and
-// a PIO state machine for reverse pin order. But since we are going
-// to need the reverse pin order anyway, we might as well make use
-// of the PIO state machine right away. This way only one PIO state
-// machine is used and no extra SPI peripheral.
-//
-// So the next evolution of this driver is to use PIO, and after that
-// DMA channels along with PIO.
-
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <assert.h>
 #include "hardware/sync.h"
 #include "pico/stdlib.h"
+#include "hardware/spi.h"
+#include "hardware/dma.h"
 #include "boards/pico_ice.h"
 #include "ice_spi.h"
 
 volatile static bool g_transfer_done = true;
 volatile static void (*g_async_callback)(volatile void *);
 volatile static void *g_async_context;
+static int dma_tx, dma_rx;
+static uint32_t dma_word;
+
+static void spi_irq_handler(void) {
+    if (dma_hw->ints1 & (1u << dma_rx))
+    {
+        if (g_async_callback != NULL) {
+            (*g_async_callback)(g_async_context);
+        }
+        g_transfer_done = true;
+        dma_hw->ints1 = (1u << dma_rx);
+    }
+}
 
 void ice_spi_init(void) {
     // This driver is only focused on one particular SPI bus
@@ -55,6 +60,17 @@ void ice_spi_init(void) {
     gpio_set_dir(ICE_SPI_SCK_PIN, GPIO_IN);
     gpio_set_dir(ICE_SPI_TX_PIN, GPIO_IN);
     gpio_set_dir(ICE_SPI_RX_PIN, GPIO_IN);
+
+    // Initialize SPI, but don't yet assign the pins SPI function so they stay in high impedance mode.
+    spi_init(spi1, 50 * 1000 * 1000);
+
+    // Setup DMA channel and interrupt handler
+    dma_tx = dma_claim_unused_channel(true);
+    dma_rx = dma_claim_unused_channel(true);
+
+    dma_channel_set_irq1_enabled(dma_rx, true);
+    irq_set_exclusive_handler(DMA_IRQ_1, spi_irq_handler);
+    irq_set_enabled(DMA_IRQ_1, true);
 }
 
 void ice_spi_init_cs_pin(uint8_t csn_pin) {
@@ -62,35 +78,11 @@ void ice_spi_init_cs_pin(uint8_t csn_pin) {
     ice_spi_chip_deselect(csn_pin);
 }
 
-static uint8_t transfer_byte(uint8_t tx) {
-    uint8_t rx;
-
-    for (uint8_t i = 0; i < 8; i++) {
-        // Update TX and immediately set negative edge.
-        gpio_put(ICE_SPI_SCK_PIN, false);
-        gpio_put(ICE_SPI_TX_PIN, tx >> 7);
-        tx <<= 1;
-
-        // stable for a while with clock low
-        sleep_us(1);
-
-        // Sample RX as we set positive edge.
-        rx <<= 1;
-        rx |= gpio_get(ICE_SPI_RX_PIN);
-        gpio_put(ICE_SPI_SCK_PIN, true);
-
-        // stable for a while with clock high
-        sleep_us(1);
-    }
-    return rx;
-}
-
 void ice_spi_chip_select(uint8_t csn_pin) {
     // Take control of the bus
-    gpio_put(ICE_SPI_SCK_PIN, false);
-    gpio_put(ICE_SPI_TX_PIN, true);
-    gpio_set_dir(ICE_SPI_SCK_PIN, GPIO_OUT);
-    gpio_set_dir(ICE_SPI_TX_PIN, GPIO_OUT);
+    gpio_set_function(ICE_SPI_RX_PIN, GPIO_FUNC_SPI);
+    gpio_set_function(ICE_SPI_SCK_PIN, GPIO_FUNC_SPI);
+    gpio_set_function(ICE_SPI_TX_PIN, GPIO_FUNC_SPI);
 
     // Start an SPI transaction
     gpio_put(csn_pin, false);
@@ -108,9 +100,10 @@ void ice_spi_chip_deselect(uint8_t csn_pin) {
     //    tight_loop_contents();
     //}
 
-    // Release the bus by putting it high-impedance mode
-    gpio_set_dir(ICE_SPI_SCK_PIN, GPIO_IN);
-    gpio_set_dir(ICE_SPI_TX_PIN, GPIO_IN);
+    // Release the bus by connecting back to the CPU GPIO, putting the IOs back to high-impedance mode
+    gpio_set_function(PICO_DEFAULT_SPI_RX_PIN, GPIO_FUNC_SIO);
+    gpio_set_function(PICO_DEFAULT_SPI_SCK_PIN, GPIO_FUNC_SIO);
+    gpio_set_function(PICO_DEFAULT_SPI_TX_PIN, GPIO_FUNC_SIO);
 
     switch (csn_pin) {
     case ICE_LED_RED_PIN:
@@ -136,34 +129,63 @@ static void prepare_transfer(void (*callback)(volatile void *), void *context) {
     restore_interrupts(status);
 }
 
-// TODO: this is not yet called from interrupt yet
-static void spi_irq_handler(void) {
-    if (true) { // TODO: check for pending bytes to transfer
-        if (g_async_callback != NULL) {
-            (*g_async_callback)(g_async_context);
-        }
-        g_transfer_done = true;
-    }
-}
-
 void ice_spi_write_async(uint8_t const *data, size_t data_size, void (*callback)(volatile void *), void *context) {
-    // TODO: we could just call callback(context) directly but this is to mimick the future behavior
     prepare_transfer(callback, context);
 
-    for (; data_size > 0; data_size--, data++) {
-        transfer_byte(*data);
-    }
-    spi_irq_handler();
+    dma_channel_config c = dma_channel_get_default_config(dma_tx);
+    channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
+    channel_config_set_dreq(&c, spi_get_dreq(spi1, true));
+    channel_config_set_read_increment(&c, true);
+    channel_config_set_write_increment(&c, false);
+    dma_channel_configure(dma_tx, &c,
+                          &spi_get_hw(spi1)->dr, // write address
+                          data,                  // read address
+                          data_size,             // element count
+                          false);
+
+    c = dma_channel_get_default_config(dma_rx);
+    channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
+    channel_config_set_dreq(&c, spi_get_dreq(spi1, false));
+    channel_config_set_read_increment(&c, false);
+    channel_config_set_write_increment(&c, false);
+    dma_channel_configure(dma_rx, &c,
+                          &dma_word,             // write address
+                          &spi_get_hw(spi1)->dr, // read address
+                          data_size,
+                          false);
+
+    dma_start_channel_mask((1u << dma_tx) | (1u << dma_rx));
 }
 
 void ice_spi_read_async(uint8_t *data, size_t data_size, void (*callback)(volatile void *), void *context) {
-    // TODO: we could just call callback(context) directly but this is to mimick the future behavior
     prepare_transfer(callback, context);
 
-    for (; data_size > 0; data_size--, data++) {
-        *data = transfer_byte(0xFF); // dummy data
-    }
-    spi_irq_handler();
+    // Byte to transmit during the read
+    dma_word = 0xFF;
+
+    dma_channel_config c = dma_channel_get_default_config(dma_tx);
+    channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
+    channel_config_set_dreq(&c, spi_get_dreq(spi1, true));
+    channel_config_set_read_increment(&c, false);
+    channel_config_set_write_increment(&c, false);
+    dma_channel_configure(dma_tx, &c,
+                          &spi_get_hw(spi1)->dr, // write address
+                          &dma_word,             // read address
+                          data_size,             // element count
+                          false);
+
+    c = dma_channel_get_default_config(dma_rx);
+    channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
+    channel_config_set_dreq(&c, spi_get_dreq(spi1, false));
+    channel_config_set_read_increment(&c, false);
+    channel_config_set_write_increment(&c, true);
+    dma_channel_configure(dma_rx, &c,
+                          data,                  // write address
+                          &spi_get_hw(spi1)->dr, // read address
+                          data_size,
+                          false);
+
+    dma_start_channel_mask((1u << dma_tx) | (1u << dma_rx));
 }
 
 bool ice_spi_is_async_complete(void) {
@@ -172,7 +194,7 @@ bool ice_spi_is_async_complete(void) {
 
 void ice_spi_wait_completion(void) {
     while (!ice_spi_is_async_complete()) {
-        // _WFE(); // TODO: uncomment this while switching to interrupt-based implementation
+        __wfe();
     }
 }
 
