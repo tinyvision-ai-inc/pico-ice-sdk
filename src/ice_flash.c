@@ -40,6 +40,7 @@
 #define FLASH_CMD_ENABLE_WRITE       0x06
 #define FLASH_CMD_STATUS             0x05
 #define FLASH_CMD_SECTOR_ERASE       0x20
+#define FLASH_CMD_BLOCK_ERASE        0xD8
 #define FLASH_CMD_CHIP_ERASE         0xC7
 #define FLASH_CMD_RELEASE_POWERDOWN  0xAB
 #define FLASH_CMD_POWERDOWN          0xB9
@@ -102,6 +103,20 @@ void ice_flash_read(uint32_t addr, uint8_t *buf, size_t sz) {
     ice_spi_write_blocking(cmds, sizeof cmds);
     ice_spi_read_blocking(buf, sz);
     ice_spi_chip_deselect(ICE_FLASH_CSN_PIN);
+}
+
+void ice_flash_erase_block(uint32_t addr) {
+    uint8_t cmds[] = { FLASH_CMD_BLOCK_ERASE, addr >> 16, addr >> 8, addr };
+
+    assert(addr % ICE_FLASH_BLOCK_SIZE == 0);
+
+    ice_flash_enable_write();
+
+    ice_spi_chip_select(ICE_FLASH_CSN_PIN);
+    ice_spi_write_blocking(cmds, sizeof cmds);
+    ice_spi_chip_deselect(ICE_FLASH_CSN_PIN);
+
+    ice_flash_wait();
 }
 
 void ice_flash_erase_chip(void) {
