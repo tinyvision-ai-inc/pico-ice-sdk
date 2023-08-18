@@ -67,6 +67,9 @@
 
 #define WATCHDOG_DELAY 3000
 
+#define DFU_ALT_CRAM 0
+#define DFU_ALT_FLASH 1
+
 // Provide a default config where some fields come be customized in <tusb_config.h>
 const tusb_desc_device_t tud_desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
@@ -178,6 +181,54 @@ static void ice_usb_uart1_to_cdc(void) {
 }
 #endif
 
+#ifdef ICE_USB_SPI_CDC
+static void ice_usb_cdc_to_spi(uint8_t byte) {
+    static enum { GET_DATA, GET_COMMAND, GET_EXTENDED } state;
+    static size_t buf_len = 0, buf_i = 0;
+    static char buf[128];
+
+    switch (state) {
+    case GET_COMMAND:
+        if (byte == 0x00) {
+            ice_spi_chip_deselect(ICE_SPI_FPGA_CSN_PIN);
+            state = GET_COMMAND;
+
+        } else if (byte == 0x80) {
+            state = GET_EXTENDED;
+
+        } else if (byte >> 7 == 1) {
+            uint8_t len = byte & 0b01111111;
+
+            ice_spi_chip_select(ICE_SPI_FPGA_CSN_PIN);
+            ice_spi_read(buf, len);
+            tud_cdc_n_write(ICE_USB_SPI_CDC, buf, len);
+            tud_cdc_n_write_flush(ICE_USB_SPI_CDC);
+            state = GET_DATA;
+
+        } else if (byte >> 7 == 0) {
+            ice_spi_chip_select(ICE_SPI_FPGA_CSN_PIN);
+            buf_len = byte & 0b01111111;
+            state = GET_DATA;
+        }
+        break;
+
+    case GET_EXTENDED:
+        state = GET_COMMAND;
+        break;
+
+    case GET_DATA:
+        buf[buf_i++] = byte;
+        if (buf_i == buf_len) {
+            ice_spi_write(buf, buf_len);
+            buf_len = 0;
+            buf_i = 0;
+            state = GET_COMMAND;
+        }
+        break;
+    }
+}
+#endif
+
 #ifdef ICE_USB_FPGA_CDC
 void ice_wishbone_serial_tx_cb(uint8_t byte) {
     tud_cdc_n_write_char(ICE_USB_FPGA_CDC, byte);
@@ -203,6 +254,9 @@ void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t) = {
 #endif
 #ifdef ICE_USB_FPGA_CDC
     [ICE_USB_FPGA_CDC] = &ice_usb_cdc_to_fpga,
+#endif
+#ifdef ICE_USB_SPI_CDC
+    [ICE_USB_SPI_CDC] = &ice_usb_cdc_to_spi,
 #endif
 };
 
@@ -232,10 +286,10 @@ uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state) {
 // Once finished flashing, application must call tud_dfu_finish_flashing()
 void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, uint16_t length) {
     static bool started = false;
+
     if (!started) {
         // When this returns, we have reserved use of the serial memory SPI bus.
-        // TODO: uncomment when ice_smem.c is working again.
-        //ice_smem_await_async_completion();
+        //ice_spi_wait_completion();
 
         // Disable all interrupts except USB.
         irq_set_mask_enabled(~(1 << USBCTRL_IRQ), false);
@@ -244,17 +298,20 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
         // TODO: if we get unlucky, core 1 might reset while holding a TinyUSB lock, in which case DFU download might hang.
         multicore_reset_core1();
 
-        // Ensure eventual reboot in case user doesn't pass -R to dfu-util
-        watchdog_enable(WATCHDOG_DELAY, true /* pause_on_debug */);
+        // Keep running if flashing from SRAM
+        if (alt != DFU_ALT_CRAM) {
+            // Ensure eventual reboot in case user doesn't pass -R to dfu-util
+            watchdog_enable(WATCHDOG_DELAY, true /* pause_on_debug */);
+        }
 
         // make sure the RP2040 have full access to the bus
         ice_fpga_stop();
         ice_spi_init();
 
-        if (alt == 0) {
+        if (alt == DFU_ALT_CRAM) {
             ice_cram_open();
         }
-        if (alt == 1) {
+        if (alt == DFU_ALT_FLASH) {
             ice_flash_init();
         }
     }
@@ -264,10 +321,10 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
     uint32_t dest_addr = block_num * CFG_TUD_DFU_XFER_BUFSIZE;
 
     for (uint32_t offset = 0; offset < length; offset += ICE_FLASH_PAGE_SIZE) {
-        if (alt == 0) {
+        if (alt == DFU_ALT_CRAM) {
             ice_cram_write(data, length);
         }
-        if (alt == 1) {
+        if (alt == DFU_ALT_FLASH) {
             if ((dest_addr + offset) % ICE_FLASH_SECTOR_SIZE == 0) {
                 ice_flash_erase_sector(dest_addr + offset);
             }
@@ -291,10 +348,10 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
 void tud_dfu_manifest_cb(uint8_t alt) {
     bool fpga_done;
 
-    if (alt == 0) {
+    if (alt == DFU_ALT_CRAM) {
         fpga_done = ice_cram_close();
     }
-    if (alt == 1) {
+    if (alt == DFU_ALT_FLASH) {
         fpga_done = ice_fpga_start();
     }
 
