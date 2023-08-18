@@ -25,6 +25,7 @@ target_link_libraries(pico_ice_sdk INTERFACE
     hardware_gpio
     hardware_pio
     hardware_spi
+    hardware_dma
     hardware_uart
     pico_stdlib
     )
