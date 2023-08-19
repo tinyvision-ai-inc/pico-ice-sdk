@@ -40,13 +40,13 @@ static int dma_tx, dma_rx;
 static uint32_t dma_word;
 
 static void spi_irq_handler(void) {
-    if (dma_hw->ints1 & (1u << dma_rx))
+    if (dma_channel_get_irq1_status(dma_rx))
     {
         if (g_async_callback != NULL) {
             (*g_async_callback)(g_async_context);
         }
         g_transfer_done = true;
-        dma_hw->ints1 = (1u << dma_rx);
+        dma_channel_acknowledge_irq1(dma_rx);
     }
 }
 
@@ -62,7 +62,8 @@ void ice_spi_init(void) {
     gpio_set_dir(ICE_SPI_RX_PIN, GPIO_IN);
 
     // Initialize SPI, but don't yet assign the pins SPI function so they stay in high impedance mode.
-    spi_init(spi1, 50 * 1000 * 1000);
+    // Use 33MHz as that is the fastest the SRAM supports a 03h read command.
+    spi_init(spi1, 33 * 1000 * 1000);
 
     // Setup DMA channel and interrupt handler
     dma_tx = dma_claim_unused_channel(true);
@@ -100,7 +101,10 @@ void ice_spi_chip_deselect(uint8_t csn_pin) {
     //    tight_loop_contents();
     //}
 
-    // Release the bus by connecting back to the CPU GPIO, putting the IOs back to high-impedance mode
+    // Release the bus by connecting back to the CPU GPIO, ensuring the IOs are back to high-impedance mode
+    gpio_set_dir(ICE_SPI_SCK_PIN, GPIO_IN);
+    gpio_set_dir(ICE_SPI_TX_PIN, GPIO_IN);
+    gpio_set_dir(ICE_SPI_RX_PIN, GPIO_IN);
     gpio_set_function(PICO_DEFAULT_SPI_RX_PIN, GPIO_FUNC_SIO);
     gpio_set_function(PICO_DEFAULT_SPI_SCK_PIN, GPIO_FUNC_SIO);
     gpio_set_function(PICO_DEFAULT_SPI_TX_PIN, GPIO_FUNC_SIO);
