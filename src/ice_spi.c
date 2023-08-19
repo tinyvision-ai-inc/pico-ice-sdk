@@ -63,6 +63,7 @@ void ice_spi_init(void) {
 
     if (spi_is_initialized) { 
         spi_set_baudrate(spi1, ICE_SPI_BAUDRATE);
+        irq_set_enabled(DMA_IRQ_1, true);
         return;
     }
     spi_is_initialized = true;
