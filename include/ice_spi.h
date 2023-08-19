@@ -24,6 +24,10 @@
 
 #pragma once
 
+// This is chosen to allow all commands to the flash and SRAM to work.
+// 33MHz is the fastest the SRAM supports a 03h read command.
+#define ICE_SPI_BAUDRATE (33 * 1000 * 1000)
+
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
