@@ -31,7 +31,10 @@
 // This module is not thread safe.
 
 #define ICE_SRAM_STATUS_BUSY_MASK  0x01
-#define ICE_SRAM_FLASH_PAGE_SIZE   0x100
+
+// Long transfers to/from the SRAM should be avoided as CS should not be
+// asserted for more than 8us.  Holding CS for too long can result in data loss.
+#define ICE_SRAM_TRANSFER_SIZE     32
 
 #ifdef __cplusplus
 extern "C" {

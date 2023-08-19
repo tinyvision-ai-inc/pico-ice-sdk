@@ -79,9 +79,18 @@ void ice_sram_write_async(uint32_t addr, const uint8_t *data, size_t data_size,
 }
 
 void ice_sram_write_blocking(uint32_t addr, const uint8_t *data, size_t data_size) {
-    ice_sram_write_async(addr, data, data_size, NULL, NULL);
-    ice_spi_wait_completion();
-    ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
+    while (data_size) {
+        size_t transfer_size = ICE_SRAM_TRANSFER_SIZE;
+        if (data_size < transfer_size) transfer_size = data_size;
+
+        ice_sram_write_async(addr, data, transfer_size, NULL, NULL);
+        ice_spi_wait_completion();
+        ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
+        
+        data_size -= transfer_size;
+        data += transfer_size;
+        addr += transfer_size;
+    }
 }
 
 void ice_sram_read_async(uint32_t addr, uint8_t *data, size_t data_size,
@@ -94,7 +103,16 @@ void ice_sram_read_async(uint32_t addr, uint8_t *data, size_t data_size,
 }
 
 void ice_sram_read_blocking(uint32_t addr, uint8_t *data, size_t data_size) {
-    ice_sram_read_async(addr, data, data_size, NULL, NULL);
-    ice_spi_wait_completion();
-    ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
+    while (data_size) {
+        size_t transfer_size = ICE_SRAM_TRANSFER_SIZE;
+        if (data_size < transfer_size) transfer_size = data_size;
+
+        ice_sram_read_async(addr, data, transfer_size, NULL, NULL);
+        ice_spi_wait_completion();
+        ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
+        
+        data_size -= transfer_size;
+        data += transfer_size;
+        addr += transfer_size;
+    }
 }
