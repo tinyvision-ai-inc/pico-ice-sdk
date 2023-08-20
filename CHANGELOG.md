@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.3.0
+
+* Switch SPI to hardware back-end with DMA (@MichaelBell).
+  This applies to all code as `<ice_spi.h>` is used everywhere.
+
+* Introduce ICE_USB_SPI_CDC: a new USB protocol to access the various SPI
+  parts, along with a new host-side python library for it.
+
 ## v1.2.1
 
 * With the default firmware, the FPGA was rebooting after a few seconds due
