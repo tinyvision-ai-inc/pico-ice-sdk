@@ -53,10 +53,7 @@ void ice_sram_reset(void) {
 
 void ice_sram_init(void) {
     ice_spi_init();
-    ice_spi_init_cs_pin(ICE_SRAM_CS_PIN);
-
-    // The SRAM CS is active low: invert its output with hardware.
-    gpio_set_outover(ICE_SRAM_CS_PIN, GPIO_OVERRIDE_INVERT);
+    ice_spi_init_cs_pin(ICE_SRAM_CS_PIN, true);
 
     // Device initialization procedure
     sleep_us(150);
@@ -84,6 +81,7 @@ void ice_sram_write_async(uint32_t addr, const uint8_t *data, size_t data_size,
 void ice_sram_write_blocking(uint32_t addr, const uint8_t *data, size_t data_size) {
     ice_sram_write_async(addr, data, data_size, NULL, NULL);
     ice_spi_wait_completion();
+    ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
 }
 
 void ice_sram_read_async(uint32_t addr, uint8_t *data, size_t data_size,
@@ -98,4 +96,5 @@ void ice_sram_read_async(uint32_t addr, uint8_t *data, size_t data_size,
 void ice_sram_read_blocking(uint32_t addr, uint8_t *data, size_t data_size) {
     ice_sram_read_async(addr, data, data_size, NULL, NULL);
     ice_spi_wait_completion();
+    ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
 }

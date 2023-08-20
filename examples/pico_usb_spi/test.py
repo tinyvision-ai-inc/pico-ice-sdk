@@ -1,24 +1,19 @@
-import serial
-import sys
+from pico_ice_spi import *
+import binascii
 
-def spi_write(ser, buffer):
-    for chunk in [buffer[i:i + 0x7F] for i in range(0, len(buffer), 0x7F)]:
-        ser.write(bytes([len(chunk) | (0 << 7)]))
-        ser.write(chunk)
+# Open the port given as argument
+spi = PicoIceSpi(sys.argv[1])
 
-def spi_read(ser, length):
-    buffer = bytearray()
-    while length > 0:
-        print(f'read({length})')
-        ser.write(bytes([min(0x7F, length) | (1 << 7)]))
-        buffer.extend(ser.read(size=min(0x7F, length)))
-        length -= 0x7F
-    return buffer
+# Query the SRAM ID
+spi.command(spi.USE_SRAM)
+spi.write(b'\x9F\x00\x00\x00')
+id = spi.read(8)
+print('SRAM ID: ' + str(binascii.b2a_hex(id, ' ')))
+spi.done()
 
-def spi_done(ser):
-    ser.write(b'\x00')
-
-with serial.Serial(sys.argv[1]) as ser:
-    spi_write(ser, bytes([0x9F]))
-    print(spi_read(ser, 12))
-    spi_done(ser)
+# Query the FLASH ID
+spi.command(spi.USE_FLASH)
+spi.write(bytes(b'\xAB\x00\x00\x00'))
+id = spi.read(1)
+print('FLASH ID: ' + str(binascii.b2a_hex(id, ' ')))
+spi.done()

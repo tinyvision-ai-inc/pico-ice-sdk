@@ -38,7 +38,7 @@ void ice_fpga_init(uint8_t freq_mhz) {
     clock_gpio_init(ICE_FPGA_CLOCK_PIN, src, 48 / freq_mhz);
 
     ice_spi_init();
-    ice_spi_init_cs_pin(ICE_FPGA_CSN_PIN);
+    ice_spi_init_cs_pin(ICE_FPGA_CSN_PIN, false);
 }
 
 void ice_fpga_stop(void) {
