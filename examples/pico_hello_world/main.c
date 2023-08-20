@@ -22,10 +22,15 @@
  * SOFTWARE.
  */
 
+// libc
 #include <stdio.h>
 #include <stdbool.h>
+
+// pico-sdk
 #include "pico/stdlib.h"
 #include "boards/pico_ice.h"
+
+// tinyusb
 #include "tusb.h"
 
 int main(void) {
