@@ -26,11 +26,13 @@
 #include "ice_usb.h"
 
 enum {
+    ITF_NUM_DFU,
     ITF_NUM_TOTAL
 };
 
 uint8_t const tud_desc_configuration[CONFIG_TOTAL_LEN] = {
     TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, 500/*mA*/),
+    TUD_DFU_DESCRIPTOR(ITF_NUM_DFU, CFG_TUD_DFU_ALT, STRID_DFU, DFU_ATTR_CAN_DOWNLOAD, 1000, CFG_TUD_DFU_XFER_BUFSIZE),
 };
 
 char const *tud_string_desc[STRID_NUM_TOTAL] = {
@@ -39,4 +41,6 @@ char const *tud_string_desc[STRID_NUM_TOTAL] = {
     [STRID_PRODUCT]         = USB_PRODUCT,
     [STRID_SERIAL_NUMBER]   = usb_serial_number,
     [STRID_VENDOR]          = USB_VENDOR,
+    [STRID_DFU+0]           = "iCE40 DFU (CRAM)",
+    [STRID_DFU+1]           = "iCE40 DFU (Flash)",
 };
