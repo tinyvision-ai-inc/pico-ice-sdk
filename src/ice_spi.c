@@ -62,7 +62,7 @@ void ice_spi_init(void) {
 
     // Initialize SPI, but don't yet assign the pins SPI function so they stay in high impedance mode.
     // Use 33MHz as that is the fastest the SRAM supports a 03h read command.
-    spi_init(spi1, 100 * 1000);
+    spi_init(spi1, 33 * 1000 * 1000);
 
     // Setup DMA channel and interrupt handler
     dma_tx = dma_claim_unused_channel(true);
