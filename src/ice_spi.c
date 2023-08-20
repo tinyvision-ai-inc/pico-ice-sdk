@@ -40,8 +40,7 @@ static int dma_tx, dma_rx;
 static uint32_t dma_word;
 
 static void spi_irq_handler(void) {
-    if (dma_channel_get_irq1_status(dma_rx))
-    {
+    if (dma_channel_get_irq1_status(dma_rx)) {
         if (g_async_callback != NULL) {
             (*g_async_callback)(g_async_context);
         }
@@ -96,14 +95,14 @@ void ice_spi_chip_select(uint8_t csn_pin) {
 }
 
 void ice_spi_chip_deselect(uint8_t csn_pin) {
+    // Busy wait until SCK goes low
+    while (gpio_get(ICE_SPI_SCK_PIN)) {
+        tight_loop_contents();
+    }
+
     // Terminate the transaction
     gpio_put(csn_pin, true);
     sleep_us(1);
-
-    // TODO: Busy wait until SCK goes low
-    //while (gpio_get(ICE_SPI_SCK_PIN)) {
-    //    tight_loop_contents();
-    //}
 
     // Release the bus by connecting back to the CPU GPIO, ensuring the IOs are back to high-impedance mode
     gpio_set_dir(ICE_SPI_SCK_PIN, GPIO_IN);
