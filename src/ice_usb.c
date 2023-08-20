@@ -40,6 +40,7 @@
 #include "ice_usb.h"
 #include "ice_flash.h"
 #include "ice_cram.h"
+#include "ice_sram.h"
 #include "ice_spi.h"
 #include "ice_fpga.h"
 
@@ -182,53 +183,62 @@ static void ice_usb_uart1_to_cdc(void) {
 #endif
 
 #ifdef ICE_USB_SPI_CDC
-static void ice_usb_cdc_to_spi(uint8_t byte) {
+static void ice_usb_cdc_to_spi(uint8_t ch) {
     static enum { GET_COMMAND, GET_DATA, GET_EXTENDED } state;
-    static size_t buf_len, buf_i, i;
+    static size_t buf_len, buf_i, pkt;
     static char buf[128];
-
-    printf("i=%d state=%d", i++, state);
+    static uint8_t csn_pin = ICE_FPGA_CSN_PIN;
 
     switch (state) {
 
     // The next byte is a command byte: [1*ReadWriteIndicator, 7*DataLength]
     case GET_COMMAND:
 
-        // Special case (null read): deselects the SPI peripheral
-        if (byte == 0x00) {
-            ice_spi_chip_deselect(ICE_SRAM_CS_PIN);
+        // Chip deselect
+        if (ch == 0x00) {
+            ice_spi_chip_deselect(csn_pin);
             state = GET_COMMAND;
 
-        // Special case (null write): extended command
-        } else if (byte == 0x80) {
+        // Extended command
+        } else if (ch == 0x80) {
             state = GET_EXTENDED;
-    
-        // First bit high: forward SPI data to USB
-        } else if (byte >> 7 == 1) {
-            uint8_t len = byte & 0b01111111;
 
-            ice_spi_chip_select(ICE_SRAM_CS_PIN);
-            ice_spi_read_blocking(buf, len);
-            tud_cdc_n_write(ICE_USB_SPI_CDC, buf, len);
+        // Read [num]
+        } else if (ch >> 7 == 1) {
+            ice_spi_chip_select(csn_pin);
+            buf_len = ch & 0b01111111;
+            ice_spi_read_blocking(buf, buf_len);
+            tud_cdc_n_write(ICE_USB_SPI_CDC, buf, buf_len);
             tud_cdc_n_write_flush(ICE_USB_SPI_CDC);
             state = GET_COMMAND;
 
-        // First bit low: forward USB data to SPI
-        } else if (byte >> 7 == 0) {
-            ice_spi_chip_select(ICE_SRAM_CS_PIN);
-            buf_len = byte & 0b01111111;
+        // Write [num]
+        } else if (ch >> 7 == 0) {
+            ice_spi_chip_select(csn_pin);
+            buf_len = ch & 0b01111111;
             state = GET_DATA;
         }
         break;
 
     // Read one extended command byte (ignored for now)
     case GET_EXTENDED:
+        switch (ch) {
+        case 0x00:
+            csn_pin = ICE_FPGA_CSN_PIN;
+            break;
+        case 0x01:
+            csn_pin = ICE_SRAM_CS_PIN;
+            break;
+        case 0x02:
+            csn_pin = ICE_FLASH_CSN_PIN;
+            break;
+        }
         state = GET_COMMAND;
         break;
 
     // Take as many bytes as the amount specified during GET_COMMAND
     case GET_DATA:
-        buf[buf_i++] = byte;
+        buf[buf_i++] = ch;
         if (buf_i == buf_len) {
             ice_spi_write_blocking(buf, buf_len);
             buf_len = 0;
@@ -237,9 +247,6 @@ static void ice_usb_cdc_to_spi(uint8_t byte) {
         }
         break;
     }
-
-    printf(" next=%d byte=0x%02X buf_len=%d buf_i=%d\r\n",
-        state, byte, buf_len, buf_i);
 }
 #endif
 
@@ -279,11 +286,11 @@ void tud_cdc_rx_cb(uint8_t cdc_num) {
     // existing callback for that CDC number, send it all available data
     assert(cdc_num < sizeof(tud_cdc_rx_cb_table) / sizeof(*tud_cdc_rx_cb_table));
 
-    while (tud_cdc_n_available(cdc_num)) {
-        uint8_t byte = tud_cdc_n_read_char(cdc_num);
-        if (tud_cdc_rx_cb_table[cdc_num] != NULL) {
-            tud_cdc_rx_cb_table[cdc_num](byte);
-        }
+    if (tud_cdc_rx_cb_table[cdc_num] == NULL) {
+        return;
+    }
+    for (int32_t ch; (ch = tud_cdc_n_read_char(cdc_num)) >= 0;) {
+        tud_cdc_rx_cb_table[cdc_num](ch);
     }
 }
 #endif
@@ -394,8 +401,10 @@ void ice_usb_init(void) {
 #endif
 
 #ifdef ICE_USB_SPI_CDC
-    ice_sram_init();
     ice_spi_init();
+    ice_spi_init_cs_pin(ICE_SRAM_CS_PIN, true);
+    ice_spi_init_cs_pin(ICE_FLASH_CSN_PIN, false);
+    ice_spi_init_cs_pin(ICE_FPGA_CSN_PIN, false);
 #endif
 
 #ifdef ICE_USB_USE_TINYUF2_MSC

@@ -63,7 +63,7 @@ void ice_spi_init(void) {
 
     // Initialize SPI, but don't yet assign the pins SPI function so they stay in high impedance mode.
     // Use 33MHz as that is the fastest the SRAM supports a 03h read command.
-    spi_init(spi1, 33 * 1000 * 1000);
+    spi_init(spi1, 100 * 1000);
 
     // Setup DMA channel and interrupt handler
     dma_tx = dma_claim_unused_channel(true);
@@ -74,8 +74,12 @@ void ice_spi_init(void) {
     irq_set_enabled(DMA_IRQ_1, true);
 }
 
-void ice_spi_init_cs_pin(uint8_t csn_pin) {
+void ice_spi_init_cs_pin(uint8_t csn_pin, bool active_high) {
     gpio_init(csn_pin);
+    if (active_high) {
+        // When CS is active high: invert the pin output with hardware
+        gpio_set_outover(csn_pin, GPIO_OVERRIDE_INVERT);
+    }
     ice_spi_chip_deselect(csn_pin);
 }
 
