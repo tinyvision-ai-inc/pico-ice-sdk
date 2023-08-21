@@ -6,6 +6,12 @@ endif()
 list(APPEND PICO_BOARD_HEADER_DIRS "${CMAKE_CURRENT_LIST_DIR}/include/boards")
 
 
+execute_process(COMMAND git -C "${CMAKE_CURRENT_LIST_DIR}" describe --tags
+    OUTPUT_VARIABLE PICO_ICE_SDK_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+set(PICO_ICE_SDK_VERSION ${PICO_ICE_SDK_VERSION} PARENT_SCOPE)
+
 add_library(pico_ice_sdk INTERFACE)
 
 target_sources(pico_ice_sdk INTERFACE
@@ -35,7 +41,6 @@ pico_generate_pio_header(pico_ice_sdk
 target_include_directories(pico_ice_sdk INTERFACE
     include
     )
-
 
 add_library(pico_ice_usb INTERFACE)
 
