@@ -95,6 +95,10 @@
 #ifndef ICE_FLASH_SIZE_BYTES
 #define ICE_FLASH_SIZE_BYTES (4 * 1024 * 1024)
 #endif
+// SRAM
+#ifndef ICE_SRAM_SIZE_BYTES
+#define ICE_SRAM_SIZE_BYTES (8 * 1024 * 1024)
+#endif
 // MISC
 #define ICE_GPOUT_CLOCK_PIN 25
 #define ICE_RESET_BUTTON_PIN 28
