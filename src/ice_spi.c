@@ -124,12 +124,16 @@ void ice_spi_chip_deselect(uint8_t csn_pin) {
     case ICE_LED_RED_PIN:
     case ICE_LED_GREEN_PIN:
     case ICE_LED_BLUE_PIN:
-        gpio_set_dir(csn_pin, GPIO_IN);
+        gpio_set_pulls(csn_pin, false, false);
+        break;
+    case ICE_SRAM_CS_PIN:
+        gpio_set_pulls(csn_pin, false, true);
         break;
     default:
-        gpio_put(csn_pin, true);
+        gpio_set_pulls(csn_pin, true, false);
         break;
     }
+    gpio_set_dir(csn_pin, GPIO_IN);
 }
 
 static void prepare_transfer(void (*callback)(volatile void *), void *context) {
