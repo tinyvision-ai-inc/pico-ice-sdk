@@ -1,3 +1,4 @@
 gateware.*
 /obj_dir/
 *.vcd
+*.elf
