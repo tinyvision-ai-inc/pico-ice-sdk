@@ -1,10 +1,9 @@
 # ice_makefile_verilator_counter
 
 Example project using a standard [Makefile](https://en.wikipedia.org/wiki/Make_%28software%29)
-to build a project.
+to build a project with a [Verilator](https://verilator.org/) simulation test bench.
 
-It needs a local [oss-cad-suite](https://github.com/YosysHQ/oss-cad-suite-build) toolchain installed,
-or at least `yosys`, `nextpnr-ice40`, `icepack` and `python` in the execution path.
+It needs [oss-cad-suite](https://github.com/YosysHQ/oss-cad-suite-build) installed.
 See the [doc](https://pico-ice.tinyvision.ai/using_oss_cad_suite.html) for more.
 
 Build with `make`. This should simulate the design, producing a `verilator.vcd` that can be browsed with `gtkwave verilator.vcd`.

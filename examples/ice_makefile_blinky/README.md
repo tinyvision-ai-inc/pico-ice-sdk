@@ -1,10 +1,9 @@
 # ice_makefile_blinky
 
 Example project using a standard [Makefile](https://en.wikipedia.org/wiki/Make_%28software%29)
-to build a project.
+to build a project that can be loaded onto the board.
 
-It needs a local [oss-cad-suite](https://github.com/YosysHQ/oss-cad-suite-build) toolchain installed,
-or at least `yosys`, `nextpnr-ice40`, `icepack` and `python` in the execution path.
+It needs [oss-cad-suite](https://github.com/YosysHQ/oss-cad-suite-build) installed.
 See the [doc](https://pico-ice.tinyvision.ai/using_oss_cad_suite.html) for more.
 
 Build with `make` and deploy it to the pico-ice with `make prog`, and `make gateware.uf2` to generate an

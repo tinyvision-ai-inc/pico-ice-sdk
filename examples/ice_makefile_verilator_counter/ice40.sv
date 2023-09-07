@@ -1,4 +1,7 @@
-module gateware (
+`timescale 1ns / 1ps
+`default_nettype none
+
+module ice40 (
     input clk,
     output led_red,
     output led_green,
