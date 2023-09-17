@@ -1,5 +1,20 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) tinyVision.ai Inc
+#
+# This file acts as a catalogue of all pinout bindings you may want,
+# so that you can copy-paste them to build your own .pcf file out
+# of it. It is also possible, of course, to use custom names.
+#
+# See https://pico-ice.tinyvision.ai/pinout.html for the position
+# of the pins on the board.
+
 # Reference for PMOD names:
 # https://digilent.com/reference/pmod/start
+
+# Signals used by the default firmware
+set_io -nowarn CLK              35
+set_io -nowarn UART_TX          25
+set_io -nowarn UART_RX          27
 
 # Signals definition (as in the circuit diagram)
 set_io -nowarn ICE_2            2
