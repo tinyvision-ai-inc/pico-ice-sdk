@@ -48,15 +48,18 @@ set_io -nowarn ICE_47           47
 set_io -nowarn ICE_48           48
 set_io -nowarn ICE_FLASH_IO2    12
 set_io -nowarn ICE_FLASH_IO3    13
-set_io -nowarn ICE_PB           10
+set_io -nowarn ICE_PB           10 # active-low
 set_io -nowarn ICE_SO           14
 set_io -nowarn ICE_SI           17
 set_io -nowarn ICE_SCK          15
-set_io -nowarn ICE_SSN          16
-set_io -nowarn SRAM_SS          37
-set_io -nowarn LED_G            39
-set_io -nowarn LED_B            40
-set_io -nowarn LED_R            41
+set_io -nowarn ICE_SSN          16 # active-low
+set_io -nowarn SRAM_SS          37 # active-high
+set_io -nowarn LED_G            39 # active-low
+set_io -nowarn LED_B            40 # active-low
+set_io -nowarn LED_R            41 # active-low
+
+# Alternate names found on the silkscreen
+set_io -nowarn ICE_SW2          10 # active-low
 
 # Silicon IO names
 set_io -nowarn IOB_6a           2
