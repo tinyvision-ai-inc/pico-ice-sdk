@@ -108,6 +108,7 @@ void ice_spi_chip_deselect(uint8_t csn_pin) {
     gpio_set_dir(ICE_SPI_SCK_PIN, GPIO_IN);
     gpio_set_dir(ICE_SPI_TX_PIN, GPIO_IN);
     gpio_set_dir(ICE_SPI_RX_PIN, GPIO_IN);
+
     gpio_set_function(PICO_DEFAULT_SPI_RX_PIN, GPIO_FUNC_SIO);
     gpio_set_function(PICO_DEFAULT_SPI_SCK_PIN, GPIO_FUNC_SIO);
     gpio_set_function(PICO_DEFAULT_SPI_TX_PIN, GPIO_FUNC_SIO);

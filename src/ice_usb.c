@@ -401,10 +401,10 @@ void ice_usb_init(void) {
 #endif
 
 #ifdef ICE_USB_SPI_CDC
-    ice_spi_init();
     ice_spi_init_cs_pin(ICE_SRAM_CS_PIN, true);
     ice_spi_init_cs_pin(ICE_FLASH_CSN_PIN, false);
     ice_spi_init_cs_pin(ICE_FPGA_CSN_PIN, false);
+    ice_spi_init();
 #endif
 
 #ifdef ICE_USB_USE_TINYUF2_MSC
