@@ -364,7 +364,9 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
     }
 }
 
-// Invoked when download process is complete, received DFU_DNLOAD (wLength=0) following by DFU_GETSTATUS (state=Manifest) Application can do checksum, or actual flashing if buffered entire image previously.
+// Invoked when download process is complete, received DFU_DNLOAD (wLength=0)
+// following by DFU_GETSTATUS (state=Manifest) Application can do checksum, or
+// actual flashing if buffered entire image previously.
 // Once finished flashing, application must call tud_dfu_finish_flashing()
 void tud_dfu_manifest_cb(uint8_t alt) {
     bool fpga_done;
@@ -387,6 +389,12 @@ void tud_dfu_detach_cb(void) {
 // Init everything as declared in <tusb_config.h>
 void ice_usb_init(void) {
     tusb_init();
+
+    // This is a blocking call, but expected to be done once at initialization
+    // rather than in the main loop.
+    while (!tud_ready()) {
+        tud_task();
+    }
 
 #ifdef ICE_USB_UART0_CDC
     irq_set_exclusive_handler(UART0_IRQ, ice_usb_uart0_to_cdc);
