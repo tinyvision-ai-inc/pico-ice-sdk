@@ -7,11 +7,4 @@
 | [Assembly](https://htmlpreview.github.io/?https://github.com/tinyvision-ai-inc/pico-ice/blob/main/Board/Rev3/bom/ibom.html)
 | [Discord](https://discord.gg/t2CzbAYeD2)
 
-[![LectronZ](https://lectronz.com/static/badges/buy-it-on-lectronz-medium.png)](https://lectronz.com/stores/tinyvision-ai-store)
-[![Tindie](https://d2ss6ovg47m0r5.cloudfront.net/badges/tindie-smalls.png)](https://www.tindie.com/stores/tinyvision_ai/?ref=offsite_badges&utm_source=sellers_vr2045&utm_medium=badges&utm_campaign=badge_small%22%3E)
-
-This is a library for using the [pico-ice](https://pico-ice.tinyvision.ai/) board.
-
-See the [getting started instructions](https://pico-ice.tinyvision.ai/getting_started.html) for a general introduction.
-
-See the [pico-ice-sdk doc](https://pico-ice.tinyvision.ai/pico_ice_sdk.html) to write custom firmware for the pico-ice.
+This is the SDK for building custom firmware for the RP2040 on the [pico-ice](https://pico-ice.tinyvision.ai/) board.
