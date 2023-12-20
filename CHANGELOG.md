@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.5.0
+
+* In the USB DFU interface, swap the alt=0 and alt=1 numbers to get APIO and
+  IceStudio to work again out of the box.
+
+* Fix DFU CRAM programming.
+
 ## v1.3.1
 
 * Make USB enumerate better in MacOS and everywhere (@dicristina).

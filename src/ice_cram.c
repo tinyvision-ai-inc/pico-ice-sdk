@@ -26,6 +26,7 @@
 #include "hardware/pio.h"
 #include "pico/time.h"
 #include "boards/pico_ice.h"
+#include "ice_fpga.h"
 #include "ice_cram.pio.h"
 
 static PIO pio;
@@ -110,11 +111,11 @@ static void wait_idle(void)
 void ice_cram_open(void)
 {
     // Hold FPGA in reset before doing anything with SPI bus.
-    gpio_put(ICE_FPGA_CRESET_B_PIN, false);
+    ice_fpga_stop();
 
     state_machine_init();
 
-    // SPI_SS low signals FPGA to receive bitstream.
+    // SPI_SS low signals FPGA to receive the bitstream.
     gpio_init(ICE_CRAM_CSN_PIN);
     gpio_put(ICE_CRAM_CSN_PIN, false);
     gpio_set_dir(ICE_CRAM_CSN_PIN, GPIO_OUT);

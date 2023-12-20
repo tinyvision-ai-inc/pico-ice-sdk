@@ -68,8 +68,8 @@
 
 #define WATCHDOG_DELAY 3000
 
-#define DFU_ALT_CRAM 0
-#define DFU_ALT_FLASH 1
+#define DFU_ALT_FLASH 0
+#define DFU_ALT_CRAM 1
 
 // Provide a default config where some fields come be customized in <tusb_config.h>
 const tusb_desc_device_t tud_desc_device = {
@@ -332,10 +332,12 @@ uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state)
     return 0; // Request we are polled in 1ms
 }
 
-static bool dfu_init_done;
+static bool dfu_ongoing;
 
 void dfu_init(uint8_t alt)
 {
+    ice_spi_init();
+
     switch (alt) {
     case DFU_ALT_CRAM:
         ice_cram_open();
@@ -353,12 +355,11 @@ void dfu_init(uint8_t alt)
 
         // Disable all interrupts except USB.
         irq_set_mask_enabled(~(1 << USBCTRL_IRQ), false);
+
+        // Make sure the RP2040 have full access to the SPI bus
+        ice_fpga_stop();
         break;
     }
-
-    // Make sure the RP2040 have full access to the SPI bus
-    ice_fpga_stop();
-    ice_spi_init();
 }
 
 // Invoked when received DFU_DNLOAD (wLength>0) following by DFU_GETSTATUS (state=DFU_DNBUSY) requests
@@ -366,33 +367,37 @@ void dfu_init(uint8_t alt)
 // Once finished flashing, application must call tud_dfu_finish_flashing()
 void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, uint16_t length)
 {
-    uint32_t dest_addr;
+    uint32_t addr;
 
     ice_spi_wait_completion();
 
-    if (!dfu_init_done) {
+    if (!dfu_ongoing) {
         dfu_init(alt);
-        dfu_init_done = true;
+        dfu_ongoing = true;
     }
 
-    watchdog_update();
-
-    dest_addr = block_num * CFG_TUD_DFU_XFER_BUFSIZE;
+    addr = block_num * CFG_TUD_DFU_XFER_BUFSIZE;
     for (uint32_t i = 0; i < length; i += ICE_FLASH_PAGE_SIZE) {
         switch (alt) {
         case DFU_ALT_CRAM:
             ice_cram_write(data, length);
             break;
         case DFU_ALT_FLASH:
-            if ((dest_addr + i) % ICE_FLASH_SECTOR_SIZE == 0) {
-                ice_flash_erase_sector(dest_addr + i);
+            watchdog_update();
+
+            if ((addr + i) % ICE_FLASH_SECTOR_SIZE == 0) {
+                ice_flash_erase_sector(addr + i);
             }
-            ice_flash_program_page(dest_addr + i, data + i);
+            ice_flash_program_page(addr + i, data + i);
             break;
         }
     }
 
     tud_dfu_finish_flashing(DFU_STATUS_OK);
+
+    while (dfu_ongoing) {
+        tud_task();
+    }
 }
 
 // Invoked when download process is complete, received DFU_DNLOAD (wLength=0)
@@ -405,14 +410,16 @@ void tud_dfu_manifest_cb(uint8_t alt)
 
     switch (alt) {
     case DFU_ALT_CRAM:
-        ice_cram_close();
+        ok = ice_cram_close();
+        break;
+    case DFU_ALT_FLASH:
+        ok = ice_fpga_start();
+        break;
     }
 
-    ok = ice_fpga_start();
     tud_dfu_finish_flashing(ok ? DFU_STATUS_OK : DFU_STATUS_ERR_FIRMWARE);
 
-    // Next init is not done yet
-    dfu_init_done = false;
+    dfu_ongoing = false;
 }
 
 // Called if -R option passed to dfu-util.
