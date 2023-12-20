@@ -51,7 +51,7 @@ extern "C" {
 /**
  * @brief Send an initialization command to the SRAM chip.
  */
-avoid ice_sram_init(void);
+void ice_sram_init(void);
 
 /**
  * @brief Send a reset command to the SRAM chipo.
