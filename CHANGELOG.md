@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.1
+
+* Make USB enumerate better in MacOS and everywhere (@dicristina).
+
 ## v1.3.0
 
 * Switch SPI to hardware back-end with DMA (@MichaelBell).
