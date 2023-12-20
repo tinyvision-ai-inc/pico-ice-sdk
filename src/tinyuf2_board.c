@@ -23,17 +23,10 @@ static uint32_t flash_erased[ICE_FLASH_SIZE_BYTES / (ICE_FLASH_BLOCK_SIZE * 32)]
 
 void board_flash_read(uint32_t addr, void *buffer, uint32_t len)
 {
-    if (!spi_ready) {
-        ice_fpga_stop();
-        ice_sram_init();
-        ice_flash_init();
-        spi_ready = true;
-    }
     if (addr >= SRAM_ADDR) {
         addr -= SRAM_ADDR;
         ice_sram_read_blocking(addr, buffer, len);
-    }
-    else {
+    } else {
         ice_flash_read(addr, buffer, len);
     }
 }
@@ -49,8 +42,7 @@ void board_flash_write(uint32_t addr, const void *data, uint32_t len)
     if (addr >= SRAM_ADDR) {
         addr -= SRAM_ADDR;
         ice_sram_write_blocking(addr, data, len);
-    }
-    else {
+    } else {
         int flash_erase_idx = addr / ICE_FLASH_BLOCK_SIZE;
         if ((flash_erased[flash_erase_idx >> 5] & (1u << (flash_erase_idx & 0x1F))) == 0) {
             ice_flash_erase_block(addr & ~(ICE_FLASH_BLOCK_SIZE - 1));

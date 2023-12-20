@@ -93,7 +93,8 @@ const tusb_desc_device_t tud_desc_device = {
 char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
 
 // Sleeping without calling tud_task() hangs the USB stack in the meantime.
-void ice_usb_sleep_ms(uint32_t ms) {
+void ice_usb_sleep_ms(uint32_t ms)
+{
     while (ms-- > 0) {
         tud_task();
         sleep_ms(1);
@@ -102,18 +103,21 @@ void ice_usb_sleep_ms(uint32_t ms) {
 
 // Invoked when received GET DEVICE DESCRIPTOR
 // Application return pointer to descriptor
-uint8_t const *tud_descriptor_device_cb(void) {
+uint8_t const *tud_descriptor_device_cb(void)
+{
     return (uint8_t const *)&tud_desc_device;
 }
 
-const uint8_t *tud_descriptor_configuration_cb(uint8_t index) {
+const uint8_t *tud_descriptor_configuration_cb(uint8_t index)
+{
     (void)index;
     return tud_desc_configuration;
 }
 
 // Invoked when received GET STRING DESCRIPTOR request
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
-uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
+uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid)
+{
     static uint16_t utf16[32];
     uint8_t len;
 
@@ -153,37 +157,49 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
 }
 
 #ifdef ICE_USB_UART0_CDC
-static void ice_usb_cdc_to_uart0(uint8_t byte) {
+
+static void ice_usb_cdc_to_uart0(uint8_t byte)
+{
     if (uart_is_writable(uart0)) {
         uart_putc(uart0, byte);
     }
 }
-static void ice_usb_uart0_to_cdc(void) {
+
+static void ice_usb_uart0_to_cdc(void)
+{
     while (uart_is_readable(uart0)) {
         uint8_t byte = uart_getc(uart0);
         tud_cdc_n_write_char(ICE_USB_UART0_CDC, byte);
         tud_cdc_n_write_flush(ICE_USB_UART0_CDC);
     }
 }
+
 #endif
 
 #ifdef ICE_USB_UART1_CDC
-static void ice_usb_cdc_to_uart1(uint8_t byte) {
+
+static void ice_usb_cdc_to_uart1(uint8_t byte)
+{
     if (uart_is_writable(uart1)) {
         uart_putc(uart1, byte);
     }
 }
-static void ice_usb_uart1_to_cdc(void) {
+
+static void ice_usb_uart1_to_cdc(void)
+{
     while (uart_is_readable(uart1)) {
         uint8_t byte = uart_getc(uart1);
         tud_cdc_n_write_char(ICE_USB_UART1_CDC, byte);
         tud_cdc_n_write_flush(ICE_USB_UART1_CDC);
     }
 }
+
 #endif
 
 #ifdef ICE_USB_SPI_CDC
-static void ice_usb_cdc_to_spi(uint8_t ch) {
+
+static void ice_usb_cdc_to_spi(uint8_t ch)
+{
     static enum { GET_COMMAND, GET_DATA, GET_EXTENDED } state;
     static size_t buf_len, buf_i, pkt;
     static char buf[128];
@@ -248,22 +264,32 @@ static void ice_usb_cdc_to_spi(uint8_t ch) {
         break;
     }
 }
+
 #endif
 
 #ifdef ICE_USB_FPGA_CDC
-void ice_wishbone_serial_tx_cb(uint8_t byte) {
+
+void ice_wishbone_serial_tx_cb(uint8_t byte)
+{
     tud_cdc_n_write_char(ICE_USB_FPGA_CDC, byte);
     tud_cdc_n_write_flush(ICE_USB_FPGA_CDC);
 }
-void ice_wishbone_serial_read_cb(uint32_t addr, uint8_t *buf, size_t size) {
+
+void ice_wishbone_serial_read_cb(uint32_t addr, uint8_t *buf, size_t size)
+{
     ice_fpga_read(addr, buf, size);
 }
-void ice_wishbone_serial_write_cb(uint32_t addr, uint8_t *buf, size_t size) {
+
+void ice_wishbone_serial_write_cb(uint32_t addr, uint8_t *buf, size_t size)
+{
     ice_fpga_write(addr, buf, size);
 }
-void ice_usb_cdc_to_fpga(uint8_t byte) {
+
+void ice_usb_cdc_to_fpga(uint8_t byte)
+{
     ice_wishbone_serial(byte);
 }
+
 #endif
 
 void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t) = {
@@ -282,7 +308,9 @@ void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t) = {
 };
 
 #if ICE_USB_UART0_CDC || ICE_USB_UART1_CDC || ICE_USB_FPGA_CDC || ICE_USB_SPI_CDC
-void tud_cdc_rx_cb(uint8_t cdc_num) {
+
+void tud_cdc_rx_cb(uint8_t cdc_num)
+{
     // existing callback for that CDC number, send it all available data
     assert(cdc_num < sizeof(tud_cdc_rx_cb_table) / sizeof(*tud_cdc_rx_cb_table));
 
@@ -293,101 +321,109 @@ void tud_cdc_rx_cb(uint8_t cdc_num) {
         tud_cdc_rx_cb_table[cdc_num](ch);
     }
 }
+
 #endif
 
 // Invoked right before tud_dfu_download_cb() (state=DFU_DNBUSY) or tud_dfu_manifest_cb() (state=DFU_MANIFEST)
 // Application return timeout in milliseconds (bwPollTimeout) for the next download/manifest operation.
 // During this period, USB host won't try to communicate with us.
-uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state) {
+uint32_t tud_dfu_get_timeout_cb(uint8_t alt, uint8_t state)
+{
     return 0; // Request we are polled in 1ms
+}
+
+static bool dfu_init_done;
+
+void dfu_init(uint8_t alt)
+{
+    switch (alt) {
+    case DFU_ALT_CRAM:
+        ice_cram_open();
+        break;
+    case DFU_ALT_FLASH:
+        ice_flash_init();
+
+        // Ensure reboot in case user doesn't pass -R to dfu-util
+        watchdog_enable(WATCHDOG_DELAY, true /* pause_on_debug */);
+
+        // Soft reset core 1.
+        // TODO: if we get unlucky, core 1 might reset while holding a TinyUSB
+        // lock, in which case DFU download might hang.
+        multicore_reset_core1();
+
+        // Disable all interrupts except USB.
+        irq_set_mask_enabled(~(1 << USBCTRL_IRQ), false);
+        break;
+    }
+
+    // Make sure the RP2040 have full access to the SPI bus
+    ice_fpga_stop();
+    ice_spi_init();
 }
 
 // Invoked when received DFU_DNLOAD (wLength>0) following by DFU_GETSTATUS (state=DFU_DNBUSY) requests
 // This callback could be returned before flashing op is complete (async).
 // Once finished flashing, application must call tud_dfu_finish_flashing()
-void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, uint16_t length) {
-    static bool started = false;
+void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, uint16_t length)
+{
+    uint32_t dest_addr;
 
-    if (!started) {
-        // When this returns, we have reserved use of the serial memory SPI bus.
-        //ice_spi_wait_completion();
+    ice_spi_wait_completion();
 
-        // Disable all interrupts except USB.
-        irq_set_mask_enabled(~(1 << USBCTRL_IRQ), false);
-
-        // Soft reset core 1.
-        // TODO: if we get unlucky, core 1 might reset while holding a TinyUSB lock, in which case DFU download might hang.
-        multicore_reset_core1();
-
-        // Keep running if flashing from SRAM
-        if (alt != DFU_ALT_CRAM) {
-            // Ensure eventual reboot in case user doesn't pass -R to dfu-util
-            watchdog_enable(WATCHDOG_DELAY, true /* pause_on_debug */);
-        }
-
-        // make sure the RP2040 have full access to the bus
-        ice_fpga_stop();
-        ice_spi_init();
-
-        if (alt == DFU_ALT_CRAM) {
-            ice_cram_open();
-        }
-        if (alt == DFU_ALT_FLASH) {
-            ice_flash_init();
-        }
+    if (!dfu_init_done) {
+        dfu_init(alt);
+        dfu_init_done = true;
     }
 
     watchdog_update();
 
-    uint32_t dest_addr = block_num * CFG_TUD_DFU_XFER_BUFSIZE;
-
-    for (uint32_t offset = 0; offset < length; offset += ICE_FLASH_PAGE_SIZE) {
-        if (alt == DFU_ALT_CRAM) {
+    dest_addr = block_num * CFG_TUD_DFU_XFER_BUFSIZE;
+    for (uint32_t i = 0; i < length; i += ICE_FLASH_PAGE_SIZE) {
+        switch (alt) {
+        case DFU_ALT_CRAM:
             ice_cram_write(data, length);
-        }
-        if (alt == DFU_ALT_FLASH) {
-            if ((dest_addr + offset) % ICE_FLASH_SECTOR_SIZE == 0) {
-                ice_flash_erase_sector(dest_addr + offset);
+            break;
+        case DFU_ALT_FLASH:
+            if ((dest_addr + i) % ICE_FLASH_SECTOR_SIZE == 0) {
+                ice_flash_erase_sector(dest_addr + i);
             }
-            ice_flash_program_page(dest_addr + offset, data + offset);
+            ice_flash_program_page(dest_addr + i, data + i);
+            break;
         }
     }
 
     tud_dfu_finish_flashing(DFU_STATUS_OK);
-
-    // Never return to the main loop.
-    if (!started) {
-        started = true;
-        for (;;) {
-            tud_task();
-        }
-    }
 }
 
 // Invoked when download process is complete, received DFU_DNLOAD (wLength=0)
 // following by DFU_GETSTATUS (state=Manifest) Application can do checksum, or
 // actual flashing if buffered entire image previously.
 // Once finished flashing, application must call tud_dfu_finish_flashing()
-void tud_dfu_manifest_cb(uint8_t alt) {
-    bool fpga_done;
+void tud_dfu_manifest_cb(uint8_t alt)
+{
+    bool ok;
 
-    if (alt == DFU_ALT_CRAM) {
-        fpga_done = ice_cram_close();
-    }
-    if (alt == DFU_ALT_FLASH) {
-        fpga_done = ice_fpga_start();
+    switch (alt) {
+    case DFU_ALT_CRAM:
+        ice_cram_close();
     }
 
-    tud_dfu_finish_flashing(fpga_done ? DFU_STATUS_OK : DFU_STATUS_ERR_FIRMWARE);
+    ok = ice_fpga_start();
+    tud_dfu_finish_flashing(ok ? DFU_STATUS_OK : DFU_STATUS_ERR_FIRMWARE);
+
+    // Next init is not done yet
+    dfu_init_done = false;
 }
 
 // Called if -R option passed to dfu-util.
-void tud_dfu_detach_cb(void) {
+void tud_dfu_detach_cb(void)
+{
     watchdog_reboot(0, 0, 0);
 }
 
 // Init everything as declared in <tusb_config.h>
-void ice_usb_init(void) {
+void ice_usb_init(void)
+{
     tusb_init();
 
     // This is a blocking call, but expected to be done once at initialization

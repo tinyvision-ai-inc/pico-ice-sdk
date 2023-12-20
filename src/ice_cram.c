@@ -33,7 +33,8 @@ static int sm;
 static uint offset;
 static const int clk_div = 1;  // 1Mbit/sec for debugging, could be much faster
 
-static bool try_add_program(PIO try_pio) {
+static bool try_add_program(PIO try_pio)
+{
     if (!pio_can_add_program(try_pio, &ice_cram_program)) {
         return false;
     }
@@ -49,11 +50,12 @@ static bool try_add_program(PIO try_pio) {
     return true;
 }
 
-static void state_machine_init() {
+static void state_machine_init(void)
+{
     // Try to fit the program into either PIO bank
     if (!try_add_program(pio1)) {
         if (!try_add_program(pio0)) {
-            panic("Could not add FPGA configuration PIO program");
+                panic("Could not add FPGA configuration PIO program");
         }
     }
 
@@ -73,7 +75,8 @@ static void state_machine_init() {
     pio_gpio_init(pio, ICE_SPI_SCK_PIN);
 }
 
-static void state_machine_deinit() {
+static void state_machine_deinit(void)
+{
     pio_sm_set_enabled(pio, sm, false);
     pio_sm_set_consecutive_pindirs(pio, sm, ICE_SPI_RX_PIN, 1, false);
     pio_sm_set_consecutive_pindirs(pio, sm, ICE_SPI_SCK_PIN, 1, false);
@@ -87,7 +90,8 @@ static void put_byte(uint8_t data) {
     pio_sm_put_blocking(pio, sm, data << 24);
 }
 
-static void wait_idle() {
+static void wait_idle(void)
+{
     // Wait until the last byte has been pulled from the FIFO.
     while (!pio_sm_is_tx_fifo_empty(pio, sm)) {
         tight_loop_contents();
@@ -103,7 +107,8 @@ static void wait_idle() {
     }
 }
 
-void ice_cram_open(void) {
+void ice_cram_open(void)
+{
     // Hold FPGA in reset before doing anything with SPI bus.
     gpio_put(ICE_FPGA_CRESET_B_PIN, false);
 
@@ -128,13 +133,15 @@ void ice_cram_open(void) {
     gpio_put(ICE_CRAM_CSN_PIN, false);
 }
 
-bool ice_cram_write(const uint8_t* bitstream, uint32_t size) {
+bool ice_cram_write(const uint8_t* bitstream, uint32_t size)
+{
     for (uint32_t i = 0; i < size; ++i) {
         put_byte(bitstream[i]);
     }
 }
 
-bool ice_cram_close(void) {
+bool ice_cram_close(void)
+{
     wait_idle();
 
     // Bring SPI_SS high at end of bitstream and leave it pulled up.
