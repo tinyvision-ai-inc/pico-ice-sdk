@@ -22,8 +22,19 @@
  * SOFTWARE.
  */
 
-#pragma once
+/**
+ * @defgroup ice_fpga
+ * @brief FPGA I/O and control
+ * @{
+ *
+ * Depending on the RTL loaded onto the FPGA, it can use its internal RC
+ * oscillator or a more accurate clock signal provided by the RP2040. This
+ * library allows to configure this signal, control the FPGA startup, and
+ * communicate over SPI to the same pins used for SRAM or FLASH access.
+ * An LED pin is used for communicating with the FPGA.
+ */
 
+#pragma once
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -31,10 +42,32 @@
 extern "C" {
 #endif
 
+/**
+ * @brief Let the FPGA start and export a clock for it over `ICE_FPGA_CLOCK_PIN`.
+ * @param freq_mhz Exported clock frequency in MHz. Valid values: 48MHz, 24MHz,
+ *  16MHz 12MHz, 8MHz, 6MHz, 4MHz, 3MHz, 2MHz, 1MHz.
+ *
+ * The RP2040 exports its own crystal-based clock to the iCE40, through the
+ * dedicated [`CLOCK GPOUT0`](https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf)
+ * feature.
+ */
 void ice_fpga_init(uint8_t freq_mhz);
+
+/**
+ * @brief Release the stop mode if it was present, and wait that the FPGA
+ *  confirms its startup with ICE_FPGA_CDONE_PIN.
+ * @return true on success and false if it timeouts.
+ */
 bool ice_fpga_start(void);
+
+/**
+ * @brief Set the ICE_FPGA_CRESET_B_PIN to LOW which keeps the FPGA in reset
+ *  mode.
+ */
 void ice_fpga_stop(void);
 
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */

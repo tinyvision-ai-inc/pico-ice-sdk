@@ -22,8 +22,13 @@
  * SOFTWARE.
  */
 
-#pragma once
+/**
+ * @defgroup ice_cram
+ * @brief FPGA CRAM access
+ * @{
+ */
 
+#pragma once
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -32,10 +37,31 @@
 extern "C" {
 #endif
 
+/**
+ * @brief Reset the iCE40 and set it to CRAM configuration mode and prepare the
+ *  incoming SPI transfer.
+ */
 void ice_cram_open(void);
+
+/**
+ * @brief Send the bitstream to the iCE40 CRAM, which configures the FPGA
+ *  circuitry.
+ *
+ * @param buf pointer to bitstream data to flush to the iCE40
+ * @param len size of that buffer
+ */
 void ice_cram_write(const uint8_t *buf, size_t len);
+
+/**
+ * @brief Terminate the SPI transaction and prepare the FPGA to start,
+ *  waiting until it finishes booting.
+ * 
+ * @return true if the FPGA configuration succeeded or `false` if it timed out.
+ */
 bool ice_cram_close(void);
 
 #ifdef __cplusplus
 }
 #endif
+
+./** @} */

@@ -4,3 +4,5 @@ This example makes use of the [apio](https://apiodoc.readthedocs.io/) command li
 
 Build with `apio build` and deploy with `apio upload`.
 See the [doc](https://pico-ice.tinyvision.ai/using_apio.html) for more.
+
+@example top.v

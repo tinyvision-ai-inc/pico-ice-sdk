@@ -4,3 +4,6 @@
 [submodule "lib/tinyuf2"]
 	path = lib/tinyuf2
 	url = https://github.com/adafruit/tinyuf2
+[submodule "doc/doxygen-awesome-css"]
+	path = doc/doxygen-awesome-css
+	url = https://github.com/jothepro/doxygen-awesome-css.git
