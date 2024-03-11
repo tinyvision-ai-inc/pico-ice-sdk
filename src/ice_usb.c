@@ -343,6 +343,9 @@ void dfu_init(uint8_t alt)
         ice_cram_open();
         break;
     case DFU_ALT_FLASH:
+        // Make sure the RP2040 have full access to the SPI bus
+        ice_fpga_stop();
+
         ice_flash_init();
 
         // Ensure reboot in case user doesn't pass -R to dfu-util
@@ -353,11 +356,8 @@ void dfu_init(uint8_t alt)
         // lock, in which case DFU download might hang.
         multicore_reset_core1();
 
-        // Disable all interrupts except USB.
-        irq_set_mask_enabled(~(1 << USBCTRL_IRQ), false);
-
-        // Make sure the RP2040 have full access to the SPI bus
-        ice_fpga_stop();
+        // Disable all interrupts except USB and DMA (needed for flash program)
+        irq_set_mask_enabled(~((1 << USBCTRL_IRQ) | (1 << DMA_IRQ_1)), false);
         break;
     }
 }
