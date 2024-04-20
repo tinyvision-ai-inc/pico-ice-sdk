@@ -29,6 +29,7 @@
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
 #include "hardware/watchdog.h"
+#include "pico/bootrom.h"
 #include "pico/multicore.h"
 #include "pico/stdlib.h"
 
@@ -306,6 +307,31 @@ void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t) = {
     [ICE_USB_SPI_CDC] = &ice_usb_cdc_to_spi,
 #endif
 };
+
+void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *coding)
+{
+    printf("%s: coding=%p baud=%d\n", __func__, coding, coding->bit_rate);
+
+    /* Mimick the Arduino reboot signal:
+     * https://arduino.github.io/arduino-cli/dev/platform-specification/#1200-bps-bootloader-reset */
+    if (coding->bit_rate == 1200) {
+        reset_usb_boot(0, 0);
+        assert(!"not reached");
+    }
+
+    switch (itf) {
+#ifdef ICE_USB_UART0_CDC
+    case ICE_USB_UART0_CDC:
+        uart_set_baudrate(uart0, coding->bit_rate);
+        break;
+#endif
+#ifdef ICE_USB_UART1_CDC
+    case ICE_USB_UART1_CDC:
+        uart_set_baudrate(uart1, coding->bit_rate);
+        break;
+#endif
+    }
+}
 
 #if ICE_USB_UART0_CDC || ICE_USB_UART1_CDC || ICE_USB_FPGA_CDC || ICE_USB_SPI_CDC
 
