@@ -185,11 +185,21 @@ static void ice_usb_cdc_to_uart1(uint8_t byte)
     }
 }
 
+char uart1_rx_buf[CFG_TUD_CDC_TX_BUFSIZE];
+int uart1_rx_index_r;
+long long uart1_rx_read_total;
+int uart1_rx_index_w;
+long long uart1_rx_written_total;
+
 static void ice_usb_uart1_to_cdc(void)
 {
     while (uart_is_readable(uart1)) {
         uint8_t byte = uart_getc(uart1);
-        tud_cdc_n_write_char(ICE_USB_UART1_CDC, byte);
+
+        uart1_rx_buf[uart1_rx_index_w++] = byte;
+        while (uart1_rx_index_w == CFG_TUD_CDC_TX_BUFSIZE)
+            uart1_rx_index_w -= CFG_TUD_CDC_TX_BUFSIZE;
+        uart1_rx_written_total++;
     }
 }
 
@@ -498,6 +508,18 @@ void ice_usb_task() {
 #endif
 
 #ifdef ICE_USB_UART1_CDC
+    uart1_rx_read_total = MAX(uart1_rx_read_total, uart1_rx_written_total - CFG_TUD_CDC_TX_BUFSIZE);
+
+    while (uart1_rx_read_total < uart1_rx_written_total) {
+        char byte = uart1_rx_buf[uart1_rx_index_r++];
+        while (uart1_rx_index_r == CFG_TUD_CDC_TX_BUFSIZE)
+            uart1_rx_index_r -= CFG_TUD_CDC_TX_BUFSIZE;
+        uart1_rx_read_total++;
+
+        if (tud_cdc_n_write_available(ICE_USB_UART1_CDC) > 0)
+            tud_cdc_n_write_char(ICE_USB_UART1_CDC, byte);
+    }
+
     tud_cdc_n_write_flush(ICE_USB_UART1_CDC);
 #endif
 }
