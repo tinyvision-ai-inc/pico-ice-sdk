@@ -197,6 +197,7 @@ extern void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t);
 
 void ice_usb_init(void);
 void ice_usb_sleep_ms(uint32_t ms);
+void ice_usb_task();
 
 #ifdef __cplusplus
 }

@@ -97,7 +97,7 @@ char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
 void ice_usb_sleep_ms(uint32_t ms)
 {
     while (ms-- > 0) {
-        tud_task();
+        ice_usb_task();
         sleep_ms(1);
     }
 }
@@ -171,7 +171,6 @@ static void ice_usb_uart0_to_cdc(void)
     while (uart_is_readable(uart0)) {
         uint8_t byte = uart_getc(uart0);
         tud_cdc_n_write_char(ICE_USB_UART0_CDC, byte);
-        tud_cdc_n_write_flush(ICE_USB_UART0_CDC);
     }
 }
 
@@ -191,7 +190,6 @@ static void ice_usb_uart1_to_cdc(void)
     while (uart_is_readable(uart1)) {
         uint8_t byte = uart_getc(uart1);
         tud_cdc_n_write_char(ICE_USB_UART1_CDC, byte);
-        tud_cdc_n_write_flush(ICE_USB_UART1_CDC);
     }
 }
 
@@ -487,5 +485,19 @@ void ice_usb_init(void)
 #ifdef ICE_USB_USE_TINYUF2_MSC
     board_init();
     uf2_init();
+#endif
+}
+
+// Task function should be called in main/rtos loop
+// this additionally flushes uart buffers
+void ice_usb_task() {
+    tud_task();
+
+#ifdef ICE_USB_UART0_CDC
+    tud_cdc_n_write_flush(ICE_USB_UART0_CDC);
+#endif
+
+#ifdef ICE_USB_UART1_CDC
+    tud_cdc_n_write_flush(ICE_USB_UART1_CDC);
 #endif
 }
