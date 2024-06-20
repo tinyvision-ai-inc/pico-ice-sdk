@@ -1,2 +1,4 @@
-set_io --warn-no-port led_green 39
-set_io --warn-no-port clk 35
+set_io -nowarn LED_G            39 # active-low
+set_io -nowarn LED_B            40 # active-low
+set_io -nowarn LED_R            41 # active-low
+set_io -nowarn CLK              35
