@@ -32,6 +32,8 @@ int main(void) {
     // but LEDs work fine nonetheless.
     ice_led_init();
 
+    // Note that the FPGA clock will not start until calling ice_fpga_init()
+
     for (bool red = false;; red = !red) {
         ice_led_red(red);
         sleep_ms(500);
