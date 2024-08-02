@@ -1,4 +1,4 @@
 set_io --warn-no-port led_blue 40
-set_io --warn-no-port led_green 30
+set_io --warn-no-port led_green 39
 set_io --warn-no-port led_red 41
 set_io --warn-no-port clk 35
