@@ -51,6 +51,9 @@
 // tinyuf2
 #include "board_api.h"
 
+// ring buffer
+#include "rb.h"
+
 #ifdef ICE_USB_UART_CDC
 #error ICE_USB_UART_CDC is now ICE_USB_UARTx_CDC with 'x' the UART number
 #endif
@@ -166,11 +169,15 @@ static void ice_usb_cdc_to_uart0(uint8_t byte)
     }
 }
 
+struct rb uart0_buf_rx = { 0 };
+
+// interrupt handler
 static void ice_usb_uart0_to_cdc(void)
 {
     while (uart_is_readable(uart0)) {
         uint8_t byte = uart_getc(uart0);
-        tud_cdc_n_write_char(ICE_USB_UART0_CDC, byte);
+        *rb_write_ptr(&uart0_buf_rx) = byte;
+        rb_write_ack(&uart0_buf_rx, 1);
     }
 }
 
@@ -185,21 +192,15 @@ static void ice_usb_cdc_to_uart1(uint8_t byte)
     }
 }
 
-char uart1_rx_buf[CFG_TUD_CDC_TX_BUFSIZE];
-int uart1_rx_index_r;
-long long uart1_rx_read_total;
-int uart1_rx_index_w;
-long long uart1_rx_written_total;
+struct rb uart1_buf_rx = { 0 };
 
+// interrupt handler
 static void ice_usb_uart1_to_cdc(void)
 {
     while (uart_is_readable(uart1)) {
         uint8_t byte = uart_getc(uart1);
-
-        uart1_rx_buf[uart1_rx_index_w++] = byte;
-        while (uart1_rx_index_w == CFG_TUD_CDC_TX_BUFSIZE)
-            uart1_rx_index_w -= CFG_TUD_CDC_TX_BUFSIZE;
-        uart1_rx_written_total++;
+        *rb_write_ptr(&uart1_buf_rx) = byte;
+        rb_write_ack(&uart1_buf_rx, 1);
     }
 }
 
@@ -300,6 +301,25 @@ void ice_usb_cdc_to_fpga(uint8_t byte)
 }
 
 #endif
+
+static void ice_usb_rb_to_cdc(struct rb* rb, int itf) {
+    while(1) {
+        // this can be executed 2 times if the data is wrapped
+        unsigned int bufsize = rb_data_left_continuous(rb);
+        if (bufsize == 0)
+            break; // no data in buffer
+
+        // returns how much data was actually written
+        bufsize = tud_cdc_n_write(itf, rb_read_ptr(rb), bufsize);
+        if (bufsize == 0)
+            break; // cdc buffer full
+
+        // ack data that was sent to cdc
+        rb_read_ack(rb, bufsize);
+    }
+
+    tud_cdc_n_write_flush(itf);
+}
 
 void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t) = {
 #ifdef ICE_USB_UART0_CDC
@@ -504,22 +524,10 @@ void ice_usb_task() {
     tud_task();
 
 #ifdef ICE_USB_UART0_CDC
-    tud_cdc_n_write_flush(ICE_USB_UART0_CDC);
+    ice_usb_rb_to_cdc(&uart0_buf_rx, ICE_USB_UART0_CDC);
 #endif
 
 #ifdef ICE_USB_UART1_CDC
-    uart1_rx_read_total = MAX(uart1_rx_read_total, uart1_rx_written_total - CFG_TUD_CDC_TX_BUFSIZE);
-
-    while (uart1_rx_read_total < uart1_rx_written_total) {
-        char byte = uart1_rx_buf[uart1_rx_index_r++];
-        while (uart1_rx_index_r == CFG_TUD_CDC_TX_BUFSIZE)
-            uart1_rx_index_r -= CFG_TUD_CDC_TX_BUFSIZE;
-        uart1_rx_read_total++;
-
-        if (tud_cdc_n_write_available(ICE_USB_UART1_CDC) > 0)
-            tud_cdc_n_write_char(ICE_USB_UART1_CDC, byte);
-    }
-
-    tud_cdc_n_write_flush(ICE_USB_UART1_CDC);
+    ice_usb_rb_to_cdc(&uart1_buf_rx, ICE_USB_UART1_CDC);
 #endif
 }
