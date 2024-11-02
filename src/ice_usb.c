@@ -162,15 +162,8 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid)
 
 #ifdef ICE_USB_UART0_CDC
 
-static void ice_usb_cdc_to_uart0(uint8_t byte)
-{
-    if (uart_is_writable(uart0)) {
-        uart_putc(uart0, byte);
-    }
-    else printf("x"); // TODO this happens a lot during fast transfers
-}
-
 struct rb uart0_buf_rx = { 0 };
+struct rb uart0_buf_tx = { 0 };
 
 static void ice_usb_uart0_irq_rx(void)
 {
@@ -185,14 +178,8 @@ static void ice_usb_uart0_irq_rx(void)
 
 #ifdef ICE_USB_UART1_CDC
 
-static void ice_usb_cdc_to_uart1(uint8_t byte)
-{
-    if (uart_is_writable(uart1)) {
-        uart_putc(uart1, byte);
-    }
-}
-
 struct rb uart1_buf_rx = { 0 };
+struct rb uart1_buf_tx = { 0 };
 
 // interrupt handler
 static void ice_usb_uart1_irq_rx(void)
@@ -327,13 +314,50 @@ static void ice_usb_rb_to_cdc(struct rb* rb, int itf) {
     tud_cdc_n_write_flush(itf);
 }
 
+// Tx functions
+// cdc -> rb
+//  rb -> uart
+
+static void ice_usb_cdc_to_rb(struct rb* rb, int itf) {
+    while(1) {
+        unsigned int bufsize = rb_space_left_continuous(rb);
+        if (bufsize == 0)
+            break; // no buffer space left
+
+        bufsize = tud_cdc_n_read(itf, rb_write_ptr(rb), bufsize);
+        if (bufsize == 0)
+            break; // cdc buffer empty
+
+        rb_write_ack(rb, bufsize);
+    }
+}
+
+static void ice_usb_rb_to_uart(struct rb* rb, uart_inst_t *uart) {
+    while (1) {
+        unsigned int bufsize = rb_data_left_continuous(rb);
+        if (bufsize == 0)
+            break; // no data in buffer
+
+        char* buf = rb_read_ptr(rb);
+        int wr;
+        for (wr=0; wr<bufsize; wr++) {
+            while (!uart_is_writable(uart));
+            uart_putc(uart, *buf++);
+        }
+
+        rb_read_ack(rb, wr);
+    }
+}
+
 void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t) = {
+/*
 #ifdef ICE_USB_UART0_CDC
     [ICE_USB_UART0_CDC] = &ice_usb_cdc_to_uart0,
 #endif
 #ifdef ICE_USB_UART1_CDC
     [ICE_USB_UART1_CDC] = &ice_usb_cdc_to_uart1,
 #endif
+*/
 #ifdef ICE_USB_FPGA_CDC
     [ICE_USB_FPGA_CDC] = &ice_usb_cdc_to_fpga,
 #endif
@@ -371,6 +395,20 @@ void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *coding)
 
 void tud_cdc_rx_cb(uint8_t cdc_num)
 {
+    // special handling for uart
+#ifdef ICE_USB_UART0_CDC
+    if (cdc_num == ICE_USB_UART0_CDC) {
+        ice_usb_cdc_to_rb(&uart0_buf_tx, ICE_USB_UART0_CDC);
+        return;
+    }
+#endif
+#ifdef ICE_USB_UART1_CDC
+    if (cdc_num == ICE_USB_UART1_CDC) {
+        ice_usb_cdc_to_rb(&uart1_buf_tx, ICE_USB_UART1_CDC);
+        return;
+    }
+#endif
+
     // existing callback for that CDC number, send it all available data
     assert(cdc_num < sizeof(tud_cdc_rx_cb_table) / sizeof(*tud_cdc_rx_cb_table));
 
@@ -524,16 +562,37 @@ void ice_usb_init(void)
 #endif
 }
 
+absolute_time_t last;
+
 // Task function should be called in main/rtos loop
 // this additionally flushes uart buffers
 void ice_usb_task() {
     tud_task();
 
+    if (absolute_time_diff_us(last, get_absolute_time())/1000 > 100) {
+        int rx0data = rb_data_left(&uart0_buf_rx)*100 / RB_BUFSIZE;
+        int tx0data = rb_data_left(&uart0_buf_tx)*100 / RB_BUFSIZE;
+        if (rx0data > 0 || tx0data > 0)
+            printf("buf u0 rx %4d%% tx %4d%%\n", rx0data, tx0data);
+
+        last = get_absolute_time();
+    }
+
 #ifdef ICE_USB_UART0_CDC
     ice_usb_rb_to_cdc(&uart0_buf_rx, ICE_USB_UART0_CDC);
+    ice_usb_rb_to_uart(&uart0_buf_tx, uart0);
 #endif
 
 #ifdef ICE_USB_UART1_CDC
     ice_usb_rb_to_cdc(&uart1_buf_rx, ICE_USB_UART1_CDC);
+    ice_usb_rb_to_uart(&uart1_buf_tx, uart1);
 #endif
+
+    // TODO rx buffer heavily overflows, like 2000% usage, dma usage
+    // TODO first cdc transfer after boot fails, hmm
+
+    // UART
+    // TODO define one struct with links to hw, cdc num, irq function, etc. and every function gets its pointer
+    // TODO cut out uart to another file
+    // TODO use dma
 }
