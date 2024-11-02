@@ -167,12 +167,12 @@ static void ice_usb_cdc_to_uart0(uint8_t byte)
     if (uart_is_writable(uart0)) {
         uart_putc(uart0, byte);
     }
+    else printf("x"); // TODO this happens a lot during fast transfers
 }
 
 struct rb uart0_buf_rx = { 0 };
 
-// interrupt handler
-static void ice_usb_uart0_to_cdc(void)
+static void ice_usb_uart0_irq_rx(void)
 {
     while (uart_is_readable(uart0)) {
         uint8_t byte = uart_getc(uart0);
@@ -195,7 +195,7 @@ static void ice_usb_cdc_to_uart1(uint8_t byte)
 struct rb uart1_buf_rx = { 0 };
 
 // interrupt handler
-static void ice_usb_uart1_to_cdc(void)
+static void ice_usb_uart1_irq_rx(void)
 {
     while (uart_is_readable(uart1)) {
         uint8_t byte = uart_getc(uart1);
@@ -302,15 +302,21 @@ void ice_usb_cdc_to_fpga(uint8_t byte)
 
 #endif
 
+// Rx functions
+// uart -> rb (irq above)
+//   rb -> cdc
+
 static void ice_usb_rb_to_cdc(struct rb* rb, int itf) {
     while(1) {
         // this can be executed 2 times if the data is wrapped
         unsigned int bufsize = rb_data_left_continuous(rb);
+
         if (bufsize == 0)
             break; // no data in buffer
 
         // returns how much data was actually written
         bufsize = tud_cdc_n_write(itf, rb_read_ptr(rb), bufsize);
+
         if (bufsize == 0)
             break; // cdc buffer full
 
@@ -494,13 +500,13 @@ void ice_usb_init(void)
     }
 
 #ifdef ICE_USB_UART0_CDC
-    irq_set_exclusive_handler(UART0_IRQ, ice_usb_uart0_to_cdc);
+    irq_set_exclusive_handler(UART0_IRQ, ice_usb_uart0_irq_rx);
     irq_set_enabled(UART0_IRQ, true);
     uart_set_irq_enables(uart0, true, false);
 #endif
 
 #ifdef ICE_USB_UART1_CDC
-    irq_set_exclusive_handler(UART1_IRQ, ice_usb_uart1_to_cdc);
+    irq_set_exclusive_handler(UART1_IRQ, ice_usb_uart1_irq_rx);
     irq_set_enabled(UART1_IRQ, true);
     uart_set_irq_enables(uart1, true, false);
 #endif
