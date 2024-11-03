@@ -51,9 +51,6 @@
 // tinyuf2
 #include "board_api.h"
 
-// ring buffer
-#include "rb.h"
-
 #ifdef ICE_USB_UART_CDC
 #error ICE_USB_UART_CDC is now ICE_USB_UARTx_CDC with 'x' the UART number
 #endif
@@ -75,6 +72,9 @@
 #define DFU_ALT_FLASH 0
 #define DFU_ALT_CRAM 1
 
+// uart functions
+#include "ice_usb_uart.h"
+
 // Provide a default config where some fields come be customized in <tusb_config.h>
 const tusb_desc_device_t tud_desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
@@ -95,15 +95,6 @@ const tusb_desc_device_t tud_desc_device = {
 
 // Also used in usb_descriptors.c.
 char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
-
-// Sleeping without calling tud_task() hangs the USB stack in the meantime.
-void ice_usb_sleep_ms(uint32_t ms)
-{
-    while (ms-- > 0) {
-        ice_usb_task();
-        sleep_ms(1);
-    }
-}
 
 // Invoked when received GET DEVICE DESCRIPTOR
 // Application return pointer to descriptor
@@ -160,51 +151,20 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid)
     return utf16;
 }
 
-#ifdef ICE_USB_UART0_CDC
-
-static void ice_usb_cdc_to_uart0(uint8_t byte)
+void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *coding)
 {
-    if (uart_is_writable(uart0)) {
-        uart_putc(uart0, byte);
+    // printf("%s: coding=%p baud=%lu\n", __func__, coding, coding->bit_rate);
+
+    /* Mimick the Arduino reboot signal:
+     * https://arduino.github.io/arduino-cli/dev/platform-specification/#1200-bps-bootloader-reset */
+    if (coding->bit_rate == 1200) {
+        reset_usb_boot(0, 0);
+        assert(!"not reached");
     }
+
+    ice_usb_uart_cb_baud(itf, coding->bit_rate);
+    // ignore if handled or not
 }
-
-struct rb uart0_buf_rx = { 0 };
-
-// interrupt handler
-static void ice_usb_uart0_to_cdc(void)
-{
-    while (uart_is_readable(uart0)) {
-        uint8_t byte = uart_getc(uart0);
-        *rb_write_ptr(&uart0_buf_rx) = byte;
-        rb_write_ack(&uart0_buf_rx, 1);
-    }
-}
-
-#endif
-
-#ifdef ICE_USB_UART1_CDC
-
-static void ice_usb_cdc_to_uart1(uint8_t byte)
-{
-    if (uart_is_writable(uart1)) {
-        uart_putc(uart1, byte);
-    }
-}
-
-struct rb uart1_buf_rx = { 0 };
-
-// interrupt handler
-static void ice_usb_uart1_to_cdc(void)
-{
-    while (uart_is_readable(uart1)) {
-        uint8_t byte = uart_getc(uart1);
-        *rb_write_ptr(&uart1_buf_rx) = byte;
-        rb_write_ack(&uart1_buf_rx, 1);
-    }
-}
-
-#endif
 
 #ifdef ICE_USB_SPI_CDC
 
@@ -302,32 +262,7 @@ void ice_usb_cdc_to_fpga(uint8_t byte)
 
 #endif
 
-static void ice_usb_rb_to_cdc(struct rb* rb, int itf) {
-    while(1) {
-        // this can be executed 2 times if the data is wrapped
-        unsigned int bufsize = rb_data_left_continuous(rb);
-        if (bufsize == 0)
-            break; // no data in buffer
-
-        // returns how much data was actually written
-        bufsize = tud_cdc_n_write(itf, rb_read_ptr(rb), bufsize);
-        if (bufsize == 0)
-            break; // cdc buffer full
-
-        // ack data that was sent to cdc
-        rb_read_ack(rb, bufsize);
-    }
-
-    tud_cdc_n_write_flush(itf);
-}
-
 void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t) = {
-#ifdef ICE_USB_UART0_CDC
-    [ICE_USB_UART0_CDC] = &ice_usb_cdc_to_uart0,
-#endif
-#ifdef ICE_USB_UART1_CDC
-    [ICE_USB_UART1_CDC] = &ice_usb_cdc_to_uart1,
-#endif
 #ifdef ICE_USB_FPGA_CDC
     [ICE_USB_FPGA_CDC] = &ice_usb_cdc_to_fpga,
 #endif
@@ -336,43 +271,23 @@ void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t) = {
 #endif
 };
 
-void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *coding)
-{
-    printf("%s: coding=%p baud=%d\n", __func__, coding, coding->bit_rate);
-
-    /* Mimick the Arduino reboot signal:
-     * https://arduino.github.io/arduino-cli/dev/platform-specification/#1200-bps-bootloader-reset */
-    if (coding->bit_rate == 1200) {
-        reset_usb_boot(0, 0);
-        assert(!"not reached");
-    }
-
-    switch (itf) {
-#ifdef ICE_USB_UART0_CDC
-    case ICE_USB_UART0_CDC:
-        uart_set_baudrate(uart0, coding->bit_rate);
-        break;
-#endif
-#ifdef ICE_USB_UART1_CDC
-    case ICE_USB_UART1_CDC:
-        uart_set_baudrate(uart1, coding->bit_rate);
-        break;
-#endif
-    }
-}
-
 #if ICE_USB_UART0_CDC || ICE_USB_UART1_CDC || ICE_USB_FPGA_CDC || ICE_USB_SPI_CDC
 
-void tud_cdc_rx_cb(uint8_t cdc_num)
+void tud_cdc_rx_cb(uint8_t itf)
 {
-    // existing callback for that CDC number, send it all available data
-    assert(cdc_num < sizeof(tud_cdc_rx_cb_table) / sizeof(*tud_cdc_rx_cb_table));
+    // special handling for uart
+    int handled = ice_usb_uart_cb_rx(itf);
+    if (handled)
+        return;
 
-    if (tud_cdc_rx_cb_table[cdc_num] == NULL) {
+    // existing callback for that CDC number, send it all available data
+    assert(itf < sizeof(tud_cdc_rx_cb_table) / sizeof(*tud_cdc_rx_cb_table));
+
+    if (tud_cdc_rx_cb_table[itf] == NULL) {
         return;
     }
-    for (int32_t ch; (ch = tud_cdc_n_read_char(cdc_num)) >= 0;) {
-        tud_cdc_rx_cb_table[cdc_num](ch);
+    for (int32_t ch; (ch = tud_cdc_n_read_char(itf)) >= 0;) {
+        tud_cdc_rx_cb_table[itf](ch);
     }
 }
 
@@ -493,17 +408,7 @@ void ice_usb_init(void)
         tud_task();
     }
 
-#ifdef ICE_USB_UART0_CDC
-    irq_set_exclusive_handler(UART0_IRQ, ice_usb_uart0_to_cdc);
-    irq_set_enabled(UART0_IRQ, true);
-    uart_set_irq_enables(uart0, true, false);
-#endif
-
-#ifdef ICE_USB_UART1_CDC
-    irq_set_exclusive_handler(UART1_IRQ, ice_usb_uart1_to_cdc);
-    irq_set_enabled(UART1_IRQ, true);
-    uart_set_irq_enables(uart1, true, false);
-#endif
+    ice_usb_uart_init();
 
 #ifdef ICE_USB_SPI_CDC
     ice_spi_init_cs_pin(ICE_SRAM_CS_PIN, true);
@@ -518,16 +423,7 @@ void ice_usb_init(void)
 #endif
 }
 
-// Task function should be called in main/rtos loop
-// this additionally flushes uart buffers
 void ice_usb_task() {
     tud_task();
-
-#ifdef ICE_USB_UART0_CDC
-    ice_usb_rb_to_cdc(&uart0_buf_rx, ICE_USB_UART0_CDC);
-#endif
-
-#ifdef ICE_USB_UART1_CDC
-    ice_usb_rb_to_cdc(&uart1_buf_rx, ICE_USB_UART1_CDC);
-#endif
+    ice_usb_uart_task();
 }
