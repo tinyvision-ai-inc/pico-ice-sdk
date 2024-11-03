@@ -31,7 +31,7 @@ struct uart_wrap {
 // uart -> rb (irq)
 //   rb -> cdc
 
-#define DMA_TCNT        128
+#define DMA_TCNT        512
 #define DMA_ALARM_US    (100*1000) // 100 ms
 
 static void ice_usb_uart_rx_dma_irq0(struct uart_wrap* uart, int channel) {
@@ -106,7 +106,7 @@ static void ice_usb_uart_dma_flush_alarm(struct uart_wrap* uart) {
         dma_channel_set_trans_count(ch_busy, DMA_TCNT, true);
 
         uart->dma_last_transfer = get_absolute_time();
-        printf("elapsed %dms ack %d\n", elapsed_us/1000, tr_done);
+        // printf("elapsed %dms ack %d\n", elapsed_us/1000, tr_done);
     }
     // else printf("No\n");
 
@@ -164,11 +164,13 @@ static void ice_usb_uart_rx_to_cdc(struct uart_wrap* uart) {
         if (bufsize == 0)
             break; // cdc buffer full
 
+        printf("%lu %4d\n", time_us_32(), bufsize);
+
         // ack data that was sent to cdc
         rb_read_ack(&uart->rx_buf, bufsize);
+        // flush
+        tud_cdc_n_write_flush(uart->itf);
     }
-
-    tud_cdc_n_write_flush(uart->itf);
 }
 
 
