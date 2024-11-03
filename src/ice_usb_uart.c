@@ -8,13 +8,11 @@
 #include "hardware/uart.h"
 #include "hardware/irq.h"
 #include "hardware/dma.h"
+#include "hardware/timer.h"
 
 struct uart_wrap {
     int itf;            // CDC interface number
     uart_inst_t* inst;  // pico sdk instance reference
-
-    int irq_num;
-    void (*irq_handler)();
 
     struct rb rx_buf;
     struct rb tx_buf;
@@ -23,6 +21,9 @@ struct uart_wrap {
 
     int dma_chA;
     int dma_chB;
+    int dma_flush_alarm;
+    absolute_time_t dma_last_transfer;
+    void (*dma_flush_alarm_cb)();
 };
 
 
@@ -30,27 +31,95 @@ struct uart_wrap {
 // uart -> rb (irq)
 //   rb -> cdc
 
-#define DMA_T_LEN  16
+#define DMA_TCNT        128
+#define DMA_ALARM_US    (100*1000) // 100 ms
 
-enum dma_chan {
-    DMA_CHAN_A,
-    DMA_CHAN_B,
-};
-
-static void ice_usb_uart_rx_dma_irq0(struct uart_wrap* uart, enum dma_chan ch) {
-    rb_write_ack(&uart->rx_buf, DMA_T_LEN);
+static void ice_usb_uart_rx_dma_irq0(struct uart_wrap* uart, int channel) {
+    rb_write_ack(&uart->rx_buf, DMA_TCNT);
 
     // complementary channel will write to write_ptr
     // need to skip another ack
-    char* waddr = rb_write_ptr_next_ack(&uart->rx_buf, DMA_T_LEN);
-
-    int channel = (ch == DMA_CHAN_A ? uart->dma_chA : uart->dma_chB);
+    char* waddr = rb_write_ptr_next_ack(&uart->rx_buf, DMA_TCNT);
     dma_channel_set_write_addr(channel, waddr, false);
+
+    uart->dma_last_transfer = get_absolute_time();
+}
+
+static void ice_usb_uart_dma_channels_enable(struct uart_wrap* uart, int en) {
+    if (en) {
+        dma_channel_hw_addr(uart->dma_chA)->al1_ctrl |= DMA_CH0_CTRL_TRIG_EN_BITS;
+        dma_channel_hw_addr(uart->dma_chB)->al1_ctrl |= DMA_CH0_CTRL_TRIG_EN_BITS;
+    }
+    else {
+        dma_channel_hw_addr(uart->dma_chA)->al1_ctrl &= ~DMA_CH0_CTRL_TRIG_EN_BITS;
+        dma_channel_hw_addr(uart->dma_chB)->al1_ctrl &= ~DMA_CH0_CTRL_TRIG_EN_BITS;
+    }
+}
+
+static void ice_usb_uart_dma_flush_alarm(struct uart_wrap* uart) {
+    uint elapsed_us = absolute_time_diff_us(uart->dma_last_transfer, get_absolute_time());
+
+    if (elapsed_us >= (DMA_ALARM_US*9/10)) {
+        // pause channels, capture state as atomically as possible
+        ice_usb_uart_dma_channels_enable(uart, 0);
+
+        int ch_busy, ch_other;
+        if (dma_channel_is_busy(uart->dma_chA)) {
+            ch_busy = uart->dma_chA;
+            ch_other = uart->dma_chB;
+        }
+        else if (dma_channel_is_busy(uart->dma_chB)) {
+            ch_busy = uart->dma_chB;
+            ch_other = uart->dma_chA;
+        }
+        else {
+            // can't return, need to set alarm
+            goto end;
+        }
+
+        int tr_left = (int) dma_channel_hw_addr(ch_busy)->transfer_count;
+        int tr_done = DMA_TCNT - tr_left;
+
+        if (tr_done == 0)
+            goto end;
+
+        // abort the active channel, with errata mitigation
+        dma_channel_set_irq0_enabled(ch_busy, false);
+        dma_channel_abort(ch_busy);
+        dma_channel_acknowledge_irq0(ch_busy);
+        dma_channel_set_irq0_enabled(ch_busy, true);
+
+        // re-enable, won't start yet because the active one got aborted
+        ice_usb_uart_dma_channels_enable(uart, 1);
+
+        // ack already done bytes
+        rb_write_ack(&uart->rx_buf, tr_done);
+        char* wptr_busy  = rb_write_ptr(&uart->rx_buf);
+        char* wptr_other = rb_write_ptr_next_ack(&uart->rx_buf, DMA_TCNT);
+
+        // wptr_busy can cross over the end of the buffer
+        // but we've configured ring size and alignment
+
+        // set up the channels with new pointer and transfer count
+        dma_channel_set_write_addr(ch_other, wptr_other, false);
+        dma_channel_set_write_addr(ch_busy, wptr_busy, false);
+        dma_channel_set_trans_count(ch_busy, DMA_TCNT, true);
+
+        uart->dma_last_transfer = get_absolute_time();
+        printf("elapsed %dms ack %d\n", elapsed_us/1000, tr_done);
+    }
+    // else printf("No\n");
+
+end:
+    // re-enable here also, in case of goto got here
+    ice_usb_uart_dma_channels_enable(uart, 1);
+    hardware_alarm_set_target(uart->dma_flush_alarm, delayed_by_us(get_absolute_time(), DMA_ALARM_US));
 }
 
 static void ice_usb_uart_rx_conf_dma_chan(struct uart_wrap* uart, int dma_chan, char* data, uint count, int chain_to) {
     dma_channel_config c = dma_channel_get_default_config(dma_chan);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
+    channel_config_set_ring(&c, true, ICE_USB_UART_RBBITS);
     channel_config_set_write_increment(&c, true);
     channel_config_set_read_increment(&c, false);
     channel_config_set_dreq(&c, uart_get_dreq(uart->inst, false));
@@ -69,9 +138,15 @@ static void ice_usb_uart_rx_conf_dma_chan(struct uart_wrap* uart, int dma_chan, 
 }
 
 static void ice_usb_uart_rx_init(struct uart_wrap* uart) {
-    char* wptr = rb_write_ptr(&uart->rx_buf);
-    ice_usb_uart_rx_conf_dma_chan(uart, uart->dma_chA, wptr,           DMA_T_LEN, uart->dma_chB);
-    ice_usb_uart_rx_conf_dma_chan(uart, uart->dma_chB, wptr+DMA_T_LEN, DMA_T_LEN, uart->dma_chA);
+    char* wptrA = rb_write_ptr(&uart->rx_buf);
+    char* wptrB = rb_write_ptr_next_ack(&uart->rx_buf, DMA_TCNT);
+    ice_usb_uart_rx_conf_dma_chan(uart, uart->dma_chA, wptrA, DMA_TCNT, uart->dma_chB);
+    ice_usb_uart_rx_conf_dma_chan(uart, uart->dma_chB, wptrB, DMA_TCNT, uart->dma_chA);
+
+    hardware_alarm_set_callback(uart->dma_flush_alarm, uart->dma_flush_alarm_cb);
+    hardware_alarm_set_target(uart->dma_flush_alarm, delayed_by_us(get_absolute_time(), DMA_ALARM_US));
+
+    uart->dma_last_transfer = get_absolute_time();
     dma_channel_start(uart->dma_chA);
 }
 
@@ -137,8 +212,8 @@ static void ice_usb_uart_tx(struct uart_wrap* uart) {
 
 static void ice_usb_uart_debug(struct uart_wrap* wrap) {
     if (absolute_time_diff_us(wrap->dbg_time, get_absolute_time())/1000 > 100) {
-        int rxdata = rb_data_left(&wrap->rx_buf)*100 / RB_BUFSIZE;
-        int txdata = rb_data_left(&wrap->tx_buf)*100 / RB_BUFSIZE;
+        int rxdata = rb_data_left(&wrap->rx_buf)*100 / ICE_USB_UART_RBSIZE;
+        int txdata = rb_data_left(&wrap->tx_buf)*100 / ICE_USB_UART_RBSIZE;
 
         if (rxdata > 0 || txdata > 0)
             printf("itf%d rx %4d%% tx %4d%%\n", wrap->itf, rxdata, txdata);
@@ -150,12 +225,13 @@ static void ice_usb_uart_debug(struct uart_wrap* wrap) {
 
 // ------------------------------- Wrap functions -------------------------------
 
-static void ice_usb_uart_wrap_init(struct uart_wrap* uart) {
-    rb_init(&uart->rx_buf);
-    rb_init(&uart->tx_buf);
+static void ice_usb_uart_wrap_init(struct uart_wrap* uart, char* rxcharbuf, char* txcharbuf) {
+    rb_init(&uart->rx_buf, rxcharbuf, ICE_USB_UART_RBSIZE);
+    rb_init(&uart->tx_buf, txcharbuf, ICE_USB_UART_RBSIZE);
     uart->dbg_time = get_absolute_time();
     uart->dma_chA = dma_claim_unused_channel(true);
     uart->dma_chB = dma_claim_unused_channel(true);
+    uart->dma_flush_alarm = hardware_alarm_claim_unused(true);
     ice_usb_uart_rx_init(uart);
 }
 
@@ -169,17 +245,31 @@ static void ice_usb_uart_wrap_task(struct uart_wrap* uart) {
 // ------------------------------- Wrap definitions -------------------------------
 
 #ifdef ICE_USB_UART0_CDC
+char uart0_rxcharbuf[ICE_USB_UART_RBSIZE] __aligned(ICE_USB_UART_RBSIZE);
+char uart0_txcharbuf[ICE_USB_UART_RBSIZE] __aligned(ICE_USB_UART_RBSIZE);
+void ice_usb_uart0_dma_flush_alarm();
 struct uart_wrap uart0_wrap = {
         .itf = ICE_USB_UART0_CDC,
-        .inst = uart0
+        .inst = uart0,
+        .dma_flush_alarm_cb = ice_usb_uart0_dma_flush_alarm
 };
+void ice_usb_uart0_dma_flush_alarm() {
+    ice_usb_uart_dma_flush_alarm(&uart0_wrap);
+}
 #endif
 
 #ifdef ICE_USB_UART1_CDC
+char uart1_rxcharbuf[ICE_USB_UART_RBSIZE] __aligned(ICE_USB_UART_RBSIZE);
+char uart1_txcharbuf[ICE_USB_UART_RBSIZE] __aligned(ICE_USB_UART_RBSIZE);
+void ice_usb_uart1_dma_flush_alarm();
 struct uart_wrap uart1_wrap = {
         .itf = ICE_USB_UART1_CDC,
-        .inst = uart1
+        .inst = uart1,
+        .dma_flush_alarm_cb = ice_usb_uart1_dma_flush_alarm
 };
+void ice_usb_uart1_dma_flush_alarm() {
+    ice_usb_uart_dma_flush_alarm(&uart1_wrap);
+}
 #endif
 
 
@@ -196,22 +286,22 @@ static void ice_usb_uart_dma_irq0_common() {
 #ifdef ICE_USB_UART0_CDC
     if (dma_channel_get_irq0_status(uart0_wrap.dma_chA)) {
         dma_channel_acknowledge_irq0(uart0_wrap.dma_chA);
-        ice_usb_uart_rx_dma_irq0(&uart0_wrap, DMA_CHAN_A);
+        ice_usb_uart_rx_dma_irq0(&uart0_wrap, uart0_wrap.dma_chA);
     }
     if (dma_channel_get_irq0_status(uart0_wrap.dma_chB)) {
         dma_channel_acknowledge_irq0(uart0_wrap.dma_chB);
-        ice_usb_uart_rx_dma_irq0(&uart0_wrap, DMA_CHAN_B);
+        ice_usb_uart_rx_dma_irq0(&uart0_wrap, uart0_wrap.dma_chB);
     }
 #endif
 
 #ifdef ICE_USB_UART1_CDC
     if (dma_channel_get_irq0_status(uart1_wrap.dma_chA)) {
         dma_channel_acknowledge_irq0(uart1_wrap.dma_chA);
-        ice_usb_uart_rx_dma_irq0(&uart1_wrap, DMA_CHAN_A);
+        ice_usb_uart_rx_dma_irq0(&uart1_wrap, uart1_wrap.dma_chA);
     }
     if (dma_channel_get_irq0_status(uart1_wrap.dma_chB)) {
         dma_channel_acknowledge_irq0(uart1_wrap.dma_chB);
-        ice_usb_uart_rx_dma_irq0(&uart1_wrap, DMA_CHAN_B);
+        ice_usb_uart_rx_dma_irq0(&uart1_wrap, uart1_wrap.dma_chB);
     }
 #endif
 }
@@ -224,11 +314,11 @@ void ice_usb_uart_init() {
     irq_set_enabled(DMA_IRQ_0, true);
 
 #ifdef ICE_USB_UART0_CDC
-    ice_usb_uart_wrap_init(&uart0_wrap);
+    ice_usb_uart_wrap_init(&uart0_wrap, uart0_rxcharbuf, uart0_txcharbuf);
 #endif
 
 #ifdef ICE_USB_UART1_CDC
-    ice_usb_uart_wrap_init(&uart1_wrap);
+    ice_usb_uart_wrap_init(&uart1_wrap, uart1_rxcharbuf, uart1_txcharbuf);
 #endif
 }
 

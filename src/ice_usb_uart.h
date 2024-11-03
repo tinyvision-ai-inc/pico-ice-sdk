@@ -6,6 +6,9 @@
 #include "tusb.h"
 #include "tusb_config.h"
 
+#define ICE_USB_UART_RBBITS 10
+#define ICE_USB_UART_RBSIZE (1<<ICE_USB_UART_RBBITS)
+
 void ice_usb_uart_init();
 void ice_usb_uart_task();
 
