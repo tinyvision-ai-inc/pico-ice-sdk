@@ -47,6 +47,7 @@ add_library(pico_ice_usb INTERFACE)
 
 target_sources(pico_ice_usb INTERFACE
     src/ice_usb.c
+    src/ice_usb_uart.c
     src/tinyuf2_main.c
     src/tinyuf2_board.c
     src/tinyuf2_include.c
