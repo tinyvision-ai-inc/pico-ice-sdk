@@ -7,6 +7,7 @@
 #include "rb.h"
 #include "hardware/uart.h"
 #include "hardware/irq.h"
+#include "hardware/dma.h"
 
 struct uart_wrap {
     int itf;            // CDC interface number
@@ -19,6 +20,9 @@ struct uart_wrap {
     struct rb tx_buf;
 
     absolute_time_t dbg_time;
+
+    int dma_chA;
+    int dma_chB;
 };
 
 
@@ -26,13 +30,49 @@ struct uart_wrap {
 // uart -> rb (irq)
 //   rb -> cdc
 
-static void ice_usb_uart_rx_irq(struct uart_wrap* uart)
-{
-    while (uart_is_readable(uart->inst)) {
-        uint8_t byte = uart_getc(uart->inst);
-        *rb_write_ptr(&uart->rx_buf) = byte;
-        rb_write_ack(&uart->rx_buf, 1);
-    }
+#define DMA_T_LEN  16
+
+enum dma_chan {
+    DMA_CHAN_A,
+    DMA_CHAN_B,
+};
+
+static void ice_usb_uart_rx_dma_irq0(struct uart_wrap* uart, enum dma_chan ch) {
+    rb_write_ack(&uart->rx_buf, DMA_T_LEN);
+
+    // complementary channel will write to write_ptr
+    // need to skip another ack
+    char* waddr = rb_write_ptr_next_ack(&uart->rx_buf, DMA_T_LEN);
+
+    int channel = (ch == DMA_CHAN_A ? uart->dma_chA : uart->dma_chB);
+    dma_channel_set_write_addr(channel, waddr, false);
+}
+
+static void ice_usb_uart_rx_conf_dma_chan(struct uart_wrap* uart, int dma_chan, char* data, uint count, int chain_to) {
+    dma_channel_config c = dma_channel_get_default_config(dma_chan);
+    channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
+    channel_config_set_write_increment(&c, true);
+    channel_config_set_read_increment(&c, false);
+    channel_config_set_dreq(&c, uart_get_dreq(uart->inst, false));
+    channel_config_set_chain_to(&c, chain_to);
+
+    dma_channel_set_irq0_enabled(dma_chan, true);
+
+    dma_channel_configure(
+            dma_chan,
+            &c,
+            data,
+            &uart_get_hw(uart->inst)->dr,
+            count,
+            false
+    );
+}
+
+static void ice_usb_uart_rx_init(struct uart_wrap* uart) {
+    char* wptr = rb_write_ptr(&uart->rx_buf);
+    ice_usb_uart_rx_conf_dma_chan(uart, uart->dma_chA, wptr,           DMA_T_LEN, uart->dma_chB);
+    ice_usb_uart_rx_conf_dma_chan(uart, uart->dma_chB, wptr+DMA_T_LEN, DMA_T_LEN, uart->dma_chA);
+    dma_channel_start(uart->dma_chA);
 }
 
 static void ice_usb_uart_rx_to_cdc(struct uart_wrap* uart) {
@@ -111,9 +151,12 @@ static void ice_usb_uart_debug(struct uart_wrap* wrap) {
 // ------------------------------- Wrap functions -------------------------------
 
 static void ice_usb_uart_wrap_init(struct uart_wrap* uart) {
-    irq_set_exclusive_handler(uart->irq_num, uart->irq_handler);
-    irq_set_enabled(uart->irq_num, true);
-    uart_set_irq_enables(uart->inst, true, false);
+    rb_init(&uart->rx_buf);
+    rb_init(&uart->tx_buf);
+    uart->dbg_time = get_absolute_time();
+    uart->dma_chA = dma_claim_unused_channel(true);
+    uart->dma_chB = dma_claim_unused_channel(true);
+    ice_usb_uart_rx_init(uart);
 }
 
 static void ice_usb_uart_wrap_task(struct uart_wrap* uart) {
@@ -126,35 +169,17 @@ static void ice_usb_uart_wrap_task(struct uart_wrap* uart) {
 // ------------------------------- Wrap definitions -------------------------------
 
 #ifdef ICE_USB_UART0_CDC
-void ice_usb_uart0_rx_irq();
 struct uart_wrap uart0_wrap = {
         .itf = ICE_USB_UART0_CDC,
-        .inst = uart0,
-        .irq_num = UART0_IRQ,
-        .irq_handler = ice_usb_uart0_rx_irq,
-        .rx_buf = { 0 },
-        .tx_buf = { 0 },
-        .dbg_time = 0
+        .inst = uart0
 };
-void ice_usb_uart0_rx_irq() {
-    ice_usb_uart_rx_irq(&uart0_wrap);
-}
 #endif
 
 #ifdef ICE_USB_UART1_CDC
-void ice_usb_uart1_rx_irq();
 struct uart_wrap uart1_wrap = {
         .itf = ICE_USB_UART1_CDC,
-        .inst = uart1,
-        .irq_num = UART1_IRQ,
-        .irq_handler = ice_usb_uart1_rx_irq,
-        .rx_buf = { 0 },
-        .tx_buf = { 0 },
-        .dbg_time = 0
+        .inst = uart1
 };
-void ice_usb_uart1_rx_irq() {
-    ice_usb_uart_rx_irq(&uart1_wrap);
-}
 #endif
 
 
@@ -164,9 +189,40 @@ static void ice_usb_uart_set_baud(struct uart_wrap* uart, unsigned int baud) {
     uart_set_baudrate(uart->inst, baud);
 }
 
+
+// ------------------------------- DMA common IRQ 0 -------------------------------
+
+static void ice_usb_uart_dma_irq0_common() {
+#ifdef ICE_USB_UART0_CDC
+    if (dma_channel_get_irq0_status(uart0_wrap.dma_chA)) {
+        dma_channel_acknowledge_irq0(uart0_wrap.dma_chA);
+        ice_usb_uart_rx_dma_irq0(&uart0_wrap, DMA_CHAN_A);
+    }
+    if (dma_channel_get_irq0_status(uart0_wrap.dma_chB)) {
+        dma_channel_acknowledge_irq0(uart0_wrap.dma_chB);
+        ice_usb_uart_rx_dma_irq0(&uart0_wrap, DMA_CHAN_B);
+    }
+#endif
+
+#ifdef ICE_USB_UART1_CDC
+    if (dma_channel_get_irq0_status(uart1_wrap.dma_chA)) {
+        dma_channel_acknowledge_irq0(uart1_wrap.dma_chA);
+        ice_usb_uart_rx_dma_irq0(&uart1_wrap, DMA_CHAN_A);
+    }
+    if (dma_channel_get_irq0_status(uart1_wrap.dma_chB)) {
+        dma_channel_acknowledge_irq0(uart1_wrap.dma_chB);
+        ice_usb_uart_rx_dma_irq0(&uart1_wrap, DMA_CHAN_B);
+    }
+#endif
+}
+
+
 // ------------------------------- Public init/task/cb -------------------------------
 
 void ice_usb_uart_init() {
+    irq_set_exclusive_handler(DMA_IRQ_0, ice_usb_uart_dma_irq0_common);
+    irq_set_enabled(DMA_IRQ_0, true);
+
 #ifdef ICE_USB_UART0_CDC
     ice_usb_uart_wrap_init(&uart0_wrap);
 #endif

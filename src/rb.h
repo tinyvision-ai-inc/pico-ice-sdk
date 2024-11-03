@@ -21,11 +21,13 @@ struct rb {
     // this variables will get large so we define them as 64bit (rolls over after 645 years at 10Gbit/s)
 };
 
+void rb_init(struct rb* rb);
 int rb_data_left(struct rb* rb);
 int rb_data_left_continuous(struct rb* rb);
 int rb_space_left(struct rb* rb);
 int rb_space_left_continuous(struct rb* rb);
 char* rb_read_ptr(struct rb* rb);
 char* rb_write_ptr(struct rb* rb);
+char* rb_write_ptr_next_ack(struct rb* rb, unsigned int bytes);
 void rb_read_ack(struct rb* rb, unsigned int bytes);
 void rb_write_ack(struct rb* rb, unsigned int bytes);
