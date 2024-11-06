@@ -22,15 +22,32 @@ struct uart_wrap {
 };
 
 
+// ------------------------------- SDK extensions -------------------------------
+enum uart_watermark {
+    // uart fifo is 32 bytes deep
+    UART_WATERMARK_4CHR = 0,
+    UART_WATERMARK_8CHR = 1,
+    UART_WATERMARK_16CHR = 2,
+    UART_WATERMARK_24CHR = 3,
+    UART_WATERMARK_28CHR = 4
+};
+
+void uart_set_irq_watermarks(struct uart_wrap* uart, enum uart_watermark value) {
+    hw_write_masked(&uart_get_hw(uart->inst)->ifls, value << UART_UARTIFLS_RXIFLSEL_LSB,
+                    UART_UARTIFLS_RXIFLSEL_BITS);
+
+    hw_write_masked(&uart_get_hw(uart->inst)->ifls, value << UART_UARTIFLS_TXIFLSEL_LSB,
+                    UART_UARTIFLS_TXIFLSEL_BITS);
+}
+
 // ------------------------------- Rx functions -------------------------------
 // uart -> rb (irq)
 //   rb -> cdc
 
-static void ice_usb_uart_rx_irq(struct uart_wrap* uart)
-{
+static void ice_usb_uart_rx_irq(struct uart_wrap* uart) {
     while (uart_is_readable(uart->inst)) {
         uint8_t byte = uart_getc(uart->inst);
-        *rb_write_ptr(&uart->rx_buf) = byte;
+        *rb_get_write_ptr(&uart->rx_buf) = byte;
         rb_write_ack(&uart->rx_buf, 1);
     }
 }
@@ -40,14 +57,18 @@ static void ice_usb_uart_rx_to_cdc(struct uart_wrap* uart) {
         // this can be executed 2 times if the data is wrapped
         unsigned int bufsize = rb_data_left_continuous(&uart->rx_buf);
 
-        if (bufsize == 0)
-            break; // no data in buffer
+        if (bufsize == 0) {
+            // no data in buffer
+            break;
+        }
 
         // returns how much data was actually written
-        bufsize = tud_cdc_n_write(uart->itf, rb_read_ptr(&uart->rx_buf), bufsize);
+        bufsize = tud_cdc_n_write(uart->itf, rb_get_read_ptr(&uart->rx_buf), bufsize);
 
-        if (bufsize == 0)
-            break; // cdc buffer full
+        if (bufsize == 0) {
+            // cdc buffer full
+            break;
+        }
 
         // ack data that was sent to cdc
         rb_read_ack(&uart->rx_buf, bufsize);
@@ -64,31 +85,26 @@ static void ice_usb_uart_rx_to_cdc(struct uart_wrap* uart) {
 static void ice_usb_uart_tx_from_cdc(struct uart_wrap* uart) {
     while(1) {
         unsigned int bufsize = rb_space_left_continuous(&uart->tx_buf);
-        if (bufsize == 0)
-            break; // no buffer space left
+        if (bufsize == 0) {
+            // no buffer space left
+            break;
+        }
 
-        bufsize = tud_cdc_n_read(uart->itf, rb_write_ptr(&uart->tx_buf), bufsize);
-        if (bufsize == 0)
-            break; // cdc buffer empty
+        bufsize = tud_cdc_n_read(uart->itf, rb_get_write_ptr(&uart->tx_buf), bufsize);
+        if (bufsize == 0) {
+            // cdc buffer empty
+            break;
+        }
 
         rb_write_ack(&uart->tx_buf, bufsize);
     }
 }
 
 static void ice_usb_uart_tx(struct uart_wrap* uart) {
-    while (1) {
-        unsigned int bufsize = rb_data_left_continuous(&uart->tx_buf);
-        if (bufsize == 0)
-            break; // no data in buffer
-
-        char* buf = rb_read_ptr(&uart->tx_buf);
-        int wr;
-        for (wr=0; wr<bufsize; wr++) {
-            while (!uart_is_writable(uart->inst));
-            uart_putc(uart->inst, *buf++);
-        }
-
-        rb_read_ack(&uart->tx_buf, wr);
+    // this could be done by DMA
+    while (uart_is_writable(uart->inst) && rb_data_left(&uart->tx_buf) > 0) {
+        uart_putc_raw(uart->inst, *rb_get_read_ptr(&uart->tx_buf));
+        rb_read_ack(&uart->tx_buf, 1);
     }
 }
 
@@ -114,11 +130,13 @@ static void ice_usb_uart_wrap_init(struct uart_wrap* uart) {
     irq_set_exclusive_handler(uart->irq_num, uart->irq_handler);
     irq_set_enabled(uart->irq_num, true);
     uart_set_irq_enables(uart->inst, true, false);
+    uart_set_irq_watermarks(uart, UART_WATERMARK_24CHR);
 }
 
 static void ice_usb_uart_wrap_task(struct uart_wrap* uart) {
     ice_usb_uart_debug(uart);
     ice_usb_uart_rx_to_cdc(uart);
+    ice_usb_uart_tx_from_cdc(uart);
     ice_usb_uart_tx(uart);
 }
 
