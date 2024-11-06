@@ -25,7 +25,7 @@ jobs:
       - name: Fetch submodules
         run: |
           git submodule update --init
-          git -C pico-sdk submodule update --init
+          git -C lib/pico-sdk submodule update --init
 
       - name: Build each example on every commit
         run: |
