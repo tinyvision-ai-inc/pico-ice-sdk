@@ -275,11 +275,6 @@ void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t) = {
 
 void tud_cdc_rx_cb(uint8_t itf)
 {
-    // special handling for uart
-    int handled = ice_usb_uart_cb_rx(itf);
-    if (handled)
-        return;
-
     // existing callback for that CDC number, send it all available data
     assert(itf < sizeof(tud_cdc_rx_cb_table) / sizeof(*tud_cdc_rx_cb_table));
 

@@ -23,11 +23,11 @@ int rb_space_left_continuous(struct rb* rb) {
     return MIN(rb_space_left(rb), RB_BUFSIZE - rb->write_index);
 }
 
-char* rb_read_ptr(struct rb* rb) {
+char* rb_get_read_ptr(struct rb* rb) {
     return rb->buf + rb->read_index;
 }
 
-char* rb_write_ptr(struct rb* rb) {
+char* rb_get_write_ptr(struct rb* rb) {
     return rb->buf + rb->write_index;
 }
 
