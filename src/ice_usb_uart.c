@@ -127,6 +127,14 @@ static void ice_usb_uart_debug(struct uart_wrap* wrap) {
 // ------------------------------- Wrap functions -------------------------------
 
 static void ice_usb_uart_wrap_init(struct uart_wrap* uart) {
+    // garbage prevention: wait a bit for FPGA and RP2040 to
+    // properly initialize and set their Tx lines to idle state
+    // then, discard all bytes in UART fifo before enabling IRQs
+    // (RP2040's pull-ups didn't work)
+    sleep_ms(10);
+    while (uart_is_readable(uart->inst))
+        (void) uart_getc(uart->inst);
+
     irq_set_exclusive_handler(uart->irq_num, uart->irq_handler);
     irq_set_enabled(uart->irq_num, true);
     uart_set_irq_enables(uart->inst, true, false);
@@ -235,9 +243,3 @@ int ice_usb_uart_cb_rx(int itf) {
 #endif
     return 0;
 }
-
-// TODO rx buffer heavily overflows, like 2000% usage, dma usage
-// TODO first cdc transfer after boot fails, hmm
-
-// UART
-// TODO use dma
