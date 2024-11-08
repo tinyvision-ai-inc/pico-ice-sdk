@@ -227,19 +227,3 @@ int ice_usb_uart_cb_baud(int itf, unsigned int baud) {
 #endif
     return 0;
 }
-
-int ice_usb_uart_cb_rx(int itf) {
-#ifdef ICE_USB_UART0_CDC
-    if (itf == ICE_USB_UART0_CDC) {
-        ice_usb_uart_tx_from_cdc(&uart0_wrap);
-        return 1;
-    }
-#endif
-#ifdef ICE_USB_UART1_CDC
-    if (itf == ICE_USB_UART1_CDC) {
-        ice_usb_uart_tx_from_cdc(&uart1_wrap);
-        return 1;
-    }
-#endif
-    return 0;
-}
