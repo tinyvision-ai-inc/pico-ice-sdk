@@ -224,9 +224,9 @@ void ice_usb_uart_task() {
     ice_usb_uart_wrap_task(&uart0_wrap);
 #endif
 
-// #ifdef ICE_USB_UART1_CDC
-//     ice_usb_uart_wrap_task(&uart1_wrap);
-// #endif
+#ifdef ICE_USB_UART1_CDC
+    ice_usb_uart_wrap_task(&uart1_wrap);
+#endif
 }
 
 int ice_usb_uart_cb_coding(int itf, uint baud, int stop_bits, int parity, int data_bits) {
