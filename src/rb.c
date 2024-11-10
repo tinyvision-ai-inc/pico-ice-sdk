@@ -7,6 +7,13 @@
 // MIN/MAX
 #include <pico/platform.h>
 
+void rb_init(struct rb* rb) {
+    rb->read_index = 0;
+    rb->read_total = 0;
+    rb->write_index = 0;
+    rb->written_total = 0;
+}
+
 int rb_data_left(struct rb* rb) {
     return (int) (rb->written_total - rb->read_total);
 }
