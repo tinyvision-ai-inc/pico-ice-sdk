@@ -96,6 +96,15 @@ const tusb_desc_device_t tud_desc_device = {
 // Also used in usb_descriptors.c.
 char usb_serial_number[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
 
+// Sleeping without calling tud_task() hangs the USB stack in the meantime.
+void ice_usb_sleep_ms(uint32_t ms)
+{
+    while (ms-- > 0) {
+        ice_usb_task();
+        sleep_ms(1);
+    }
+}
+
 // Invoked when received GET DEVICE DESCRIPTOR
 // Application return pointer to descriptor
 uint8_t const *tud_descriptor_device_cb(void)
