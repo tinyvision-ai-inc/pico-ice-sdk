@@ -1,5 +1,6 @@
 //
-// Created by MrJake222 on 30/10/24.
+// Copyright (c) 2024 MrJake222
+// SPDX-License-Identifier: MIT
 //
 
 #pragma once

@@ -1,5 +1,6 @@
 //
-// Created by MrJake222 on 03/11/24.
+// Copyright (c) 2024 MrJake222
+// SPDX-License-Identifier: MIT
 //
 
 #include "ice_usb_uart.h"
