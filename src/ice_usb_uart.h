@@ -10,4 +10,4 @@ void ice_usb_uart_init();
 void ice_usb_uart_task();
 
 // callback functions
-int ice_usb_uart_cb_baud(int itf, unsigned int baud);
+int ice_usb_uart_cb_coding(int itf, uint baud, int stop_bits, int parity, int data_bits);

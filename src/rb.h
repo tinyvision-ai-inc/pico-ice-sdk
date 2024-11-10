@@ -26,6 +26,7 @@ struct rb {
     // this variables will get large so we define them as 64bit (rolls over after 645 years at 10Gbit/s)
 };
 
+void rb_init(struct rb* rb);
 int rb_data_left(struct rb* rb);
 int rb_data_left_continuous(struct rb* rb);
 int rb_space_left(struct rb* rb);

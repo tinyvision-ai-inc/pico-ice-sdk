@@ -19,6 +19,10 @@ struct uart_wrap {
     struct rb tx_buf;
 
     absolute_time_t dbg_time;
+    size_t dbg_rx_uart;
+    size_t dbg_rx_cdc;
+    size_t dbg_tx_cdc;
+    size_t dbg_tx_uart;
 };
 
 
@@ -49,6 +53,7 @@ static void ice_usb_uart_rx_irq(struct uart_wrap* uart) {
         uint8_t byte = uart_getc(uart->inst);
         *rb_get_write_ptr(&uart->rx_buf) = byte;
         rb_write_ack(&uart->rx_buf, 1);
+        uart->dbg_rx_uart++;
     }
 }
 
@@ -72,6 +77,7 @@ static void ice_usb_uart_rx_to_cdc(struct uart_wrap* uart) {
 
         // ack data that was sent to cdc
         rb_read_ack(&uart->rx_buf, bufsize);
+        uart->dbg_rx_cdc += bufsize;
     }
 
     tud_cdc_n_write_flush(uart->itf);
@@ -97,6 +103,7 @@ static void ice_usb_uart_tx_from_cdc(struct uart_wrap* uart) {
         }
 
         rb_write_ack(&uart->tx_buf, bufsize);
+        uart->dbg_tx_cdc += bufsize;
     }
 }
 
@@ -105,21 +112,25 @@ static void ice_usb_uart_tx(struct uart_wrap* uart) {
     while (uart_is_writable(uart->inst) && rb_data_left(&uart->tx_buf) > 0) {
         uart_putc_raw(uart->inst, *rb_get_read_ptr(&uart->tx_buf));
         rb_read_ack(&uart->tx_buf, 1);
+        uart->dbg_tx_uart++;
     }
 }
 
 
 // ------------------------------- Debug functions -------------------------------
 
-static void ice_usb_uart_debug(struct uart_wrap* wrap) {
-    if (absolute_time_diff_us(wrap->dbg_time, get_absolute_time())/1000 > 100) {
-        int rxdata = rb_data_left(&wrap->rx_buf)*100 / RB_BUFSIZE;
-        int txdata = rb_data_left(&wrap->tx_buf)*100 / RB_BUFSIZE;
+static void ice_usb_uart_debug(struct uart_wrap* uart) {
+    if (absolute_time_diff_us(uart->dbg_time, get_absolute_time()) / 1000 > 10) {
+        int rxdata = rb_data_left(&uart->rx_buf) * 100 / RB_BUFSIZE;
+        int txdata = rb_data_left(&uart->tx_buf) * 100 / RB_BUFSIZE;
 
-        if (rxdata > 0 || txdata > 0)
-            printf("itf%d rx %4d%% tx %4d%%\n", wrap->itf, rxdata, txdata);
+        if (rxdata > 0 || txdata > 0) {
+            printf("itf%d rx %5d %3d%% %5d \t tx %5d %3d%% %5d\n", uart->itf,
+                   uart->dbg_rx_uart, rxdata, uart->dbg_rx_cdc,
+                   uart->dbg_tx_cdc, txdata, uart->dbg_tx_uart);
+        }
 
-        wrap->dbg_time = get_absolute_time();
+        uart->dbg_time = get_absolute_time();
     }
 }
 
@@ -127,6 +138,15 @@ static void ice_usb_uart_debug(struct uart_wrap* wrap) {
 // ------------------------------- Wrap functions -------------------------------
 
 static void ice_usb_uart_wrap_init(struct uart_wrap* uart) {
+    rb_init(&uart->rx_buf);
+    rb_init(&uart->tx_buf);
+
+    uart->dbg_time = get_absolute_time();
+    uart->dbg_rx_uart = 0;
+    uart->dbg_rx_cdc = 0;
+    uart->dbg_tx_cdc = 0;
+    uart->dbg_tx_uart = 0;
+
     // garbage prevention: wait a bit for FPGA and RP2040 to
     // properly initialize and set their Tx lines to idle state
     // then, discard all bytes in UART fifo before enabling IRQs
@@ -142,7 +162,8 @@ static void ice_usb_uart_wrap_init(struct uart_wrap* uart) {
 }
 
 static void ice_usb_uart_wrap_task(struct uart_wrap* uart) {
-    ice_usb_uart_debug(uart);
+    // disabled by default
+    // ice_usb_uart_debug(uart);
     ice_usb_uart_rx_to_cdc(uart);
     ice_usb_uart_tx_from_cdc(uart);
     ice_usb_uart_tx(uart);
@@ -157,10 +178,7 @@ struct uart_wrap uart0_wrap = {
         .itf = ICE_USB_UART0_CDC,
         .inst = uart0,
         .irq_num = UART0_IRQ,
-        .irq_handler = ice_usb_uart0_rx_irq,
-        .rx_buf = { 0 },
-        .tx_buf = { 0 },
-        .dbg_time = 0
+        .irq_handler = ice_usb_uart0_rx_irq
 };
 void ice_usb_uart0_rx_irq() {
     ice_usb_uart_rx_irq(&uart0_wrap);
@@ -173,10 +191,7 @@ struct uart_wrap uart1_wrap = {
         .itf = ICE_USB_UART1_CDC,
         .inst = uart1,
         .irq_num = UART1_IRQ,
-        .irq_handler = ice_usb_uart1_rx_irq,
-        .rx_buf = { 0 },
-        .tx_buf = { 0 },
-        .dbg_time = 0
+        .irq_handler = ice_usb_uart1_rx_irq
 };
 void ice_usb_uart1_rx_irq() {
     ice_usb_uart_rx_irq(&uart1_wrap);
@@ -186,8 +201,9 @@ void ice_usb_uart1_rx_irq() {
 
 // ------------------------------- Baudrate setting -------------------------------
 
-static void ice_usb_uart_set_baud(struct uart_wrap* uart, unsigned int baud) {
+static void ice_usb_uart_set_coding(struct uart_wrap* uart, uint baud, int stop_bits, int parity, int data_bits) {
     uart_set_baudrate(uart->inst, baud);
+    uart_set_format(uart->inst, data_bits, stop_bits, parity);
 }
 
 // ------------------------------- Public init/task/cb -------------------------------
@@ -207,23 +223,46 @@ void ice_usb_uart_task() {
     ice_usb_uart_wrap_task(&uart0_wrap);
 #endif
 
-#ifdef ICE_USB_UART1_CDC
-    ice_usb_uart_wrap_task(&uart1_wrap);
-#endif
+// #ifdef ICE_USB_UART1_CDC
+//     ice_usb_uart_wrap_task(&uart1_wrap);
+// #endif
 }
 
-int ice_usb_uart_cb_baud(int itf, unsigned int baud) {
+int ice_usb_uart_cb_coding(int itf, uint baud, int stop_bits, int parity, int data_bits) {
+    switch (stop_bits) {
+        case CDC_LINE_CONDING_STOP_BITS_1: stop_bits = 1; break;
+        case CDC_LINE_CONDING_STOP_BITS_2: stop_bits = 2; break;
+        default:
+            printf("itf%d unsupported stop bits %d\n", itf, stop_bits);
+            return 1; // "handled"
+    }
+
+    switch (parity) {
+        case CDC_LINE_CODING_PARITY_NONE: parity = UART_PARITY_NONE; break;
+        case CDC_LINE_CODING_PARITY_ODD:  parity = UART_PARITY_ODD;  break;
+        case CDC_LINE_CODING_PARITY_EVEN: parity = UART_PARITY_EVEN; break;
+        default:
+            printf("itf%d unsupported parity %d\n", itf, parity);
+            return 1;
+    }
+
+    if (data_bits < 5 || data_bits > 8) {
+        printf("itf%d unsupported data bits %d\n", itf, data_bits);
+        return 1;
+    }
+
 #ifdef ICE_USB_UART0_CDC
     if (itf == ICE_USB_UART0_CDC) {
-        ice_usb_uart_set_baud(&uart0_wrap, baud);
+        ice_usb_uart_set_coding(&uart0_wrap, baud, stop_bits, parity, data_bits);
         return 1;
     }
 #endif
 #ifdef ICE_USB_UART1_CDC
     if (itf == ICE_USB_UART1_CDC) {
-        ice_usb_uart_set_baud(&uart1_wrap, baud);
+        ice_usb_uart_set_coding(&uart1_wrap, baud, stop_bits, parity, data_bits);
         return 1;
     }
 #endif
+
     return 0;
 }

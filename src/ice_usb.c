@@ -162,7 +162,7 @@ void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *coding)
         assert(!"not reached");
     }
 
-    ice_usb_uart_cb_baud(itf, coding->bit_rate);
+    ice_usb_uart_cb_coding(itf, coding->bit_rate, coding->stop_bits, coding->parity, coding->data_bits);
     // ignore if handled or not
 }
 
