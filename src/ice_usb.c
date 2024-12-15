@@ -31,13 +31,15 @@
 #include "hardware/watchdog.h"
 #include "pico/bootrom.h"
 #include "pico/multicore.h"
+#include <stdio.h>//timo added
+#include "pico/stdio.h"//timo added
 #include "pico/stdlib.h"
 
 // tinyusb
 #include "tusb.h"
 
 // pico-ice-sdk
-#include "boards/pico_ice.h"
+#include "boards.h"
 #include "ice_usb.h"
 #include "ice_flash.h"
 #include "ice_cram.h"

@@ -25,7 +25,7 @@
 #include "hardware/gpio.h"
 #include "hardware/pio.h"
 #include "pico/time.h"
-#include "boards/pico_ice.h"
+#include "boards.h"
 #include "ice_fpga.h"
 #include "ice_cram.pio.h"
 

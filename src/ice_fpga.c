@@ -28,7 +28,7 @@
 #include "pico/stdlib.h"
 
 // pico-ice-sdk
-#include "boards/pico_ice.h"
+#include "boards.h"
 #include "ice_fpga.h"
 #include "ice_spi.h"
 

@@ -1,4 +1,5 @@
 // stdlib
+#include <stdio.h>
 #include <stdbool.h>
 
 // pico-sdk
