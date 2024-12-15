@@ -21,14 +21,29 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#ifndef BOARDS_H_
+#define BOARDS_H_
 
+#define PICO_ICE            1
+#define PICO2_ICE           2
+
+#if PICO_ICE_BOARD_ID == PICO_ICE
 #include "boards/pico_ice.h"
-#include "ice_usb.h"
-// Allow compilation of TinyUF2 without changing any source file.
+#elif PICO_ICE_BOARD_ID == PICO2_ICE
+#include "boards/pico2_ice.h"
+#else
+#error "pico-ice board model not found"
+#endif
 
+//#include "ice_usb.h" //commented out timo
+// Allow compilation of TinyUF2 without changing any source file.
+// For board detection
+#define TINYVISION_AI_INC_PICO_ICE
 #define UF2_VERSION         "0"
 #define UF2_INDEX_URL       "https://pico-ice.tinyvision.ai/"
-#define UF2_VOLUME_LABEL    "pico-ice"
-#define UF2_PRODUCT_NAME    "pico-ice"
-#define UF2_BOARD_ID        "pico-ice"
+#define UF2_VOLUME_LABEL    PICO_ICE_BOARD_NAME
+#define UF2_PRODUCT_NAME    PICO_ICE_BOARD_NAME
+#define UF2_BOARD_ID        PICO_ICE_BOARD_NAME
 #define BOARD_UF2_FAMILY_ID ICE_UF2_FAMILY_ID
+
+#endif

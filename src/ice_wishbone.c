@@ -29,7 +29,7 @@
 #include <assert.h>
 
 // pico-ice-sdk
-#include "boards/pico_ice.h"
+#include "boards.h"
 #include "ice_wishbone.h"
 #include "ice_spi.h"
 

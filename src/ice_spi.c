@@ -30,7 +30,7 @@
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 #include "hardware/dma.h"
-#include "boards/pico_ice.h"
+#include "boards.h"
 #include "ice_spi.h"
 
 volatile static bool g_transfer_done = true;
@@ -62,7 +62,7 @@ void ice_spi_init(void) {
     gpio_set_dir(ICE_SPI_RX_PIN, GPIO_IN);
 
     if (spi_is_initialized) { 
-        spi_set_baudrate(spi1, ICE_SPI_BAUDRATE);
+        spi_set_baudrate(spi0, ICE_SPI_BAUDRATE);
         irq_set_enabled(DMA_IRQ_1, true);
         return;
     }
@@ -70,7 +70,7 @@ void ice_spi_init(void) {
 
     // Initialize SPI, but don't yet assign the pins SPI function so they stay in high impedance mode.
     // Use 33MHz as that is the fastest the SRAM supports a 03h read command.
-    spi_init(spi1, ICE_SPI_BAUDRATE);
+    spi_init(spi0, ICE_SPI_BAUDRATE);
 
     // Setup DMA channel and interrupt handler
     dma_tx = dma_claim_unused_channel(true);
@@ -154,23 +154,23 @@ void ice_spi_write_async(uint8_t const *data, size_t data_size, void (*callback)
 
     dma_channel_config c = dma_channel_get_default_config(dma_tx);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
-    channel_config_set_dreq(&c, spi_get_dreq(spi1, true));
+    channel_config_set_dreq(&c, spi_get_dreq(spi0, true));
     channel_config_set_read_increment(&c, true);
     channel_config_set_write_increment(&c, false);
     dma_channel_configure(dma_tx, &c,
-                          &spi_get_hw(spi1)->dr, // write address
+                          &spi_get_hw(spi0)->dr, // write address
                           data,                  // read address
                           data_size,             // element count
                           false);
 
     c = dma_channel_get_default_config(dma_rx);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
-    channel_config_set_dreq(&c, spi_get_dreq(spi1, false));
+    channel_config_set_dreq(&c, spi_get_dreq(spi0, false));
     channel_config_set_read_increment(&c, false);
     channel_config_set_write_increment(&c, false);
     dma_channel_configure(dma_rx, &c,
                           &dma_word,             // write address
-                          &spi_get_hw(spi1)->dr, // read address
+                          &spi_get_hw(spi0)->dr, // read address
                           data_size,
                           false);
 
@@ -185,23 +185,23 @@ void ice_spi_read_async(uint8_t *data, size_t data_size, void (*callback)(volati
 
     dma_channel_config c = dma_channel_get_default_config(dma_tx);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
-    channel_config_set_dreq(&c, spi_get_dreq(spi1, true));
+    channel_config_set_dreq(&c, spi_get_dreq(spi0, true));
     channel_config_set_read_increment(&c, false);
     channel_config_set_write_increment(&c, false);
     dma_channel_configure(dma_tx, &c,
-                          &spi_get_hw(spi1)->dr, // write address
+                          &spi_get_hw(spi0)->dr, // write address
                           &dma_word,             // read address
                           data_size,             // element count
                           false);
 
     c = dma_channel_get_default_config(dma_rx);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
-    channel_config_set_dreq(&c, spi_get_dreq(spi1, false));
+    channel_config_set_dreq(&c, spi_get_dreq(spi0, false));
     channel_config_set_read_increment(&c, false);
     channel_config_set_write_increment(&c, true);
     dma_channel_configure(dma_rx, &c,
                           data,                  // write address
-                          &spi_get_hw(spi1)->dr, // read address
+                          &spi_get_hw(spi0)->dr, // read address
                           data_size,
                           false);
 
