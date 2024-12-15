@@ -30,7 +30,7 @@
 #include "pico/stdlib.h"
 
 // pico-ice-sdk
-#include "boards/pico_ice.h"
+#include "boards.h"
 #include "ice_spi.h"
 #include "ice_flash.h"
 #include "ice_led.h"

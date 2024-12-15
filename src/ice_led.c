@@ -26,7 +26,7 @@
 #include "hardware/gpio.h"
 
 // pico-ice-sdk
-#include "boards/pico_ice.h"
+#include "boards/pico2_ice.h"
 #include "ice_led.h"
 
 // Rather than driving LEDs up and down, we always drive the wire down,

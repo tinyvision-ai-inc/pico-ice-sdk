@@ -34,7 +34,7 @@
 // pico-ice-sdk
 #include "ice_sram.h"
 #include "ice_spi.h"
-#include "boards/pico_ice.h"
+#include "boards.h"
 
 #define CMD_GET_ID              0x9F
 #define CMD_GET_STATUS          0x05
@@ -52,12 +52,14 @@ void ice_sram_reset(void) {
 }
 
 void ice_sram_init(void) {
+    /**** timo
     ice_spi_init();
     ice_spi_init_cs_pin(ICE_SRAM_CS_PIN, true);
 
     // Device initialization procedure
     sleep_us(150);
     ice_sram_reset();
+    ***/
 }
 
 void ice_sram_get_id(uint8_t id[8]) {

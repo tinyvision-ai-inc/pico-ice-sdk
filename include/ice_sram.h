@@ -34,7 +34,7 @@
 #pragma once
 #include <stdint.h>
 #include <stddef.h>
-#include "boards/pico_ice.h"
+#include "boards.h"
 
 // This module is not thread safe.
 
