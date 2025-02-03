@@ -9,27 +9,53 @@ on:
 
 jobs:
   firmware:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     strategy:
       matrix:
         cmake_build_type: [Debug, Release]
-
+        example:
+          - pico_blinky
+          - pico_blinky_cplusplus
+          - pico_cram
+          - pico_flash
+          - pico_flash_repl
+          - pico_fpga
+          - pico_fpga_io
+          - pico_hello_world
+          - pico_sram
+          - pico_usb_fpga
+          - pico_usb_keyboard
+          - pico_usb_spi
+          - pico_usb_uart
+          - pico_usb_uf2
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+      - name: arm-none-eabi-gcc GNU Arm Embedded Toolchain
+        uses: carlosperate/arm-none-eabi-gcc-action@v1.10.0
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+
+      - name: Cache Submodules
+        id: cache-submodules
+        uses: actions/cache@v4
+        with:
+          path: lib
+          key: ${{ runner.os }}-build-${{ hashFiles('lib/**') }}
+          restore-keys: |
+            ${{ runner.os }}-build-
 
       - name: Fetch submodules
         run: |
           git submodule update --init
-          git -C pico-sdk submodule update --init
+          git -C lib/pico-sdk submodule update --init
 
       - name: Build each example on every commit
         run: |
-          mkdir -p examples/build
-          cd examples/build
+          cd examples/${{ matrix.example }}
+          mkdir -p build
+          cd build
           cmake -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} ..
           make
