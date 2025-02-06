@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     strategy:
+      fail-fast: false
       matrix:
         cmake_build_type: [Debug, Release]
         example:
@@ -48,6 +49,7 @@ jobs:
             ${{ runner.os }}-build-
 
       - name: Fetch submodules
+        if: steps.cache-submodules.outputs.cache-hit != 'true'
         run: |
           git submodule update --init
           git -C lib/pico-sdk submodule update --init
