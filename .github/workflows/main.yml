@@ -2,7 +2,7 @@ name: build_on_push
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "rp2350_ice" ]
   pull_request:
     branches: [ "main", "develop" ]
   workflow_dispatch:
@@ -16,20 +16,20 @@ jobs:
       matrix:
         cmake_build_type: [Debug, Release]
         example:
-          - pico_blinky
-          - pico_blinky_cplusplus
-          - pico_cram
-          - pico_flash
-          - pico_flash_repl
-          - pico_fpga
-          - pico_fpga_io
-          - pico_hello_world
-          - pico_sram
-          - pico_usb_fpga
-          - pico_usb_keyboard
-          - pico_usb_spi
-          - pico_usb_uart
-          - pico_usb_uf2
+          - rp2_blinky
+          - rp2_blinky_cplusplus
+          - rp2_cram
+          - rp2_flash
+          - rp2_flash_repl
+          - rp2_fpga
+          - rp2_fpga_io
+          - rp2_hello_world
+          - rp2_sram
+          - rp2_usb_fpga
+          - rp2_usb_keyboard
+          - rp2_usb_spi
+          - rp2_usb_uart
+          - rp2_usb_uf2
     steps:
       - uses: actions/checkout@v4
 
