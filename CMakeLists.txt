@@ -1,11 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
 
-if (NOT DEFINED PICO_BOARD)
-    set(PICO_BOARD pico_ice)
-endif()
-list(APPEND PICO_BOARD_HEADER_DIRS "${CMAKE_CURRENT_LIST_DIR}/include/boards")
-
-
 execute_process(COMMAND git -C "${CMAKE_CURRENT_LIST_DIR}" describe --tags
     OUTPUT_VARIABLE PICO_ICE_SDK_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE

@@ -14,7 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cmake_build_type: [Debug, Release]
+        cmake_build_type: [Debug]
+        pico_board: ["pico_ice", "pico2_ice"]
         example:
           - rp2_blinky
           - rp2_blinky_cplusplus
@@ -59,5 +60,6 @@ jobs:
           cd examples/${{ matrix.example }}
           mkdir -p build
           cd build
+          export PICO_BOARD=${{ matrix.pico_board }}
           cmake -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} ..
-          make
+          make -j4

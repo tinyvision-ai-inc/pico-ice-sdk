@@ -24,7 +24,7 @@
 
 #include "pico/stdlib.h"
 #include "pico/stdio.h"
-#include "boards/pico_ice.h"
+#include "boards.h"
 #include "ice_fpga.h"
 #include "ice_flash.h"
 #include "ice_led.h"

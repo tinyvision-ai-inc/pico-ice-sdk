@@ -28,7 +28,7 @@
 
 // pico-sdk
 #include "pico/stdlib.h"
-#include "boards/pico_ice.h"
+#include "boards.h"
 
 // tinyusb
 #include "tusb.h"

@@ -23,6 +23,9 @@
 #endif
 #define PICO_ICE_BOARD_NAME          "pico2-ice"
 
+// --- RP2350 VARIANT ---
+#define PICO_RP2350B 1
+
 // --- LED ---
 #ifndef PICO_DEFAULT_LED_PIN
 #define PICO_DEFAULT_LED_PIN 1
@@ -54,11 +57,8 @@
 #ifndef PICO_FLASH_SPI_CLKDIV
 #define PICO_FLASH_SPI_CLKDIV 2
 #endif
-#ifndef PICO_RP2040_B0_SUPPORTED
-#define PICO_RP2040_B0_SUPPORTED 1
-#endif
-#ifndef PICO_RP2040_B1_SUPPORTED
-#define PICO_RP2040_B1_SUPPORTED 0
+#ifndef PICO_RP2350_A2_SUPPORTED
+#define PICO_RP2350_A2_SUPPORTED 1
 #endif
 
 // --- BOARD SPECIFIC ---

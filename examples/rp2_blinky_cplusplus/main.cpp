@@ -1,5 +1,5 @@
 #include "pico/stdlib.h"
-#include "boards/pico_ice.h"
+#include "boards.h"
 
 // Deliberately adding all pico-ice-sdk headers here, even ones not needed for blinky, so that continuous integration
 // verifies that all SDK headers can be compiled as C++.

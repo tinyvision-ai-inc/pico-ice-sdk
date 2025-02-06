@@ -23,7 +23,7 @@
  */
 
 #include "pico/stdlib.h"
-#include "boards/pico_ice.h"
+#include "boards.h"
 #include "ice_led.h"
 
 int main(void) {

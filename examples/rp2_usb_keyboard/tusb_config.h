@@ -25,7 +25,7 @@
 #pragma once
 
 // pico-ice-sdk
-#include "boards/pico_ice.h"
+#include "boards.h"
 
 #define CFG_TUSB_RHPORT0_MODE       OPT_MODE_HOST
 

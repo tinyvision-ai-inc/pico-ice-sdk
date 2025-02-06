@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/pico-ice-sdk/cmake/preinit_pico_ice_sdk.cmake)
+
 # import the pico-sdk
 set(PICO_SDK_PATH ${CMAKE_CURRENT_SOURCE_DIR}/pico-sdk/)
 include(pico_sdk_import.cmake)

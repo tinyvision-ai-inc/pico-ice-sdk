@@ -29,7 +29,7 @@
 #include "pico/stdlib.h"
 
 // pico-ice-sdk
-#include "boards/pico_ice.h"
+#include "boards.h"
 #include "ice_sram.h"
 
 int main(void) {
