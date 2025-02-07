@@ -18,7 +18,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     main.c
     )
 target_link_libraries(${CMAKE_PROJECT_NAME}
-    pico_ice_sdk
+    pico_ice_preinit_common
     tinyusb_host
     )
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC

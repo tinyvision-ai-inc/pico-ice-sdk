@@ -20,6 +20,7 @@ target_include_directories(pico_ice_sdk INTERFACE
     include
     )
 target_link_libraries(pico_ice_sdk INTERFACE
+    pico_ice_preinit_common
     hardware_flash
     hardware_gpio
     hardware_pio
@@ -48,6 +49,7 @@ target_include_directories(pico_ice_usb INTERFACE
     lib/tinyuf2/src
     )
 target_link_libraries(pico_ice_usb INTERFACE
+    pico_ice_preinit_common
     pico_multicore
     pico_unique_id
     tinyusb_device

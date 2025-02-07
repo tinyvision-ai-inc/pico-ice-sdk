@@ -19,6 +19,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     usb_descriptors.c
     )
 target_link_libraries(${CMAKE_PROJECT_NAME}
+    pico_ice_preinit_common
     pico_ice_sdk
     pico_ice_usb
     pico_stdio_usb

@@ -24,18 +24,14 @@
 #ifndef BOARDS_H_
 #define BOARDS_H_
 
-#define PICO_ICE            1
-#define PICO2_ICE           2
-
-#if PICO_ICE_BOARD_ID == PICO_ICE
-#include "boards/pico_ice.h"
-#elif PICO_ICE_BOARD_ID == PICO2_ICE
+#ifdef PICO2_ICE
 #include "boards/pico2_ice.h"
+#elifdef PICO_ICE
+#include "boards/pico_ice.h"
 #else
-#error "pico-ice board model not found"
+#error "pico-ice board model not found, check the value of PICO_BOARD"
 #endif
 
-//#include "ice_usb.h" //commented out timo
 // Allow compilation of TinyUF2 without changing any source file.
 // For board detection
 #define TINYVISION_AI_INC_PICO_ICE

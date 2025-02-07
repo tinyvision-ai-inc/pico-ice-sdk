@@ -52,14 +52,12 @@ void ice_sram_reset(void) {
 }
 
 void ice_sram_init(void) {
-    /**** timo
     ice_spi_init();
     ice_spi_init_cs_pin(ICE_SRAM_CS_PIN, true);
 
     // Device initialization procedure
     sleep_us(150);
     ice_sram_reset();
-    ***/
 }
 
 void ice_sram_get_id(uint8_t id[8]) {

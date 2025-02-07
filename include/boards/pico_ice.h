@@ -77,6 +77,9 @@
 #define ICE_LED_GREEN_PIN 12
 #define ICE_LED_BLUE_PIN 15
 // SPI
+#ifndef ICE_SPI_PERIPHERAL
+#define ICE_SPI_PERIPHERAL spi1
+#endif
 #ifndef ICE_SPI_RX_PIN
 #define ICE_SPI_RX_PIN 8
 #endif
