@@ -60,6 +60,5 @@ jobs:
           cd examples/${{ matrix.example }}
           mkdir -p build
           cd build
-          export PICO_BOARD=${{ matrix.pico_board }}
-          cmake -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} ..
+          cmake -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} -DPICO_BOARD=${{ matrix.pico_board }} ..
           make -j4
