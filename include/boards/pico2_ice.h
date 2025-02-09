@@ -74,7 +74,7 @@
 #define ICE_FLASH_CSN_PIN 5 //ICE_SSN 5
 #define ICE_CRAM_CSN_PIN ICE_FLASH_CSN_PIN
 #define ICE_FPGA_CSN_PIN ICE_LED_RED_PIN // shared usage
-#define ICE_SRAM_CS_PIN 28 // active-low //SRAM_SS
+#define ICE_SRAM_CS_PIN -1 // active-low // No FPGA SRAM on pico2-ice
 // FLASH
 #ifndef ICE_FLASH_SIZE_BYTES
 #define ICE_FLASH_SIZE_BYTES (4 * 1024 * 1024)
@@ -90,5 +90,8 @@
 #define ICE_FPGA_CLOCK_PIN 21 //ICE_CLK
 #define ICE_FPGA_CDONE_PIN 40  //ICE_DONE_ADC0
 #define ICE_FPGA_CRESET_B_PIN 31 //ICE_RST
+// FPGA UART
+#define ICE_UART_TX -1
+#define ICE_UART_RX -1
 
 #endif

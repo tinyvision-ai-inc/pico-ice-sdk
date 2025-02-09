@@ -310,6 +310,8 @@ void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t) = {
 #endif
 };
 
+#if ICE_USB_UART0_CDC || ICE_USB_UART1_CDC || ICE_USB_FPGA_CDC || ICE_USB_SPI_CDC
+
 void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *coding)
 {
     printf("%s: coding=%p baud=%d\n", __func__, coding, coding->bit_rate);
@@ -334,8 +336,6 @@ void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *coding)
 #endif
     }
 }
-
-#if ICE_USB_UART0_CDC || ICE_USB_UART1_CDC || ICE_USB_FPGA_CDC || ICE_USB_SPI_CDC
 
 void tud_cdc_rx_cb(uint8_t cdc_num)
 {

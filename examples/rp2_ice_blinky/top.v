@@ -12,6 +12,6 @@ module top (
     counter <= counter +1;
   end
 
-  assign {LED_R,LED_G,LED_B} = counter[31:29];
+  assign {LED_R,LED_G,LED_B} = counter[29:27];
 
 endmodule

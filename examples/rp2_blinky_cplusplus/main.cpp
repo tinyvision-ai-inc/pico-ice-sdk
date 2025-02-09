@@ -3,10 +3,12 @@
 
 // Deliberately adding all pico-ice-sdk headers here, even ones not needed for blinky, so that continuous integration
 // verifies that all SDK headers can be compiled as C++.
+#include "ice_cram.h"
 #include "ice_flash.h"
 #include "ice_fpga.h"
-#include "ice_comm.h"
 #include "ice_led.h"
+#include "ice_pmod.h"
+#include "ice_spi.h"
 #include "ice_sram.h"
 #include "ice_usb.h"
 

@@ -122,5 +122,12 @@
 #ifndef ICE_FPGA_CRESET_B_PIN
 #define ICE_FPGA_CRESET_B_PIN 27
 #endif
+// UART
+#ifndef ICE_FPGA_UART_TX
+#define ICE_FPGA_UART_TX 0
+#endif
+#ifndef ICE_FPGA_UART_RX
+#define ICE_FPGA_UART_RX 1
+#endif
 
 #endif
