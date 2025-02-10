@@ -42,7 +42,7 @@ jobs:
       - name: riscv Toolchain env
         if: ${{ contains(matrix.pico.platform, 'riscv') }}
         run: |
-          echo "PICO_SDK_PATH=riscv_toolchain/corev-openhw-gcc-ubuntu2204-20240530" >> $GITHUB_ENV
+          echo "PICO_TOOLCHAIN_PATH=${PWD}/riscv_toolchain/corev-openhw-gcc-ubuntu2204-20240530" >> $GITHUB_ENV
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
