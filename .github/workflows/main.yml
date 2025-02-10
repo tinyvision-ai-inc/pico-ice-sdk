@@ -42,8 +42,8 @@ jobs:
       - name: riscv Toolchain
         if: matrix.pico.platform == "rp2350-riscv"
         uses: ConorMacBride/install-package@v1
-          with:
-            apt: gcc-riscv64-unknown-elf binutils-riscv64-unknown-elf
+        with:
+          apt: gcc-riscv64-unknown-elf binutils-riscv64-unknown-elf
       - name: riscv Toolchain env
         if: matrix.pico.platform == "rp2350-riscv"
         run: |
