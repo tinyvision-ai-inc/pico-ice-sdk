@@ -2,9 +2,9 @@ name: build_on_push
 
 on:
   push:
-    branches: [ "main", "rp2350_ice" ]
+    branches: [ "main", "rp2350_ice", "pico2-ice_develop" ]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "develop", "pico2-ice_develop" ]
   workflow_dispatch:
 
 jobs:
