@@ -36,6 +36,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: arm-none-eabi-gcc GNU Arm Embedded Toolchain
+        if: ${{ !contains(matrix.pico.platform, 'riscv') }}
         uses: carlosperate/arm-none-eabi-gcc-action@v1.10.0
 
       - name: riscv Toolchain
@@ -46,7 +47,7 @@ jobs:
       - name: riscv Toolchain env
         if: ${{ contains(matrix.pico.platform, 'riscv') }}
         run: |
-          echo "PICO_GCC_TRIPLE=riscv64-unknown-elf" >> $GITHUB_ENV
+          echo "PICO_SDK_PATH=riscv_toolchain/corev-openhw-gcc-ubuntu2204-20240530" >> $GITHUB_ENV
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
@@ -60,11 +61,30 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-build-
 
+      - name: Cache riscv toolchain
+        id: cache-riscv-toolchain
+        if: ${{ contains(matrix.pico.platform, 'riscv') }}
+        uses: actions/cache@v4
+        with:
+          path: lib
+          key: ${{ runner.os }}-build-${{ hashFiles('riscv_toolchain/**') }}
+          restore-keys: |
+            ${{ runner.os }}-build-
+
       - name: Fetch submodules
         if: steps.cache-submodules.outputs.cache-hit != 'true'
         run: |
           git submodule update --init
           git -C lib/pico-sdk submodule update --init
+
+      - name: Fetch riscv toolchain
+        if: ${{ contains(matrix.pico.platform, 'riscv') && steps.cache-riscv-toolchain.outputs.cache-hit != 'true'}}
+        run: |
+          mkdir riscv_toolchain
+          cd riscv_toolchain
+          export TC_NAME=corev-openhw-gcc-ubuntu2204-20240530
+          wget https://buildbot.embecosm.com/job/corev-gcc-ubuntu2204/47/artifact/${TC_NAME}.tar.gz
+          tar -xf ${TC_NAME}.tar.gz
 
       - name: Build each example on every commit
         run: |
