@@ -52,7 +52,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: lib
-          key: ${{ runner.os }}-build-${{ hashFiles('lib/**') }}
+          key: ${{ runner.os }}-build-submodules-${{ hashFiles('lib/**') }}
           restore-keys: |
             ${{ runner.os }}-build-submodules
 
@@ -62,7 +62,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: lib
-          key: ${{ runner.os }}-build-${{ hashFiles('riscv_toolchain/**') }}
+          key: ${{ runner.os }}-build-riscv_toolchain-${{ hashFiles('riscv_toolchain/**') }}
           restore-keys: |
             ${{ runner.os }}-build-riscv_toolchain
 
