@@ -21,6 +21,7 @@ jobs:
             pico_board: "pico_ice"
           - pico_platform: "rp2350"
             pico_board: "pico2_ice"
+            additional_var_fix: "dummy"
           - pico_platform: "rp2350-riscv"
             pico_board: "pico2_ice"
 
