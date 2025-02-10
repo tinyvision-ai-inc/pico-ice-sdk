@@ -15,15 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         cmake_build_type: [Debug]
-        pico_board: ["pico_ice", "pico2_ice"]
-        include:
-          - pico_platform: "rp2040"
-            pico_board: "pico_ice"
-          - pico_platform: "rp2350"
-            pico_board: "pico2_ice"
-            additional_var_fix: "dummy"
-          - pico_platform: "rp2350-riscv"
-            pico_board: "pico2_ice"
+        pico: [ {board: "pico_ice", platform: "rp2040"}, {board: "pico2_ice", platform: "rp2350"}, {board: "pico2_ice", platform: "rp2350-riscv"}]
 
         example:
           - rp2_blinky
@@ -69,5 +61,5 @@ jobs:
           cd examples/${{ matrix.example }}
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} -DPICO_BOARD=${{ matrix.pico_board }} -DPICO_PLATFORM=${{ matrix.pico_platform }} ..
+          cmake -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} -DPICO_BOARD=${{ matrix.pico.board }} -DPICO_PLATFORM=${{ matrix.pico.platform }} ..
           make -j4
