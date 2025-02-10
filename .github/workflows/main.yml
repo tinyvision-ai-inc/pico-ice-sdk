@@ -61,7 +61,7 @@ jobs:
         if: ${{ contains(matrix.pico.platform, 'riscv') }}
         uses: actions/cache@v4
         with:
-          path: lib
+          path: riscv_toolchain
           key: ${{ runner.os }}-build-riscv_toolchain-${{ hashFiles('riscv_toolchain/**') }}
           restore-keys: |
             ${{ runner.os }}-build-riscv_toolchain
