@@ -36,16 +36,16 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: arm-none-eabi-gcc GNU Arm Embedded Toolchain
-        if: matrix.pico.platform == "rp2040" || matrix.pico.platform == "rp2350"
+        if: ${{ !contains(matrix.pico.platform, "riscv") }}
         uses: carlosperate/arm-none-eabi-gcc-action@v1.10.0
 
       - name: riscv Toolchain
-        if: matrix.pico.platform == "rp2350-riscv"
+        if: ${{ contains(matrix.pico.platform, "riscv") }}
         uses: ConorMacBride/install-package@v1
         with:
           apt: gcc-riscv64-unknown-elf binutils-riscv64-unknown-elf
       - name: riscv Toolchain env
-        if: matrix.pico.platform == "rp2350-riscv"
+        if: ${{ contains(matrix.pico.platform, "riscv") }}
         run: |
           echo "PICO_GCC_TRIPLE=riscv64-unknown-elf" >> $GITHUB_ENV
 
