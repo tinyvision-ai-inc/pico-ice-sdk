@@ -39,11 +39,6 @@ jobs:
         if: ${{ !contains(matrix.pico.platform, 'riscv') }}
         uses: carlosperate/arm-none-eabi-gcc-action@v1.10.0
 
-      - name: riscv Toolchain
-        if: ${{ contains(matrix.pico.platform, 'riscv') }}
-        uses: ConorMacBride/install-package@v1
-        with:
-          apt: gcc-riscv64-unknown-elf binutils-riscv64-unknown-elf
       - name: riscv Toolchain env
         if: ${{ contains(matrix.pico.platform, 'riscv') }}
         run: |
@@ -59,7 +54,7 @@ jobs:
           path: lib
           key: ${{ runner.os }}-build-${{ hashFiles('lib/**') }}
           restore-keys: |
-            ${{ runner.os }}-build-
+            ${{ runner.os }}-build-submodules
 
       - name: Cache riscv toolchain
         id: cache-riscv-toolchain
@@ -69,7 +64,7 @@ jobs:
           path: lib
           key: ${{ runner.os }}-build-${{ hashFiles('riscv_toolchain/**') }}
           restore-keys: |
-            ${{ runner.os }}-build-
+            ${{ runner.os }}-build-riscv_toolchain
 
       - name: Fetch submodules
         if: steps.cache-submodules.outputs.cache-hit != 'true'
