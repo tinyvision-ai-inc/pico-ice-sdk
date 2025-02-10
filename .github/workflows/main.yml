@@ -73,4 +73,4 @@ jobs:
           mkdir -p build
           cd build
           cmake -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} -DPICO_BOARD=${{ matrix.pico.board }} -DPICO_PLATFORM=${{ matrix.pico.platform }} ..
-          make -j4
+          make
