@@ -16,14 +16,13 @@ jobs:
       matrix:
         cmake_build_type: [Debug]
         pico_board: ["pico_ice", "pico2_ice"]
-        pico_platform: ["rp2040", "rp2350", "rp2350-riscv"]
         include:
-          - pico_board: "pico_ice"
-            pico_platform: "rp2040"
-          - pico_board: "pico2_ice"
-            pico_platform: "rp2350"
-          - pico_board: "pico2_ice"
-            pico_platform: "rp2350-riscv"
+          - pico_platform: "rp2040"
+            pico_board: "pico_ice"
+          - pico_platform: "rp2350"
+            pico_board: "pico2_ice"
+          - pico_platform: "rp2350-riscv"
+            pico_board: "pico2_ice"
 
         example:
           - rp2_blinky
