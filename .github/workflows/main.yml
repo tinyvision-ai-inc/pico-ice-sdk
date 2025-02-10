@@ -20,9 +20,8 @@ jobs:
           - pico_board: "pico_ice"
             pico_platform: "rp2040"
           - pico_board: "pico2_ice"
-            pico_platform: "rp2350"
-          - pico_board: "pico2_ice"
-            pico_platform: "rp2350-riscv"
+            pico_platform: ["rp2350", "rp2350-riscv"]
+
         example:
           - rp2_blinky
           - rp2_blinky_cplusplus
