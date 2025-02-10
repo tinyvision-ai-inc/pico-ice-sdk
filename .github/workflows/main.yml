@@ -16,6 +16,13 @@ jobs:
       matrix:
         cmake_build_type: [Debug]
         pico_board: ["pico_ice", "pico2_ice"]
+        include:
+          - pico_board: "pico_ice"
+            pico_platform: "rp2040"
+          - pico_board: "pico2_ice"
+            pico_platform: "rp2350"
+          - pico_board: "pico2_ice"
+            pico_platform: "rp2350-riscv"
         example:
           - rp2_blinky
           - rp2_blinky_cplusplus
@@ -60,5 +67,5 @@ jobs:
           cd examples/${{ matrix.example }}
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} -DPICO_BOARD=${{ matrix.pico_board }} ..
+          cmake -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} -DPICO_BOARD=${{ matrix.pico_board }} -DPICO_PLATFORM=${{ matrix.pico_platform }} ..
           make -j4
