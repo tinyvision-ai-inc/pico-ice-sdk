@@ -139,6 +139,7 @@ bool ice_cram_write(const uint8_t* bitstream, uint32_t size)
     for (uint32_t i = 0; i < size; ++i) {
         put_byte(bitstream[i]);
     }
+    return true;
 }
 
 bool ice_cram_close(void)
