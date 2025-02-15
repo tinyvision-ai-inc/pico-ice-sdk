@@ -33,6 +33,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "ice_fpga_data.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,7 +43,7 @@ extern "C" {
  * @brief Reset the iCE40 and set it to CRAM configuration mode and prepare the
  *  incoming SPI transfer.
  */
-void ice_cram_open(void);
+bool ice_cram_open(const ice_fpga fpga);
 
 /**
  * @brief Send the bitstream to the iCE40 CRAM, which configures the FPGA

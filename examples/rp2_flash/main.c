@@ -52,7 +52,7 @@ int main(void) {
     ice_led_init();
 
     // Booted up, now take control of the Flash
-    ice_flash_init();
+    ice_flash_init(FPGA_DATA.bus);
 
     // Write data: known pattern, not very random!
     for (size_t i = 0; i < sizeof buf_w; i++) {
@@ -62,9 +62,9 @@ int main(void) {
     for (uint16_t i = 0;; i++) {
         // Erase a sector, program the page and then read it back.
         // Note that the FPGA bitfile which is at 0x000000
-        ice_flash_erase_sector(MY_BASE_ADDRESS);
-        ice_flash_program_page(MY_BASE_ADDRESS, buf_w);
-        ice_flash_read(MY_BASE_ADDRESS, buf_r, sizeof buf_r);
+        ice_flash_erase_sector(FPGA_DATA.bus, MY_BASE_ADDRESS);
+        ice_flash_program_page(FPGA_DATA.bus, MY_BASE_ADDRESS, buf_w);
+        ice_flash_read(FPGA_DATA.bus, MY_BASE_ADDRESS, buf_r, sizeof buf_r);
         memdump(buf_r, sizeof buf_r);
 
         sleep_ms(5000);

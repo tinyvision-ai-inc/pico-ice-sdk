@@ -13,6 +13,7 @@
 #ifndef PICO_ICE_H_
 #define PICO_ICE_H_
 #include "ice40up5k.h"
+#include "../ice_fpga_data.h"
 
 // For board detection
 #ifndef PICO_ICE
@@ -76,31 +77,6 @@
 #define ICE_LED_RED_PIN 13
 #define ICE_LED_GREEN_PIN 12
 #define ICE_LED_BLUE_PIN 15
-// SPI
-#ifndef ICE_SPI_PERIPHERAL
-#define ICE_SPI_PERIPHERAL spi1
-#endif
-#ifndef ICE_SPI_RX_PIN
-#define ICE_SPI_RX_PIN 8
-#endif
-#ifndef ICE_SPI_SCK_PIN
-#define ICE_SPI_SCK_PIN 10
-#endif
-#ifndef ICE_SPI_TX_PIN
-#define ICE_SPI_TX_PIN 11
-#endif
-#ifndef ICE_FLASH_CSN_PIN
-#define ICE_FLASH_CSN_PIN 9
-#endif
-#ifndef ICE_CRAM_CSN_PIN
-#define ICE_CRAM_CSN_PIN ICE_FLASH_CSN_PIN
-#endif
-#ifndef ICE_FPGA_CSN_PIN
-#define ICE_FPGA_CSN_PIN ICE_LED_RED_PIN // shared usage
-#endif
-#ifndef ICE_SRAM_CS_PIN
-#define ICE_SRAM_CS_PIN 14 // active-high
-#endif
 // FLASH
 #ifndef ICE_FLASH_SIZE_BYTES
 #define ICE_FLASH_SIZE_BYTES (4 * 1024 * 1024)
@@ -112,16 +88,6 @@
 // MISC
 #define ICE_GPOUT_CLOCK_PIN 25
 #define ICE_RESET_BUTTON_PIN 28
-// ICE40 FPGA (SYSTEM)
-#ifndef ICE_FPGA_CLOCK_PIN
-#define ICE_FPGA_CLOCK_PIN 24
-#endif
-#ifndef ICE_FPGA_CDONE_PIN
-#define ICE_FPGA_CDONE_PIN 26
-#endif
-#ifndef ICE_FPGA_CRESET_B_PIN
-#define ICE_FPGA_CRESET_B_PIN 27
-#endif
 // UART
 #ifndef ICE_FPGA_UART_TX
 #define ICE_FPGA_UART_TX 0
@@ -129,5 +95,7 @@
 #ifndef ICE_FPGA_UART_RX
 #define ICE_FPGA_UART_RX 1
 #endif
+
+#define FPGA_DATA pico_fpga
 
 #endif

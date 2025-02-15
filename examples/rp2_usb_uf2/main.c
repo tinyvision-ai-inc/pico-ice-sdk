@@ -33,7 +33,7 @@ int main(void) {
     ice_usb_init();
 
     // Let the FPGA start
-    ice_fpga_start();
+    ice_fpga_start(FPGA_DATA);
 
     while (true) {
         tud_task();

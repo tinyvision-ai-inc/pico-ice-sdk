@@ -32,40 +32,40 @@
 #include "ice_fpga.h"
 #include "ice_spi.h"
 
-void ice_fpga_init(uint8_t freq_mhz) {
+void ice_fpga_init(const ice_fpga fpga, uint8_t freq_mhz) {
     uint src = CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_VALUE_CLK_USB;
 
-    clock_gpio_init(ICE_FPGA_CLOCK_PIN, src, 48 / freq_mhz);
+    clock_gpio_init(fpga.pin_clock, src, 48 / freq_mhz);
 
-    ice_spi_init();
-    ice_spi_init_cs_pin(ICE_FPGA_CSN_PIN, false);
+    ice_spi_init(fpga.bus);
+    ice_spi_init_cs_pin(fpga.bus.CS_fpga, false);
 }
 
-void ice_fpga_stop(void) {
-    gpio_init(ICE_FPGA_CRESET_B_PIN);
-    gpio_put(ICE_FPGA_CRESET_B_PIN, false);
-    gpio_set_dir(ICE_FPGA_CRESET_B_PIN, GPIO_OUT);
+void ice_fpga_stop(const ice_fpga fpga) {
+    gpio_init(fpga.pin_creset);
+    gpio_put(fpga.pin_creset, false);
+    gpio_set_dir(fpga.pin_creset, GPIO_OUT);
 }
 
 // Datasheet iCE40 Programming Configuration - 3.1. Mode Selection
-bool ice_fpga_start(void) {
+bool ice_fpga_start(const ice_fpga fpga) {
     // For sensing configuration status.
-    gpio_init(ICE_FPGA_CDONE_PIN);
+    gpio_init(fpga.pin_cdone);
 
     // To take the FPGA out of reset
-    gpio_init(ICE_FPGA_CRESET_B_PIN);
-    gpio_put(ICE_FPGA_CRESET_B_PIN, true);
-    gpio_set_dir(ICE_FPGA_CRESET_B_PIN, GPIO_OUT);
+    gpio_init(fpga.pin_creset);
+    gpio_put(fpga.pin_creset, true);
+    gpio_set_dir(fpga.pin_creset, GPIO_OUT);
 
     // Wait that the configuration is finished before interferring.
     // This makes sure the SPI bus is not driven by both the FPGA
     // (reading from flash) and the RP2040 (configuring the flash).
     // Note that if the flash is corrupted, this function will timeout!
-    for (uint8_t timeout = 100; !gpio_get(ICE_FPGA_CDONE_PIN); timeout--) {
+    for (uint8_t timeout = 100; !gpio_get(fpga.pin_cdone); timeout--) {
         if (timeout == 0) {
             // if the FPGA could not start, it would keep the clock active,
             // which disturpts the rest of the signals, including SWD
-            ice_fpga_stop();
+            ice_fpga_stop(fpga);
             return false;
         }
         sleep_ms(1);

@@ -36,6 +36,8 @@
 #include <stddef.h>
 #include "boards.h"
 
+#include "ice_fpga_data.h"
+
 // This module is not thread safe.
 
 #define ICE_SRAM_STATUS_BUSY_MASK  0x01
@@ -51,12 +53,12 @@ extern "C" {
 /**
  * @brief Send an initialization command to the SRAM chip.
  */
-void ice_sram_init(void);
+void ice_sram_init(const ice_spibus spibus);
 
 /**
  * @brief Send a reset command to the SRAM chipo.
  */
-void ice_sram_reset(void);
+void ice_sram_reset(const ice_spibus spibus);
 
 /**
  * @brief Obtain the chip ID from the SRAM chip.
@@ -69,7 +71,7 @@ void ice_sram_reset(void);
  * - 3 bits - Density EID - A code for memory size
  * - 45 bits - EID - the rest of the chip identifier
  */
-void ice_sram_get_id(uint8_t id[8]);
+void ice_sram_get_id(const ice_spibus spibus, uint8_t id[8]);
 
 /**
  * @brief Calling this function when any SPI transfer is in progress on this bus waits for it then starts.
@@ -81,7 +83,7 @@ void ice_sram_get_id(uint8_t id[8]);
  *
  * Calling this function when a transfer is in progress waits then starts.
  */
-void ice_sram_write_async(uint32_t addr, const uint8_t *data, size_t data_size, void (*callback)(volatile void *), void *context);
+void ice_sram_write_async(const ice_spibus spibus, uint32_t addr, const uint8_t *data, size_t data_size, void (*callback)(volatile void *), void *context);
 
 /**
  * @brief Write a buffer to the flash chip and wait until completion.
@@ -89,7 +91,7 @@ void ice_sram_write_async(uint32_t addr, const uint8_t *data, size_t data_size, 
  * @param data Buffer with the data to send.
  * @param data_size Size of this buffer in bytes.
  */
-void ice_sram_write_blocking(uint32_t addr, const uint8_t *data, size_t data_size);
+void ice_sram_write_blocking(const ice_spibus spibus, uint32_t addr, const uint8_t *data, size_t data_size);
 
 /**
  * @brief Read a buffer from the flash chip in the background, with a callback
@@ -103,7 +105,7 @@ void ice_sram_write_blocking(uint32_t addr, const uint8_t *data, size_t data_siz
  * Calling this function when any SPI transfer is in progress on this bus waits
  * for it then starts.
  */
-void ice_sram_read_async(uint32_t addr, uint8_t *data, size_t data_size, void (*callback)(volatile void *), void *context);
+void ice_sram_read_async(const ice_spibus spibus, uint32_t addr, uint8_t *data, size_t data_size, void (*callback)(volatile void *), void *context);
 
 /**
  * @brief Read a buffer from the flash chip and wait until completion.
@@ -111,7 +113,7 @@ void ice_sram_read_async(uint32_t addr, uint8_t *data, size_t data_size, void (*
  * @param data Buffer to which save the data read.
  * @param data_size Size of this buffer in bytes.
  */
-void ice_sram_read_blocking(uint32_t addr, uint8_t *data, size_t data_size);
+void ice_sram_read_blocking(const ice_spibus spibus, uint32_t addr, uint8_t *data, size_t data_size);
 
 #ifdef __cplusplus
 }

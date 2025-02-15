@@ -32,7 +32,7 @@
 
 int main(void) {
     ice_led_init();
-    ice_fpga_start();
+    ice_fpga_start(FPGA_DATA);
 
     while (true) {
         // let the FPGA run

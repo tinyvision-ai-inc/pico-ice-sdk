@@ -34,17 +34,17 @@
 
 int main(void) {
     stdio_init_all();
-    ice_sram_init();
+    ice_sram_init(FPGA_DATA.bus);
 
     while (1) {
         uint8_t buf[8];
 
-        ice_sram_get_id(buf);
+        ice_sram_get_id(FPGA_DATA.bus, buf);
         printf("ChipID: %02X %02X %02X %02X %02X %02X %02X %02X\r\n",
                 buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
 
-        ice_sram_write_blocking(0x0000, "\x01\x02\x03\x04\x05\x06\x07\x08", 8);
-        ice_sram_read_blocking(0x0000, buf, sizeof buf);
+        ice_sram_write_blocking(FPGA_DATA.bus, 0x0000, "\x01\x02\x03\x04\x05\x06\x07\x08", 8);
+        ice_sram_read_blocking(FPGA_DATA.bus, 0x0000, buf, sizeof buf);
         printf("0x0000: %02X %02X %02X %02X %02X %02X %02X %02X\r\n",
                 buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
     }

@@ -33,6 +33,8 @@ static PIO pio;
 static int sm;
 static uint offset;
 static const int clk_div = 1;  // 1Mbit/sec for debugging, could be much faster
+static ice_fpga fpga_copy;
+static bool fpga_initialized = false;
 
 static bool try_add_program(PIO try_pio)
 {
@@ -61,26 +63,26 @@ static void state_machine_init(void)
     }
 
     pio_sm_config c = ice_cram_program_get_default_config(offset);
-    sm_config_set_out_pins(&c, ICE_SPI_RX_PIN, 1);
-    sm_config_set_sideset_pins(&c, ICE_SPI_SCK_PIN);
+    sm_config_set_out_pins(&c, fpga_copy.bus.MISO, 1);
+    sm_config_set_sideset_pins(&c, fpga_copy.bus.SCK);
     sm_config_set_clkdiv(&c, clk_div);
     sm_config_set_out_shift(&c, false, true, 8);
     pio_sm_init(pio, sm, offset, &c);
 
     pio_sm_set_enabled(pio, sm, true);
 
-    pio_sm_set_consecutive_pindirs(pio, sm, ICE_SPI_RX_PIN, 1, true);
-    pio_sm_set_consecutive_pindirs(pio, sm, ICE_SPI_SCK_PIN, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, sm, fpga_copy.bus.MISO, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, sm, fpga_copy.bus.SCK, 1, true);
 
-    pio_gpio_init(pio, ICE_SPI_RX_PIN);
-    pio_gpio_init(pio, ICE_SPI_SCK_PIN);
+    pio_gpio_init(pio, fpga_copy.bus.MISO);
+    pio_gpio_init(pio, fpga_copy.bus.SCK);
 }
 
 static void state_machine_deinit(void)
 {
     pio_sm_set_enabled(pio, sm, false);
-    pio_sm_set_consecutive_pindirs(pio, sm, ICE_SPI_RX_PIN, 1, false);
-    pio_sm_set_consecutive_pindirs(pio, sm, ICE_SPI_SCK_PIN, 1, false);
+    pio_sm_set_consecutive_pindirs(pio, sm, fpga_copy.bus.MISO, 1, false);
+    pio_sm_set_consecutive_pindirs(pio, sm, fpga_copy.bus.SCK, 1, false);
     pio_remove_program(pio, &ice_cram_program, offset);
     pio_sm_unclaim(pio, sm);
 }
@@ -108,30 +110,37 @@ static void wait_idle(void)
     }
 }
 
-void ice_cram_open(void)
+bool ice_cram_open(const ice_fpga fpga)
 {
+    if (fpga_initialized) return false;
+    fpga_copy = fpga;
+    fpga_copy.bus = fpga.bus;
+    fpga_initialized = true;
+
     // Hold FPGA in reset before doing anything with SPI bus.
-    ice_fpga_stop();
+    ice_fpga_stop(fpga);
 
     state_machine_init();
 
     // SPI_SS low signals FPGA to receive the bitstream.
-    gpio_init(ICE_CRAM_CSN_PIN);
-    gpio_put(ICE_CRAM_CSN_PIN, false);
-    gpio_set_dir(ICE_CRAM_CSN_PIN, GPIO_OUT);
+    gpio_init(fpga_copy.bus.CS_cram);
+    gpio_put(fpga_copy.bus.CS_cram, false);
+    gpio_set_dir(fpga_copy.bus.CS_cram, GPIO_OUT);
 
     // Bring FPGA out of reset after at least 200ns.
     busy_wait_us(2);
-    gpio_put(ICE_FPGA_CRESET_B_PIN, true);
+    gpio_put(fpga_copy.pin_creset, true);
 
     // At least 1200us for FPGA to clear internal configuration memory.
     busy_wait_us(1300);
 
     // SPI_SS high for 8 SPI_SCLKs
-    gpio_put(ICE_CRAM_CSN_PIN, true);
+    gpio_put(fpga_copy.bus.CS_cram, true);
     put_byte(0);
     wait_idle();
-    gpio_put(ICE_CRAM_CSN_PIN, false);
+    gpio_put(fpga_copy.bus.CS_cram, false);
+
+    return true;
 }
 
 bool ice_cram_write(const uint8_t* bitstream, uint32_t size)
@@ -144,18 +153,20 @@ bool ice_cram_write(const uint8_t* bitstream, uint32_t size)
 
 bool ice_cram_close(void)
 {
+    if (!fpga_initialized) return false;
+
     wait_idle();
 
     // Bring SPI_SS high at end of bitstream and leave it pulled up.
-    gpio_put(ICE_CRAM_CSN_PIN, true);
+    gpio_put(fpga_copy.bus.CS_cram, true);
     sleep_us(1);
-    gpio_pull_up(ICE_CRAM_CSN_PIN);
-    gpio_set_dir(ICE_CRAM_CSN_PIN, GPIO_IN);
+    gpio_pull_up(fpga_copy.bus.CS_cram);
+    gpio_set_dir(fpga_copy.bus.CS_cram, GPIO_IN);
 
     // Output dummy bytes. CDONE should go high within 100 SCLKs or there was an error with the bitstream.
     for (int i = 0; i < 13; ++i) {
         put_byte(0);
-        if (gpio_get(ICE_FPGA_CDONE_PIN)) {
+        if (gpio_get(fpga_copy.pin_cdone)) {
             break;
         }
     }
@@ -168,5 +179,7 @@ bool ice_cram_close(void)
     wait_idle();
     state_machine_deinit();
 
-    return gpio_get(ICE_FPGA_CDONE_PIN);
+    fpga_initialized = false;
+
+    return gpio_get(fpga_copy.pin_creset);
 }

@@ -39,6 +39,8 @@ volatile static void *g_async_context;
 static int dma_tx, dma_rx;
 static uint32_t dma_word;
 static bool spi_is_initialized;
+static ice_spibus spibus_copy;
+static bool spibus_initialized = false;
 
 static void spi_irq_handler(void) {
     if (dma_channel_get_irq1_status(dma_rx)) {
@@ -50,27 +52,31 @@ static void spi_irq_handler(void) {
     }
 }
 
-void ice_spi_init(void) {
+bool ice_spi_init(const ice_spibus spibus) {
+    if (spibus_initialized) return false;
+    spibus_copy = spibus;
+    spibus_initialized = true;
+
     // This driver is only focused on one particular SPI bus
-    gpio_init(ICE_SPI_SCK_PIN);
-    gpio_init(ICE_SPI_TX_PIN);
-    gpio_init(ICE_SPI_RX_PIN);
+    gpio_init(spibus_copy.SCK);
+    gpio_init(spibus_copy.MOSI);
+    gpio_init(spibus_copy.MISO);
 
     // Everything in high impedance before a transaction occurs
-    gpio_set_dir(ICE_SPI_SCK_PIN, GPIO_IN);
-    gpio_set_dir(ICE_SPI_TX_PIN, GPIO_IN);
-    gpio_set_dir(ICE_SPI_RX_PIN, GPIO_IN);
+    gpio_set_dir(spibus_copy.SCK, GPIO_IN);
+    gpio_set_dir(spibus_copy.MOSI, GPIO_IN);
+    gpio_set_dir(spibus_copy.MISO, GPIO_IN);
 
     if (spi_is_initialized) { 
-        spi_set_baudrate(ICE_SPI_PERIPHERAL, ICE_SPI_BAUDRATE);
+        spi_set_baudrate(spibus_copy.peripheral, ICE_SPI_BAUDRATE);
         irq_set_enabled(DMA_IRQ_1, true);
-        return;
+        return true;
     }
     spi_is_initialized = true;
 
     // Initialize SPI, but don't yet assign the pins SPI function so they stay in high impedance mode.
     // Use 33MHz as that is the fastest the SRAM supports a 03h read command.
-    spi_init(ICE_SPI_PERIPHERAL, ICE_SPI_BAUDRATE);
+    spi_init(spibus_copy.peripheral, ICE_SPI_BAUDRATE);
 
     // Setup DMA channel and interrupt handler
     dma_tx = dma_claim_unused_channel(true);
@@ -79,6 +85,7 @@ void ice_spi_init(void) {
     dma_channel_set_irq1_enabled(dma_rx, true);
     irq_set_exclusive_handler(DMA_IRQ_1, spi_irq_handler);
     irq_set_enabled(DMA_IRQ_1, true);
+    return true;
 }
 
 void ice_spi_init_cs_pin(uint8_t csn_pin, bool active_high) {
@@ -92,9 +99,9 @@ void ice_spi_init_cs_pin(uint8_t csn_pin, bool active_high) {
 
 void ice_spi_chip_select(uint8_t csn_pin) {
     // Take control of the bus
-    gpio_set_function(ICE_SPI_RX_PIN, GPIO_FUNC_SPI);
-    gpio_set_function(ICE_SPI_SCK_PIN, GPIO_FUNC_SPI);
-    gpio_set_function(ICE_SPI_TX_PIN, GPIO_FUNC_SPI);
+    gpio_set_function(spibus_copy.MISO, GPIO_FUNC_SPI);
+    gpio_set_function(spibus_copy.SCK, GPIO_FUNC_SPI);
+    gpio_set_function(spibus_copy.MOSI, GPIO_FUNC_SPI);
 
     // Start an SPI transaction
     gpio_put(csn_pin, false);
@@ -104,7 +111,7 @@ void ice_spi_chip_select(uint8_t csn_pin) {
 
 void ice_spi_chip_deselect(uint8_t csn_pin) {
     // Busy wait until SCK goes low
-    while (gpio_get(ICE_SPI_SCK_PIN)) {
+    while (gpio_get(spibus_copy.SCK)) {
         tight_loop_contents();
     }
 
@@ -113,27 +120,23 @@ void ice_spi_chip_deselect(uint8_t csn_pin) {
     sleep_us(1);
 
     // Release the bus by connecting back to the CPU GPIO, ensuring the IOs are back to high-impedance mode
-    gpio_set_dir(ICE_SPI_SCK_PIN, GPIO_IN);
-    gpio_set_dir(ICE_SPI_TX_PIN, GPIO_IN);
-    gpio_set_dir(ICE_SPI_RX_PIN, GPIO_IN);
+    gpio_set_dir(spibus_copy.SCK, GPIO_IN);
+    gpio_set_dir(spibus_copy.MOSI, GPIO_IN);
+    gpio_set_dir(spibus_copy.MISO, GPIO_IN);
 
     gpio_set_function(PICO_DEFAULT_SPI_RX_PIN, GPIO_FUNC_SIO);
     gpio_set_function(PICO_DEFAULT_SPI_SCK_PIN, GPIO_FUNC_SIO);
     gpio_set_function(PICO_DEFAULT_SPI_TX_PIN, GPIO_FUNC_SIO);
 
-    switch (csn_pin) {
-    case ICE_LED_RED_PIN:
-    case ICE_LED_GREEN_PIN:
-    case ICE_LED_BLUE_PIN:
+    if (csn_pin == ICE_LED_BLUE_PIN) {
         gpio_set_pulls(csn_pin, false, false);
-        break;
-    case ICE_SRAM_CS_PIN:
+    } else if (csn_pin == spibus_copy.CS_psram) {
         gpio_set_pulls(csn_pin, false, true);
-        break;
-    default:
+    } else if (csn_pin == ICE_LED_RED_PIN || csn_pin == ICE_LED_GREEN_PIN) {
+    } else {
         gpio_set_pulls(csn_pin, true, false);
-        break;
     }
+
     gpio_set_dir(csn_pin, GPIO_IN);
 }
 
@@ -154,23 +157,23 @@ void ice_spi_write_async(uint8_t const *data, size_t data_size, void (*callback)
 
     dma_channel_config c = dma_channel_get_default_config(dma_tx);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
-    channel_config_set_dreq(&c, spi_get_dreq(ICE_SPI_PERIPHERAL, true));
+    channel_config_set_dreq(&c, spi_get_dreq(spibus_copy.peripheral, true));
     channel_config_set_read_increment(&c, true);
     channel_config_set_write_increment(&c, false);
     dma_channel_configure(dma_tx, &c,
-                          &spi_get_hw(ICE_SPI_PERIPHERAL)->dr, // write address
+                          &spi_get_hw(spibus_copy.peripheral)->dr, // write address
                           data,                  // read address
                           data_size,             // element count
                           false);
 
     c = dma_channel_get_default_config(dma_rx);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
-    channel_config_set_dreq(&c, spi_get_dreq(ICE_SPI_PERIPHERAL, false));
+    channel_config_set_dreq(&c, spi_get_dreq(spibus_copy.peripheral, false));
     channel_config_set_read_increment(&c, false);
     channel_config_set_write_increment(&c, false);
     dma_channel_configure(dma_rx, &c,
                           &dma_word,             // write address
-                          &spi_get_hw(ICE_SPI_PERIPHERAL)->dr, // read address
+                          &spi_get_hw(spibus_copy.peripheral)->dr, // read address
                           data_size,
                           false);
 
@@ -185,23 +188,23 @@ void ice_spi_read_async(uint8_t *data, size_t data_size, void (*callback)(volati
 
     dma_channel_config c = dma_channel_get_default_config(dma_tx);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
-    channel_config_set_dreq(&c, spi_get_dreq(ICE_SPI_PERIPHERAL, true));
+    channel_config_set_dreq(&c, spi_get_dreq(spibus_copy.peripheral, true));
     channel_config_set_read_increment(&c, false);
     channel_config_set_write_increment(&c, false);
     dma_channel_configure(dma_tx, &c,
-                          &spi_get_hw(ICE_SPI_PERIPHERAL)->dr, // write address
+                          &spi_get_hw(spibus_copy.peripheral)->dr, // write address
                           &dma_word,             // read address
                           data_size,             // element count
                           false);
 
     c = dma_channel_get_default_config(dma_rx);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
-    channel_config_set_dreq(&c, spi_get_dreq(ICE_SPI_PERIPHERAL, false));
+    channel_config_set_dreq(&c, spi_get_dreq(spibus_copy.peripheral, false));
     channel_config_set_read_increment(&c, false);
     channel_config_set_write_increment(&c, true);
     dma_channel_configure(dma_rx, &c,
                           data,                  // write address
-                          &spi_get_hw(ICE_SPI_PERIPHERAL)->dr, // read address
+                          &spi_get_hw(spibus_copy.peripheral)->dr, // read address
                           data_size,
                           false);
 

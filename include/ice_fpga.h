@@ -38,6 +38,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "ice_fpga_data.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,20 +53,20 @@ extern "C" {
  * dedicated [`CLOCK GPOUT0`](https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf)
  * feature.
  */
-void ice_fpga_init(uint8_t freq_mhz);
+void ice_fpga_init(const ice_fpga fpga, uint8_t freq_mhz);
 
 /**
  * @brief Release the stop mode if it was present, and wait that the FPGA
  *  confirms its startup with ICE_FPGA_CDONE_PIN.
  * @return true on success and false if it timeouts.
  */
-bool ice_fpga_start(void);
+bool ice_fpga_start(const ice_fpga fpga);
 
 /**
  * @brief Set the ICE_FPGA_CRESET_B_PIN to LOW which keeps the FPGA in reset
  *  mode.
  */
-void ice_fpga_stop(void);
+void ice_fpga_stop(const ice_fpga fpga);
 
 #ifdef __cplusplus
 }

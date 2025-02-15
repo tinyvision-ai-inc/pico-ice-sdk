@@ -37,12 +37,16 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#include "ice_fpga_data.h"
+
 /**
  * @brief This is chosen to allow all commands to the flash and SRAM to work.
  *
  * 33MHz is the fastest the SRAM supports a 03h read command.
  */
 #define ICE_SPI_BAUDRATE (33 * 1000 * 1000)
+
+#define SPI_PERIPHERAL(per) spi##per
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,7 +58,7 @@ extern "C" {
  * This lets others access the bus, such as the iCE40 during initial
  * configuration.
  */
-void ice_spi_init(void);
+bool ice_spi_init(const ice_spibus spibus);
 
 void ice_spi_init_cs_pin(uint8_t cs_pin, bool active_high);
 

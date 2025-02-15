@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2023 tinyVision.ai
+ * Copyright (c) 2025 tinyVision.ai
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,28 +22,28 @@
  * SOFTWARE.
  */
 
-#include "pico/stdlib.h"
-#include "pico/stdio.h"
-#include "boards.h"
-#include "ice_cram.h"
-#include "ice_fpga.h"
-#include "ice_led.h"
-#include "ice_spi.h"
+#pragma once
+#include <stdint.h>
 
-uint8_t bitstream[] = {
-#include "bitstream.h"
-};
+#include "hardware/spi.h"
 
-int main(void) {
-    ice_led_init();
-	ice_fpga_init(FPGA_DATA, 48);
-    ice_fpga_start(FPGA_DATA);
+typedef struct {
+	spi_inst_t	*peripheral;
+	uint8_t		MISO;
+	uint8_t		MOSI;
+	uint8_t		SCK;
+	uint8_t		CS_flash;
+	uint8_t		CS_cram;
+	uint8_t		CS_psram;
+	uint8_t		CS_fpga;
+} ice_spibus;
 
-    // Write the whole bitstream to the FPGA CRAM
-    ice_cram_open(FPGA_DATA);
-    ice_cram_write(bitstream, sizeof(bitstream));
-    ice_cram_close();
+typedef struct {
+	ice_spibus	bus;
+	uint8_t		pin_cdone;
+	uint8_t		pin_clock;
+	uint8_t		pin_creset;
+} ice_fpga;
 
-    while (1);
-    return 0;
-}
+extern const ice_fpga pico_fpga;
+extern const ice_fpga pico2_fpga;

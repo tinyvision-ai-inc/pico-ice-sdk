@@ -34,10 +34,10 @@
 int main(void) {
     ice_led_init();
 
-    ice_fpga_start();
+    ice_fpga_start(FPGA_DATA);
 
     // Write the whole bitstream to the FPGA CRAM
-    ice_cram_open();
+    ice_cram_open(FPGA_DATA);
     ice_cram_write(rgb_blink, sizeof(rgb_blink));
     ice_cram_close();
 

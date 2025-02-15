@@ -40,7 +40,7 @@ int main(void) {
     ice_usb_init();
 
     // Let the FPGA start
-    ice_fpga_init(12);
+    ice_fpga_init(FPGA_DATA, 12);
 
     // Enable the UART (not done by ice_usb_init())
     uart_init(uart0, 115200);

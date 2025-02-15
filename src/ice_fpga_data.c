@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2023 tinyVision.ai
+ * Copyright (c) 2025 tinyVision.ai
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,28 +22,40 @@
  * SOFTWARE.
  */
 
-#include "pico/stdlib.h"
-#include "pico/stdio.h"
-#include "boards.h"
-#include "ice_cram.h"
-#include "ice_fpga.h"
-#include "ice_led.h"
-#include "ice_spi.h"
+#include "ice_fpga_data.h"
 
-uint8_t bitstream[] = {
-#include "bitstream.h"
+const ice_spibus pico2_spibus = {
+	.peripheral = spi0,
+	.MISO = 4, //ICE_SI
+	.MOSI = 7, //ICE_SO
+	.SCK = 6, //ICE_SCK
+	.CS_flash = 5, //ICE_SSN
+	.CS_cram = 5,
+	.CS_psram = -1, // No FPGA SRAM on pico2-ice
+	.CS_fpga = 1,
 };
 
-int main(void) {
-    ice_led_init();
-	ice_fpga_init(FPGA_DATA, 48);
-    ice_fpga_start(FPGA_DATA);
+const ice_fpga pico2_fpga = {
+	.bus = pico2_spibus,
+	.pin_cdone = 40, //ICE_DONE_ADC0
+	.pin_clock = 21, //ICE_CLK
+	.pin_creset = 31, //ICE_RST
+};
 
-    // Write the whole bitstream to the FPGA CRAM
-    ice_cram_open(FPGA_DATA);
-    ice_cram_write(bitstream, sizeof(bitstream));
-    ice_cram_close();
+const ice_spibus pico_spibus = {
+	.peripheral = spi1,
+	.MISO = 8,
+	.MOSI = 11,
+	.SCK = 10,
+	.CS_flash = 9,
+	.CS_cram = 9,
+	.CS_psram = 14,
+	.CS_fpga = 13,
+};
 
-    while (1);
-    return 0;
-}
+const ice_fpga pico_fpga = {
+	.bus = pico_spibus,
+	.pin_cdone = 26,
+	.pin_clock = 24,
+	.pin_creset = 27,
+};

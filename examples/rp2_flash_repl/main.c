@@ -144,7 +144,7 @@ static void repl_command_write(void)
     if (!repl_parse_newline()) {
         return;
     }
-    ice_flash_program_page(repl_address, buf);
+    ice_flash_program_page(FPGA_DATA.bus, repl_address, buf);
     printf("%s 0x%08lX done\r\n", __func__, repl_address);
 }
 
@@ -166,7 +166,7 @@ static void repl_command_read(void)
     if (!repl_parse_newline()) {
         return;
     }
-    ice_flash_read(repl_address, buf, sizeof buf);
+    ice_flash_read(FPGA_DATA.bus, repl_address, buf, sizeof buf);
     printf("%s 0x%08lX done\r\n", __func__, repl_address);
     memdump(buf, sizeof buf, repl_address);
 }
@@ -176,7 +176,7 @@ static void repl_command_erase(void)
     if (!repl_parse_newline()) {
         return;
     }
-    ice_flash_erase_sector(repl_address);
+    ice_flash_erase_sector(FPGA_DATA.bus, repl_address);
     printf("%s 0x%08lX done\r\n", __func__, repl_address);
 }
 
@@ -187,7 +187,7 @@ static void repl_command_zero(void)
     if (!repl_parse_newline()) {
         return;
     }
-    ice_flash_program_page(repl_address, buf);
+    ice_flash_program_page(FPGA_DATA.bus, repl_address, buf);
     printf("%s 0x%08lX done\r\n", __func__, repl_address);
 }
 
@@ -196,7 +196,7 @@ static void repl_command_sleep(void)
     if (!repl_parse_newline()) {
         return;
     }
-    ice_flash_sleep();
+    ice_flash_sleep(FPGA_DATA.bus);
     printf("%s done\r\n", __func__);
 }
 
@@ -205,7 +205,7 @@ static void repl_command_wakeup(void)
     if (!repl_parse_newline()) {
         return;
     }
-    ice_flash_wakeup();
+    ice_flash_wakeup(FPGA_DATA.bus);
     printf("%s done\r\n", __func__);
 }
 
@@ -229,7 +229,7 @@ static void repl_command_page(void)
 {
     uint8_t buf[ICE_FLASH_PAGE_SIZE] = {0};
 
-    ice_flash_read(repl_address, buf, sizeof buf);
+    ice_flash_read(FPGA_DATA.bus, repl_address, buf, sizeof buf);
     memdump(buf, sizeof buf, repl_address);
     repl_address += 0x1000;
 }
@@ -237,13 +237,13 @@ static void repl_command_page(void)
 int main(void)
 {
     // Let the FPGA boot up from flash
-    ice_fpga_stop();
+    ice_fpga_stop(FPGA_DATA);
 
     // Enable USB-UART #0 output
     stdio_init_all();
 
     // Initialize the flash driver and its SPI bus
-    ice_flash_init();
+    ice_flash_init(FPGA_DATA.bus);
 
     for (;;) {
         tud_task();
