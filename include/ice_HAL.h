@@ -55,7 +55,7 @@ int ICE_HAL_ATTR ice_hal_spi_init(int mosi, int miso, int clk, int freq);
  * of data written
  */
 
-int ICE_HAL_ATTR ice_hal_spi_write(uint8_t *buf, size_t len);
+int ICE_HAL_ATTR ice_hal_spi_write(const uint8_t *buf, size_t len);
 
 /**
  * @brief This hal function must read data on SPI device ID in a blocking way
@@ -138,6 +138,15 @@ int ICE_HAL_ATTR ice_hal_gpio_set_1(int gpio);
  */
 
 int ICE_HAL_ATTR ice_hal_gpio_set_0(int gpio);
+
+/**
+ * @brief This hal function must return the value of the pin
+ *
+ * @param gpio gpio pin ID
+ * @returns negative In case of failure, else, 0 or 1
+ */
+
+int ICE_HAL_ATTR ice_hal_gpio_get(int gpio);
 
 /**
  * @brief This hal function must return control of the GPIO pin from the HAL

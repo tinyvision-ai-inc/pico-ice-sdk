@@ -280,9 +280,7 @@ int ICE_HAL_ATTR ice_hal_spi_init(int mosi, int miso, int clk, int freq)
 			return -EINVAL;
 		}
 
-		ret = spi_init(device, freq);
-		if (ret != freq)
-			return -EIO;
+		spi_init(device, freq);
 	}
 
 	has_spi = true;
@@ -290,7 +288,7 @@ int ICE_HAL_ATTR ice_hal_spi_init(int mosi, int miso, int clk, int freq)
 	return dev;
 }
 
-int ICE_HAL_ATTR ice_hal_spi_write(uint8_t *buf, size_t len)
+int ICE_HAL_ATTR ice_hal_spi_write(const uint8_t *buf, size_t len)
 {
 	int ret;
 
@@ -303,6 +301,19 @@ int ICE_HAL_ATTR ice_hal_spi_write(uint8_t *buf, size_t len)
 			 * pre-shift by 24 bits to get bit 7 of data byte into bit 31 of FIFO slot.
 			 */
 			pio_sm_put_blocking(pio, sm, buf[i] << 24);
+		}
+		    // Wait until the last byte has been pulled from the FIFO.
+		while (!pio_sm_is_tx_fifo_empty(pio, sm)) {
+			tight_loop_contents();
+		}
+
+		// At this point the last byte has been removed from the FIFO but the last bit might not have
+		// been shifted out. Wait for the state machine to stall waiting for another bit
+		// (which night never arrive).
+		uint32_t mask = 1u << (sm + PIO_FDEBUG_TXSTALL_LSB);
+		pio->fdebug = mask;
+		while ((pio->fdebug & mask) == 0) {
+			tight_loop_contents();
 		}
 	} else {
 		gpio_set_function(hal_miso, GPIO_FUNC_SPI);
@@ -387,13 +398,20 @@ int ICE_HAL_ATTR ice_hal_gpio_set_pd(int gpio)
 int ICE_HAL_ATTR ice_hal_gpio_set_1(int gpio)
 {
 	gpio_put(gpio, true);
+	gpio_set_dir(gpio, GPIO_OUT);
 	return 0;
 }
 
 int ICE_HAL_ATTR ice_hal_gpio_set_0(int gpio)
 {
 	gpio_put(gpio, false);
+	gpio_set_dir(gpio, GPIO_OUT);
 	return 0;
+}
+
+int ICE_HAL_ATTR ice_hal_gpio_get(int gpio)
+{
+	return gpio_get(gpio) ? 1 : 0;
 }
 
 int ICE_HAL_ATTR ice_hal_gpio_deinit(int gpio)
