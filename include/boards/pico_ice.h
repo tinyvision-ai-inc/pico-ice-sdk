@@ -13,7 +13,6 @@
 #ifndef PICO_ICE_H_
 #define PICO_ICE_H_
 #include "ice40up5k.h"
-#include "../ice_fpga_data.h"
 
 // For board detection
 #ifndef PICO_ICE
