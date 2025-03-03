@@ -27,7 +27,6 @@
 #include "boards.h"
 #include "ice_HAL.h"
 #include "ice_fpga.h"
-#include "ice_cram.pio.h"
 
 static ice_fpga fpga_copy;
 static bool fpga_initialized = false;
