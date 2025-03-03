@@ -28,7 +28,6 @@
 #include "ice_cram.h"
 #include "ice_fpga.h"
 #include "ice_led.h"
-#include "ice_spi.h"
 
 uint8_t bitstream[] = {
 #include "bitstream.h"

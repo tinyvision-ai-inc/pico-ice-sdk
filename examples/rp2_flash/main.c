@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "boards.h"
-#include "ice_spi.h"
 #include "ice_flash.h"
 
 #define MY_BASE_ADDRESS 0x00000
@@ -49,10 +48,12 @@ int main(void) {
     // Enable USB-UART 0 output
     stdio_init_all();
 
-    ice_led_init();
+    //ice_led_init();
+
+    sleep_ms(2000);
 
     // Booted up, now take control of the Flash
-    ice_flash_init(FPGA_DATA.bus);
+    ice_flash_init(FPGA_DATA.bus, ICE_FLASH_BAUDRATE);
 
     // Write data: known pattern, not very random!
     for (size_t i = 0; i < sizeof buf_w; i++) {
@@ -63,6 +64,8 @@ int main(void) {
         // Erase a sector, program the page and then read it back.
         // Note that the FPGA bitfile which is at 0x000000
         ice_flash_erase_sector(FPGA_DATA.bus, MY_BASE_ADDRESS);
+        ice_flash_read(FPGA_DATA.bus, MY_BASE_ADDRESS, buf_r, sizeof buf_r);
+        memdump(buf_r, sizeof buf_r);
         ice_flash_program_page(FPGA_DATA.bus, MY_BASE_ADDRESS, buf_w);
         ice_flash_read(FPGA_DATA.bus, MY_BASE_ADDRESS, buf_r, sizeof buf_r);
         memdump(buf_r, sizeof buf_r);

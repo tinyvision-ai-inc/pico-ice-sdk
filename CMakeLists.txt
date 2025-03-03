@@ -9,12 +9,10 @@ set(PICO_ICE_SDK_VERSION ${PICO_ICE_SDK_VERSION} PARENT_SCOPE)
 add_library(pico_ice_sdk INTERFACE)
 
 target_sources(pico_ice_sdk INTERFACE
-    src/ice_fpga_hal.c
-    src/ice_spi.c
-    src/ice_flash_hal.c
-    src/ice_sram.c
+    src/ice_fpga.c
+    src/ice_flash.c
     src/ice_led.c
-    src/ice_cram_hal.c
+    src/ice_cram.c
     src/ice_fpga_data.c
     src/pico-sdk_ice_hal.c
     )

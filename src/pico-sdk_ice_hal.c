@@ -380,6 +380,7 @@ int ICE_HAL_ATTR ice_hal_gpio_init(int gpio)
 int ICE_HAL_ATTR ice_hal_gpio_set_high_z(int gpio)
 {
 	gpio_set_dir(gpio, GPIO_IN);
+	gpio_disable_pulls(gpio);
 	return 0;
 }
 

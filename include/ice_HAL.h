@@ -27,6 +27,12 @@
 
 #define ICE_HAL_ATTR __attribute__((weak))
 
+#pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** @ingroup SPI HAL functions
  *  @{
  */
@@ -158,3 +164,7 @@ int ICE_HAL_ATTR ice_hal_gpio_get(int gpio);
 int ICE_HAL_ATTR ice_hal_gpio_deinit(int gpio);
 
 /** @}*/
+
+#ifdef __cplusplus
+}
+#endif

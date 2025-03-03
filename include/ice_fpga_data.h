@@ -35,7 +35,6 @@ typedef struct {
 	uint8_t		CS_flash;
 	uint8_t		CS_cram;
 	uint8_t		CS_psram;
-	uint8_t		CS_fpga;
 } ice_spibus;
 
 typedef struct {

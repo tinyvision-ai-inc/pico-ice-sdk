@@ -32,6 +32,8 @@
 #error "pico-ice board model not found, check the value of PICO_BOARD"
 #endif
 
+#define ICE_FLASH_BAUDRATE 10000000
+
 // Allow compilation of TinyUF2 without changing any source file.
 // For board detection
 #define TINYVISION_AI_INC_PICO_ICE

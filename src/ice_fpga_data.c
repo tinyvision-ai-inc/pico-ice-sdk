@@ -32,7 +32,6 @@ const ice_spibus pico2_spibus = {
 	.CS_flash = 5, //ICE_SSN
 	.CS_cram = 5,
 	.CS_psram = -1, // No FPGA SRAM on pico2-ice
-	.CS_fpga = 1,
 };
 
 const ice_fpga pico2_fpga = {
@@ -50,7 +49,6 @@ const ice_spibus pico_spibus = {
 	.CS_flash = 9,
 	.CS_cram = 9,
 	.CS_psram = 14,
-	.CS_fpga = 13,
 };
 
 const ice_fpga pico_fpga = {
