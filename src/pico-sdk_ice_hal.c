@@ -222,7 +222,6 @@ int ICE_HAL_ATTR ice_hal_spi_init(int mosi, int miso, int clk, int freq)
 				return dev;
 		}
 		is_pio = true;
-		dev = 0;
 	}
 
 
