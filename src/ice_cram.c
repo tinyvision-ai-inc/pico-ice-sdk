@@ -43,11 +43,11 @@ bool ice_cram_open(const ice_fpga fpga)
     // Hold FPGA in reset before doing anything with SPI bus.
     ret = ice_fpga_stop(fpga);
     if (ret < 0)
-        return ret;
+        return false;
 
     ret = ice_hal_spi_init(fpga_copy.bus.MISO, -1, fpga_copy.bus.SCK, 1000000);
     if (ret < 0)
-        return ret;
+        return false;
 
     // SPI_SS low signals FPGA to receive the bitstream.
     ice_hal_gpio_init(fpga_copy.bus.CS_cram);
@@ -70,7 +70,7 @@ bool ice_cram_open(const ice_fpga fpga)
     return true;
 }
 
-bool ice_cram_write(const uint8_t* bitstream, uint32_t size)
+int ice_cram_write(const uint8_t* bitstream, uint32_t size)
 {
     return ice_hal_spi_write(bitstream, size);
 }

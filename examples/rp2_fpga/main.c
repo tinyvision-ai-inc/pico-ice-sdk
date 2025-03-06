@@ -28,10 +28,10 @@
 #include "ice_fpga.h"
 #include "ice_flash.h"
 #include "ice_led.h"
-#include "ice_spi.h"
 
 int main(void) {
     ice_led_init();
+    ice_fpga_init(FPGA_DATA, 48);
     ice_fpga_start(FPGA_DATA);
 
     while (true) {

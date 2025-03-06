@@ -51,8 +51,9 @@ bool ice_cram_open(const ice_fpga fpga);
  *
  * @param buf pointer to bitstream data to flush to the iCE40
  * @param len size of that buffer
+ * @returns 0, or negative error
  */
-void ice_cram_write(const uint8_t *buf, size_t len);
+int ice_cram_write(const uint8_t *buf, size_t len);
 
 /**
  * @brief Terminate the SPI transaction and prepare the FPGA to start,

@@ -367,13 +367,12 @@ int ICE_HAL_ATTR ice_hal_spi_deinit(void)
 
 int ICE_HAL_ATTR ice_hal_gpio_init(int gpio)
 {
-	int ret;
-
 	gpio_init(gpio);
 	gpio_disable_pulls(gpio);
 	gpio_put(gpio, false);
 	/* set hiz */
 	gpio_set_dir(gpio, GPIO_IN);
+	return 0;
 }
 
 int ICE_HAL_ATTR ice_hal_gpio_set_high_z(int gpio)
