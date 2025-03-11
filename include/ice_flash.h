@@ -97,6 +97,11 @@ int ice_flash_wakeup(const ice_spibus spibus);
  */
 int ice_flash_sleep(const ice_spibus spibus);
 
+/**
+ * @brief Free SPI bus
+ */
+int ice_flash_deinit(const ice_spibus spibus);
+
 #ifdef __cplusplus
 }
 #endif

@@ -209,3 +209,8 @@ int ice_flash_init(const ice_spibus spibus, int baudrate) {
     ret = ice_flash_wakeup(spibus);
     return ret;
 }
+
+int ice_flash_deinit(const ice_spibus spibus)
+{
+    return ice_hal_spi_deinit();
+}
