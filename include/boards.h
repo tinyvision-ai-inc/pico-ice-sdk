@@ -26,7 +26,7 @@
 
 #ifdef PICO2_ICE
 #include "boards/pico2_ice.h"
-#elifdef PICO_ICE
+#elif defined(PICO_ICE)
 #include "boards/pico_ice.h"
 #else
 #error "pico-ice board model not found, check the value of PICO_BOARD"
