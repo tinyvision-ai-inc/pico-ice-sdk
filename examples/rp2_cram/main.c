@@ -28,12 +28,11 @@
 #include "ice_cram.h"
 #include "ice_fpga.h"
 #include "ice_led.h"
-#include "ice_spi.h"
 #include "rgb_blink.h"
 
 int main(void) {
     ice_led_init();
-
+    ice_fpga_init(FPGA_DATA, 48);
     ice_fpga_start(FPGA_DATA);
 
     // Write the whole bitstream to the FPGA CRAM
