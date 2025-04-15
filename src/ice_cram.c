@@ -40,6 +40,9 @@ bool ice_cram_open(const ice_fpga fpga)
     fpga_copy = fpga;
     fpga_copy.bus = fpga.bus;
 
+    // fpga wasnt initialized and pulled out of reset
+    if (!gpio_is_dir_out(fpga_copy.pin_creset)) return false;
+
     // Hold FPGA in reset before doing anything with SPI bus.
     ret = ice_fpga_stop(fpga);
     if (ret < 0)

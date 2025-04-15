@@ -35,6 +35,7 @@ int ice_fpga_init(const ice_fpga fpga, uint8_t freq_mhz)
     uint src = CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_VALUE_CLK_USB;
 
     clock_gpio_init(fpga.pin_clock, src, 48 / freq_mhz);
+    ice_hal_gpio_init(fpga.pin_creset);
 
     return 0;
 }
@@ -43,6 +44,7 @@ int ice_fpga_stop(const ice_fpga fpga)
 {
     ice_hal_gpio_init(fpga.pin_creset);
     ice_hal_gpio_set_0(fpga.pin_creset);
+
     return 0;
 }
 
