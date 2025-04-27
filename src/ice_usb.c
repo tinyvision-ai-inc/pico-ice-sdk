@@ -429,5 +429,10 @@ void ice_usb_init(void)
 
 void ice_usb_task() {
     tud_task();
+    if (!tud_ready()) {
+        // prevent other actions while host resets the device
+        return;
+    }
+
     ice_usb_uart_task();
 }
