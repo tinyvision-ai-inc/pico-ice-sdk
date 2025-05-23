@@ -31,18 +31,19 @@
 #include "hardware/watchdog.h"
 #include "pico/bootrom.h"
 #include "pico/multicore.h"
+#include <stdio.h>//timo added
+#include "pico/stdio.h"//timo added
 #include "pico/stdlib.h"
 
 // tinyusb
 #include "tusb.h"
 
 // pico-ice-sdk
-#include "boards/pico_ice.h"
+#include "boards.h"
+#include "ice_fpga_data.h"
 #include "ice_usb.h"
 #include "ice_flash.h"
 #include "ice_cram.h"
-#include "ice_sram.h"
-#include "ice_spi.h"
 #include "ice_fpga.h"
 
 // microsoft uf2
@@ -308,6 +309,8 @@ void (*tud_cdc_rx_cb_table[CFG_TUD_CDC])(uint8_t) = {
 #endif
 };
 
+#if ICE_USB_UART0_CDC || ICE_USB_UART1_CDC || ICE_USB_FPGA_CDC || ICE_USB_SPI_CDC
+
 void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *coding)
 {
     printf("%s: coding=%p baud=%d\n", __func__, coding, coding->bit_rate);
@@ -332,8 +335,6 @@ void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *coding)
 #endif
     }
 }
-
-#if ICE_USB_UART0_CDC || ICE_USB_UART1_CDC || ICE_USB_FPGA_CDC || ICE_USB_SPI_CDC
 
 void tud_cdc_rx_cb(uint8_t cdc_num)
 {
@@ -362,17 +363,15 @@ static bool dfu_ongoing;
 
 void dfu_init(uint8_t alt)
 {
-    ice_spi_init();
-
     switch (alt) {
     case DFU_ALT_CRAM:
-        ice_cram_open();
+        ice_cram_open(FPGA_DATA);
         break;
     case DFU_ALT_FLASH:
         // Make sure the RP2040 have full access to the SPI bus
-        ice_fpga_stop();
+        ice_fpga_stop(FPGA_DATA);
 
-        ice_flash_init();
+        ice_flash_init(FPGA_DATA.bus, ICE_FLASH_BAUDRATE);
 
         // Ensure reboot in case user doesn't pass -R to dfu-util
         watchdog_enable(WATCHDOG_DELAY, true /* pause_on_debug */);
@@ -395,8 +394,6 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
 {
     uint32_t addr;
 
-    ice_spi_wait_completion();
-
     if (!dfu_ongoing) {
         dfu_init(alt);
         dfu_ongoing = true;
@@ -412,9 +409,9 @@ void tud_dfu_download_cb(uint8_t alt, uint16_t block_num, const uint8_t *data, u
             watchdog_update();
 
             if ((addr + i) % ICE_FLASH_SECTOR_SIZE == 0) {
-                ice_flash_erase_sector(addr + i);
+                ice_flash_erase_sector(FPGA_DATA.bus, addr + i);
             }
-            ice_flash_program_page(addr + i, data + i);
+            ice_flash_program_page(FPGA_DATA.bus, addr + i, data + i);
             break;
         }
     }
@@ -439,7 +436,7 @@ void tud_dfu_manifest_cb(uint8_t alt)
         ok = ice_cram_close();
         break;
     case DFU_ALT_FLASH:
-        ok = ice_fpga_start();
+        ok = ice_fpga_start(FPGA_DATA);
         break;
     }
 
@@ -475,13 +472,6 @@ void ice_usb_init(void)
     irq_set_exclusive_handler(UART1_IRQ, ice_usb_uart1_to_cdc);
     irq_set_enabled(UART1_IRQ, true);
     uart_set_irq_enables(uart1, true, false);
-#endif
-
-#ifdef ICE_USB_SPI_CDC
-    ice_spi_init_cs_pin(ICE_SRAM_CS_PIN, true);
-    ice_spi_init_cs_pin(ICE_FLASH_CSN_PIN, false);
-    ice_spi_init_cs_pin(ICE_FPGA_CSN_PIN, false);
-    ice_spi_init();
 #endif
 
 #ifdef ICE_USB_USE_TINYUF2_MSC

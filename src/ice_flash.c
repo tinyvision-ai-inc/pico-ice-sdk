@@ -26,12 +26,10 @@
 #include <stdio.h>
 
 // pico-sdk
-#include "hardware/structs/spi.h"
 #include "pico/stdlib.h"
 
 // pico-ice-sdk
-#include "boards/pico_ice.h"
-#include "ice_spi.h"
+#include "ice_HAL.h"
 #include "ice_flash.h"
 #include "ice_led.h"
 
@@ -47,117 +45,172 @@
 
 #define FLASH_STATUS_BUSY_MASK       0x01
 
-static void ice_flash_wait(void) {
+static int ice_flash_wait(const ice_spibus spibus) {
     uint8_t cmds[] = { FLASH_CMD_STATUS, 0 };
     uint8_t buf[2];
+    int ret;
 
     do {
-        ice_spi_chip_select(ICE_FLASH_CSN_PIN);
-        ice_spi_write_blocking(cmds, sizeof(cmds));
-        ice_spi_read_blocking(buf, sizeof(buf));
-        ice_spi_chip_deselect(ICE_FLASH_CSN_PIN);
+        ice_hal_gpio_set_0(spibus.CS_flash);
+        ret = ice_hal_spi_write(cmds, sizeof(cmds));
+        ret |= ice_hal_spi_read(buf, sizeof(buf));
+        ice_hal_gpio_set_1(spibus.CS_flash);
+        if (ret < 0)
+            return ret;
     } while (buf[1] & FLASH_STATUS_BUSY_MASK);
+    return ret;
 }
 
-static void ice_flash_enable_write(void) {
+static int ice_flash_enable_write(const ice_spibus spibus) {
     uint8_t cmds[] = { FLASH_CMD_ENABLE_WRITE };
+    int ret;
 
-    ice_spi_chip_select(ICE_FLASH_CSN_PIN);
-    ice_spi_write_blocking(cmds, sizeof cmds);
-    ice_spi_chip_deselect(ICE_FLASH_CSN_PIN);
+    ice_hal_gpio_set_0(spibus.CS_flash);
+    ret = ice_hal_spi_write(cmds, sizeof cmds);
+    ice_hal_gpio_set_1(spibus.CS_flash);
+
+    return ret;
 }
 
-void ice_flash_erase_sector(uint32_t addr) {
+int ice_flash_erase_sector(const ice_spibus spibus, uint32_t addr) {
     uint8_t cmds[] = { FLASH_CMD_SECTOR_ERASE, addr >> 16, addr >> 8, addr };
+    int ret;
 
     assert(addr % ICE_FLASH_SECTOR_SIZE == 0);
 
-    ice_flash_enable_write();
+    ret = ice_flash_enable_write(spibus);
+    if (ret < 0)
+        return ret;
 
-    ice_spi_chip_select(ICE_FLASH_CSN_PIN);
-    ice_spi_write_blocking(cmds, sizeof cmds);
-    ice_spi_chip_deselect(ICE_FLASH_CSN_PIN);
+    ice_hal_gpio_set_0(spibus.CS_flash);
+    ret = ice_hal_spi_write(cmds, sizeof cmds);
+    ice_hal_gpio_set_1(spibus.CS_flash);
+    if (ret < 0)
+        return ret;
 
-    ice_flash_wait();
+    ret = ice_flash_wait(spibus);
+    return ret;
 }
 
-void ice_flash_program_page(uint32_t addr, uint8_t const page[ICE_FLASH_PAGE_SIZE]) {
+int ice_flash_program_page(const ice_spibus spibus, uint32_t addr, uint8_t const page[ICE_FLASH_PAGE_SIZE]) {
     uint8_t cmds[] = { FLASH_CMD_PROGRAM_PAGE, addr >> 16, addr >> 8, addr };
+    int ret;
 
     assert(addr % ICE_FLASH_PAGE_SIZE == 0);
 
-    ice_flash_enable_write();
+    ret = ice_flash_enable_write(spibus);
+    if (ret < 0)
+        return ret;
 
-    ice_spi_chip_select(ICE_FLASH_CSN_PIN);
-    ice_spi_write_blocking(cmds, sizeof cmds);
-    ice_spi_write_blocking(page, ICE_FLASH_PAGE_SIZE);
-    ice_spi_chip_deselect(ICE_FLASH_CSN_PIN);
+    ice_hal_gpio_set_0(spibus.CS_flash);
+    ret = ice_hal_spi_write(cmds, sizeof cmds);
+    ret |= ice_hal_spi_write(page, ICE_FLASH_PAGE_SIZE);
+    ice_hal_gpio_set_1(spibus.CS_flash);
+    if (ret < 0)
+        return ret;
 
-    ice_flash_wait();
+    ret = ice_flash_wait(spibus);
+    return ret;
 }
 
-void ice_flash_read(uint32_t addr, uint8_t *buf, size_t sz) {
+int ice_flash_read(const ice_spibus spibus, uint32_t addr, uint8_t *buf, size_t sz) {
     uint8_t cmds[] = { FLASH_CMD_READ, addr >> 16, addr >> 8, addr };
+    int ret;
 
-    ice_spi_chip_select(ICE_FLASH_CSN_PIN);
-    ice_spi_write_blocking(cmds, sizeof cmds);
-    ice_spi_read_blocking(buf, sz);
-    ice_spi_chip_deselect(ICE_FLASH_CSN_PIN);
+    ice_hal_gpio_set_0(spibus.CS_flash);
+    ret = ice_hal_spi_write(cmds, sizeof cmds);
+    if (ret < 0)
+        return ret;
+    ret = ice_hal_spi_read(buf, sz);
+    ice_hal_gpio_set_1(spibus.CS_flash);
+
+    return ret;
 }
 
-void ice_flash_erase_block(uint32_t addr) {
+int ice_flash_erase_block(const ice_spibus spibus, uint32_t addr) {
     uint8_t cmds[] = { FLASH_CMD_BLOCK_ERASE, addr >> 16, addr >> 8, addr };
+    int ret;
 
     assert(addr % ICE_FLASH_BLOCK_SIZE == 0);
 
-    ice_flash_enable_write();
+    ret = ice_flash_enable_write(spibus);
+    if (ret < 0)
+        return ret;
 
-    ice_spi_chip_select(ICE_FLASH_CSN_PIN);
-    ice_spi_write_blocking(cmds, sizeof cmds);
-    ice_spi_chip_deselect(ICE_FLASH_CSN_PIN);
+    ice_hal_gpio_set_0(spibus.CS_flash);
+    ret = ice_hal_spi_write(cmds, sizeof cmds);
+    ice_hal_gpio_set_1(spibus.CS_flash);
+    if (ret < 0)
+        return ret;
 
-    ice_flash_wait();
+    ret = ice_flash_wait(spibus);
+    return ret;
 }
 
-void ice_flash_erase_chip(void) {
+int ice_flash_erase_chip(const ice_spibus spibus) {
     uint8_t cmds[] = { FLASH_CMD_CHIP_ERASE };
+    int ret;
 
-    ice_flash_enable_write();
+    ret = ice_flash_enable_write(spibus);
+    if (ret < 0)
+        return ret;
 
-    ice_spi_chip_select(ICE_FLASH_CSN_PIN);
-    ice_spi_write_blocking(cmds, sizeof cmds);
-    ice_spi_chip_deselect(ICE_FLASH_CSN_PIN);
+    ice_hal_gpio_set_0(spibus.CS_flash);
+    ret = ice_hal_spi_write(cmds, sizeof cmds);
+    ice_hal_gpio_set_1(spibus.CS_flash);
+    if (ret < 0)
+        return ret;
 
-    ice_flash_wait();
+    ret = ice_flash_wait(spibus);
+    return ret;
 }
 
-void ice_flash_wakeup(void) {
+int ice_flash_wakeup(const ice_spibus spibus) {
     uint8_t cmds[] = { FLASH_CMD_RELEASE_POWERDOWN };
+    int ret;
 
-    ice_spi_chip_select(ICE_FLASH_CSN_PIN);
-    ice_spi_write_blocking(cmds, sizeof cmds);
-    ice_spi_chip_deselect(ICE_FLASH_CSN_PIN);
+    ice_hal_gpio_set_0(spibus.CS_flash);
+    ret = ice_hal_spi_write(cmds, sizeof cmds);
+    ice_hal_gpio_set_1(spibus.CS_flash);
+    if (ret < 0)
+        return ret;
 
-    ice_flash_wait();
+    ret = ice_flash_wait(spibus);
+    return ret;
 }
 
-void ice_flash_sleep(void) {
+int ice_flash_sleep(const ice_spibus spibus) {
     uint8_t cmds[] = { FLASH_CMD_POWERDOWN };
+    int ret;
 
-    ice_spi_chip_select(ICE_FLASH_CSN_PIN);
-    ice_spi_write_blocking(cmds, sizeof cmds);
-    ice_spi_chip_deselect(ICE_FLASH_CSN_PIN);
+    ice_hal_gpio_set_0(spibus.CS_flash);
+    ret = ice_hal_spi_write(cmds, sizeof cmds);
+    ice_hal_gpio_set_1(spibus.CS_flash);
+    if (ret < 0)
+        return ret;
 
-    ice_flash_wait();
+    ret = ice_flash_wait(spibus);
+    return ret;
 }
 
-void ice_flash_init(void) {
+int ice_flash_init(const ice_spibus spibus, int baudrate) {
+    int ret;
+
     // Configure the SPI peripheral if not done already
-    ice_spi_init();
+    ret = ice_hal_spi_init(spibus.MOSI, spibus.MISO, spibus.SCK, baudrate);
+    if (ret < 0)
+        return ret;
 
     // Setup the CSN pin to GPIO mode for software control
-    ice_spi_init_cs_pin(ICE_FLASH_CSN_PIN, false);
+    ice_hal_gpio_init(spibus.CS_flash);
+    ice_hal_gpio_set_pu(spibus.CS_flash);
 
     // Flash might be asleep as a successful FPGA boot will put it to sleep as the last command!
-    ice_flash_wakeup();
+    ret = ice_flash_wakeup(spibus);
+    return ret;
+}
+
+int ice_flash_deinit(const ice_spibus spibus)
+{
+    return ice_hal_spi_deinit();
 }

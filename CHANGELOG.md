@@ -1,4 +1,8 @@
 # Changelog
+## v2.0.0b
+
+* BETA: initial changes for pico2-ice
+
 
 ## v1.5.0
 

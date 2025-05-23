@@ -22,44 +22,51 @@
  * SOFTWARE.
  */
 
-// pico-sdk
-#include "hardware/gpio.h"
-
 // pico-ice-sdk
-#include "boards/pico_ice.h"
+#include "boards.h"
+#include "ice_HAL.h"
 #include "ice_led.h"
 
 // Rather than driving LEDs up and down, we always drive the wire down,
 // but connect or disconnect the pin (high-impedance vs pull-down).
-void ice_led_init(void) {
-    gpio_init(ICE_LED_RED_PIN);
-    gpio_init(ICE_LED_GREEN_PIN);
-    gpio_init(ICE_LED_BLUE_PIN);
+void ice_led_init(void)
+{
+    ice_hal_gpio_init(ICE_LED_RED_PIN);
+    ice_hal_gpio_init(ICE_LED_GREEN_PIN);
+    ice_hal_gpio_init(ICE_LED_BLUE_PIN);
 
-    // Disable pulls-downs on LED PINS otherwise leds will glow very dim
-    gpio_disable_pulls(ICE_LED_RED_PIN);
-    gpio_disable_pulls(ICE_LED_GREEN_PIN);
-    gpio_disable_pulls(ICE_LED_BLUE_PIN);
+    ice_hal_gpio_set_0(ICE_LED_RED_PIN);
+    ice_hal_gpio_set_0(ICE_LED_GREEN_PIN);
+    ice_hal_gpio_set_0(ICE_LED_BLUE_PIN);
 
-    // When in output mode, low-voltage to connect connects the LEDs to ground
-    gpio_put(ICE_LED_RED_PIN, false);
-    gpio_put(ICE_LED_GREEN_PIN, false);
-    gpio_put(ICE_LED_BLUE_PIN, false);
-
-    // High-impedance by default, leaving LED control to the FPGA.
-    gpio_set_dir(ICE_LED_RED_PIN, GPIO_IN);
-    gpio_set_dir(ICE_LED_GREEN_PIN, GPIO_IN);
-    gpio_set_dir(ICE_LED_BLUE_PIN, GPIO_IN);
+    ice_hal_gpio_set_high_z(ICE_LED_RED_PIN);
+    ice_hal_gpio_set_high_z(ICE_LED_GREEN_PIN);
+    ice_hal_gpio_set_high_z(ICE_LED_BLUE_PIN);
 }
 
-void ice_led_red(bool state) {
-    gpio_set_dir(ICE_LED_RED_PIN, state ? GPIO_OUT : GPIO_IN);
+void ice_led_red(bool state)
+{
+    if (state) {
+        ice_hal_gpio_set_0(ICE_LED_RED_PIN);
+    } else {
+        ice_hal_gpio_set_high_z(ICE_LED_RED_PIN);
+    }
 }
 
-void ice_led_green(bool state) {
-    gpio_set_dir(ICE_LED_GREEN_PIN, state ? GPIO_OUT : GPIO_IN);
+void ice_led_green(bool state)
+{
+    if (state) {
+        ice_hal_gpio_set_0(ICE_LED_RED_PIN);
+    } else {
+        ice_hal_gpio_set_high_z(ICE_LED_RED_PIN);
+    }
 }
 
-void ice_led_blue(bool state) {
-    gpio_set_dir(ICE_LED_BLUE_PIN, state ? GPIO_OUT : GPIO_IN);
+void ice_led_blue(bool state)
+{
+    if (state) {
+        ice_hal_gpio_set_0(ICE_LED_RED_PIN);
+    } else {
+        ice_hal_gpio_set_high_z(ICE_LED_RED_PIN);
+    }
 }
