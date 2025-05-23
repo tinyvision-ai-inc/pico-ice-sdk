@@ -2,9 +2,9 @@ name: build_on_push
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "rp2350_ice", "pico2-ice_develop" ]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "develop", "pico2-ice_develop" ]
   workflow_dispatch:
 
 jobs:
@@ -14,27 +14,35 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cmake_build_type: [Debug, Release]
+        cmake_build_type: [Debug]
+        pico: [ {board: "pico_ice", platform: "rp2040"}, {board: "pico2_ice", platform: "rp2350"}, {board: "pico2_ice", platform: "rp2350-riscv"}]
+
         example:
-          - pico_blinky
-          - pico_blinky_cplusplus
-          - pico_cram
-          - pico_flash
-          - pico_flash_repl
-          - pico_fpga
-          - pico_fpga_io
-          - pico_hello_world
-          - pico_sram
-          - pico_usb_fpga
-          - pico_usb_keyboard
-          - pico_usb_spi
-          - pico_usb_uart
-          - pico_usb_uf2
+          - rp2_blinky
+          - rp2_blinky_cplusplus
+          - rp2_cram
+          - rp2_flash
+          - rp2_flash_repl
+          - rp2_fpga
+          - rp2_fpga_io
+          - rp2_hello_world
+          - rp2_sram
+          - rp2_usb_fpga
+          - rp2_usb_keyboard
+          - rp2_usb_spi
+          - rp2_usb_uart
+          - rp2_usb_uf2
     steps:
       - uses: actions/checkout@v4
 
       - name: arm-none-eabi-gcc GNU Arm Embedded Toolchain
+        if: ${{ !contains(matrix.pico.platform, 'riscv') }}
         uses: carlosperate/arm-none-eabi-gcc-action@v1.10.0
+
+      - name: riscv Toolchain env
+        if: ${{ contains(matrix.pico.platform, 'riscv') }}
+        run: |
+          echo "PICO_TOOLCHAIN_PATH=${PWD}/riscv_toolchain/corev-openhw-gcc-ubuntu2204-20240530" >> $GITHUB_ENV
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
@@ -44,9 +52,19 @@ jobs:
         uses: actions/cache@v4
         with:
           path: lib
-          key: ${{ runner.os }}-build-${{ hashFiles('lib/**') }}
+          key: ${{ runner.os }}-build-submodules-${{ hashFiles('lib/**') }}
           restore-keys: |
-            ${{ runner.os }}-build-
+            ${{ runner.os }}-build-submodules
+
+      - name: Cache riscv toolchain
+        id: cache-riscv-toolchain
+        if: ${{ contains(matrix.pico.platform, 'riscv') }}
+        uses: actions/cache@v4
+        with:
+          path: riscv_toolchain
+          key: ${{ runner.os }}-build-riscv_toolchain-${{ hashFiles('riscv_toolchain/**') }}
+          restore-keys: |
+            ${{ runner.os }}-build-riscv_toolchain
 
       - name: Fetch submodules
         if: steps.cache-submodules.outputs.cache-hit != 'true'
@@ -54,10 +72,19 @@ jobs:
           git submodule update --init
           git -C lib/pico-sdk submodule update --init
 
+      - name: Fetch riscv toolchain
+        if: ${{ contains(matrix.pico.platform, 'riscv') && steps.cache-riscv-toolchain.outputs.cache-hit != 'true'}}
+        run: |
+          mkdir riscv_toolchain
+          cd riscv_toolchain
+          export TC_NAME=corev-openhw-gcc-ubuntu2204-20240530
+          wget https://buildbot.embecosm.com/job/corev-gcc-ubuntu2204/47/artifact/${TC_NAME}.tar.gz
+          tar -xf ${TC_NAME}.tar.gz
+
       - name: Build each example on every commit
         run: |
           cd examples/${{ matrix.example }}
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} ..
+          cmake -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} -DPICO_BOARD=${{ matrix.pico.board }} -DPICO_PLATFORM=${{ matrix.pico.platform }} ..
           make

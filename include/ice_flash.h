@@ -35,6 +35,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "ice_fpga_data.h"
+
 /**
  * @brief The size of the flash
  */
@@ -49,7 +51,7 @@ extern "C" {
 /**
  * @brief Initialise the SPI1 peripheral, dedicated to flashing the FPGA.
  */
-void ice_flash_init(void);
+int ice_flash_init(const ice_spibus spibus, int baudrate);
 
 /**
  * @brief Communicate to the chip over SPI and read multiple bytes at chosen
@@ -58,13 +60,13 @@ void ice_flash_init(void);
  * @param data The buffer onto which the data read is stored.
  * @param data_size The size of the buffer in bytes.
  */
-void ice_flash_read(uint32_t addr, uint8_t *buf, size_t sz);
+int ice_flash_read(const ice_spibus spibus, uint32_t addr, uint8_t *buf, size_t sz);
 
 /**
  * @brief Erase a sector of the flash chip at the given address.
  * @param addr The beginning of the sector.
  */
-void ice_flash_erase_sector(uint32_t addr);
+int ice_flash_erase_sector(const ice_spibus spibus, uint32_t addr);
 
 /**
  * @brief Program a page of the flash chip at the given address.
@@ -72,28 +74,33 @@ void ice_flash_erase_sector(uint32_t addr);
  * @param data The buffer holding the data to be sent to the flash chip, of
  *  size @ref ICE_FLASH_PAGE_SIZE.
  */
-void ice_flash_program_page(uint32_t addr, uint8_t const page[ICE_FLASH_PAGE_SIZE]);
+int ice_flash_program_page(const ice_spibus spibus, uint32_t addr, uint8_t const page[ICE_FLASH_PAGE_SIZE]);
 
 /**
  * @brief Send a command to erase a whole block.
  * @param addr The address at which the data is written.
  */
-void ice_flash_erase_block(uint32_t addr);
+int ice_flash_erase_block(const ice_spibus spibus, uint32_t addr);
 
 /**
  * @brief Send a command to erase the whole chip.
  */
-void ice_flash_erase_chip(void);
+int ice_flash_erase_chip(const ice_spibus spibus);
 
 /**
  * @brief Send a command to wakeup the chip.
  */
-void ice_flash_wakeup(void);
+int ice_flash_wakeup(const ice_spibus spibus);
 
 /**
  * @brief Send a command to put the chip to sleep.
  */
-void ice_flash_sleep(void);
+int ice_flash_sleep(const ice_spibus spibus);
+
+/**
+ * @brief Free SPI bus
+ */
+int ice_flash_deinit(const ice_spibus spibus);
 
 #ifdef __cplusplus
 }

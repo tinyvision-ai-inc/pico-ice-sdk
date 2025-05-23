@@ -38,6 +38,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "ice_fpga_data.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,21 +52,36 @@ extern "C" {
  * The RP2040 exports its own crystal-based clock to the iCE40, through the
  * dedicated [`CLOCK GPOUT0`](https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf)
  * feature.
+ * @return 0 on success, negative on fail
  */
-void ice_fpga_init(uint8_t freq_mhz);
+int ice_fpga_init(const ice_fpga fpga, uint8_t freq_mhz);
 
 /**
  * @brief Release the stop mode if it was present, and wait that the FPGA
  *  confirms its startup with ICE_FPGA_CDONE_PIN.
- * @return true on success and false if it timeouts.
+ * @return 0 on success, negative on fail
  */
-bool ice_fpga_start(void);
+int ice_fpga_start(const ice_fpga fpga);
 
 /**
  * @brief Set the ICE_FPGA_CRESET_B_PIN to LOW which keeps the FPGA in reset
  *  mode.
+ * @return 0 on success, negative on fail
  */
-void ice_fpga_stop(void);
+int ice_fpga_stop(const ice_fpga fpga);
+
+/**
+ * @brief Set the ICE_FPGA_CRESET_B_PIN to LOW which keeps the FPGA in reset
+ *  mode.
+ * @return 0 on success, negative on fail
+ */
+int ice_fpga_stop(const ice_fpga fpga);
+
+/**
+ * @brief deinit and free FPGA and associated resources
+ * @return 0 on success, negative on fail
+ */
+int ice_fpga_deinit(const ice_fpga fpga);
 
 #ifdef __cplusplus
 }
