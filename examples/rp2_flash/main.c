@@ -48,8 +48,6 @@ int main(void) {
     // Enable USB-UART 0 output
     stdio_init_all();
 
-    //ice_led_init();
-
     sleep_ms(2000);
 
     // Booted up, now take control of the Flash

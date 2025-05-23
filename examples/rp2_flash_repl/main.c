@@ -27,9 +27,7 @@
 #include "tusb.h"
 #include "boards.h"
 #include "ice_flash.h"
-#include "ice_spi.h"
 #include "ice_fpga.h"
-#include "ice_spi.h"
 
 // address to work upon
 uint32_t repl_address;
@@ -243,7 +241,7 @@ int main(void)
     stdio_init_all();
 
     // Initialize the flash driver and its SPI bus
-    ice_flash_init(FPGA_DATA.bus);
+    ice_flash_init(FPGA_DATA.bus, ICE_FLASH_BAUDRATE);
 
     for (;;) {
         tud_task();

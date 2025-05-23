@@ -44,8 +44,8 @@ int main(void) {
     // Configure the piping as configured in <tusb_config.h>
     ice_usb_init();
 
-    // Let the FPGA start
-    ice_fpga_init(FPGA_DATA, 12);
+    // Initialize the FPGA
+    ice_fpga_init(FPGA_DATA, 48);
 
     // Let the FPGA start
     ice_fpga_start(FPGA_DATA);
