@@ -32,6 +32,6 @@ add_custom_target(bitstream.h
     COMMAND yosys -p 'synth_ice40 -abc9 -top top -json bitstream.json' ${VERILOG}
     COMMAND nextpnr-ice40  --package sg48 --up5k --freq 48 --top top --pcf ${CMAKE_SOURCE_DIR}/pico_ice.pcf --json bitstream.json --asc bitstream.asc
     COMMAND icepack bitstream.asc bitstream.bin
-    COMMAND python -c "\"print(', '.join(map(hex, open('bitstream.bin', 'rb').read())))\"" >bitstream.h
+    COMMAND python ${CMAKE_CURRENT_LIST_DIR}/bin2header.py bitstream.bin >bitstream.h
     )
 add_dependencies(${CMAKE_PROJECT_NAME} bitstream.h)
