@@ -5,7 +5,7 @@
 # so that you can copy-paste them to build your own .pcf file out
 # of it. It is also possible, of course, to use custom names.
 #
-# See https://pico-ice.tinyvision.ai/pinout.html for the position
+# See https://pico2-ice.tinyvision.ai/md_pinout.html for the position
 # of the pins on the board.
 
 # Reference for PMOD names:
@@ -103,194 +103,194 @@ set_io -nowarn RGB0             39
 set_io -nowarn RGB1             40
 set_io -nowarn RGB2             41
 
-# ICE_PMOD0A (near USB) top row
+# ICE_PMOD_A_TOP (near USB)
 # GPIO
-set_io -nowarn ICE_PMOD0A_IO4   45
-set_io -nowarn ICE_PMOD0A_IO3   47
-set_io -nowarn ICE_PMOD0A_IO2   2
-set_io -nowarn ICE_PMOD0A_IO1   4
+set_io -nowarn ICE_PMOD_A_TOP_IO4   47
+set_io -nowarn ICE_PMOD_A_TOP_IO3   45
+set_io -nowarn ICE_PMOD_A_TOP_IO2   2
+set_io -nowarn ICE_PMOD_A_TOP_IO1   4
 # I2C
-set_io -nowarn ICE_PMOD0A_SDA   45
-set_io -nowarn ICE_PMOD0A_SCL   47
-set_io -nowarn ICE_PMOD0A_RST   2
-set_io -nowarn ICE_PMOD0A_INT   4
+set_io -nowarn ICE_PMOD_A_TOP_SDA   47
+set_io -nowarn ICE_PMOD_A_TOP_SCL   45
+set_io -nowarn ICE_PMOD_A_TOP_RST   2
+set_io -nowarn ICE_PMOD_A_TOP_INT   4
 # I2S
-set_io -nowarn ICE_PMOD0A_BCLK  45
-set_io -nowarn ICE_PMOD0A_ADC   47
-set_io -nowarn ICE_PMOD0A_DAC   2
-set_io -nowarn ICE_PMOD0A_LRCLK 4
+set_io -nowarn ICE_PMOD_A_TOP_BCLK  47
+set_io -nowarn ICE_PMOD_A_TOP_ADC   45
+set_io -nowarn ICE_PMOD_A_TOP_DAC   2
+set_io -nowarn ICE_PMOD_A_TOP_LRCLK 4
 # SPI
-set_io -nowarn ICE_PMOD0A_SCK   45
-set_io -nowarn ICE_PMOD0A_MISO  47
-set_io -nowarn ICE_PMOD0A_MOSI  2
-set_io -nowarn ICE_PMOD0A_CS    4
+set_io -nowarn ICE_PMOD_A_TOP_SCK   47
+set_io -nowarn ICE_PMOD_A_TOP_MISO  45
+set_io -nowarn ICE_PMOD_A_TOP_MOSI  2
+set_io -nowarn ICE_PMOD_A_TOP_CS    4
 # UART
-set_io -nowarn ICE_PMOD0A_RTS   45
-set_io -nowarn ICE_PMOD0A_RXD   47
-set_io -nowarn ICE_PMOD0A_TXD   2
-set_io -nowarn ICE_PMOD0A_CTS   4
+set_io -nowarn ICE_PMOD_A_TOP_RTS   47
+set_io -nowarn ICE_PMOD_A_TOP_RXD   45
+set_io -nowarn ICE_PMOD_A_TOP_TXD   2
+set_io -nowarn ICE_PMOD_A_TOP_CTS   4
 # HBridge
-set_io -nowarn ICE_PMOD0A_SB    45
-set_io -nowarn ICE_PMOD0A_SA    47
-set_io -nowarn ICE_PMOD0A_EN    2
-set_io -nowarn ICE_PMOD0A_DIR   4
+set_io -nowarn ICE_PMOD_A_TOP_SB    47
+set_io -nowarn ICE_PMOD_A_TOP_SA    45
+set_io -nowarn ICE_PMOD_A_TOP_EN    2
+set_io -nowarn ICE_PMOD_A_TOP_DIR   4
 
-# ICE_PMOD0B (near USB) bottom row
+# ICE_PMOD_A_BOT (near USB)
 # GPIO
-set_io -nowarn ICE_PMOD0B_IO4   44
-set_io -nowarn ICE_PMOD0B_IO3   46
-set_io -nowarn ICE_PMOD0B_IO2   48
-set_io -nowarn ICE_PMOD0B_IO1   3
+set_io -nowarn ICE_PMOD_A_BOT_IO4   48
+set_io -nowarn ICE_PMOD_A_BOT_IO3   46
+set_io -nowarn ICE_PMOD_A_BOT_IO2   44
+set_io -nowarn ICE_PMOD_A_BOT_IO1   3
 # I2C
-set_io -nowarn ICE_PMOD0B_SDA   44
-set_io -nowarn ICE_PMOD0B_SCL   46
-set_io -nowarn ICE_PMOD0B_RST   48
-set_io -nowarn ICE_PMOD0B_INT   3
+set_io -nowarn ICE_PMOD_A_BOT_SDA   48
+set_io -nowarn ICE_PMOD_A_BOT_SCL   46
+set_io -nowarn ICE_PMOD_A_BOT_RST   44
+set_io -nowarn ICE_PMOD_A_BOT_INT   3
 # I2S
-set_io -nowarn ICE_PMOD0B_BCLK  44
-set_io -nowarn ICE_PMOD0B_ADC   46
-set_io -nowarn ICE_PMOD0B_DAC   48
-set_io -nowarn ICE_PMOD0B_LRCLK 3
+set_io -nowarn ICE_PMOD_A_BOT_BCLK  48
+set_io -nowarn ICE_PMOD_A_BOT_ADC   46
+set_io -nowarn ICE_PMOD_A_BOT_DAC   44
+set_io -nowarn ICE_PMOD_A_BOT_LRCLK 3
 # SPI
-set_io -nowarn ICE_PMOD0B_SCK   44
-set_io -nowarn ICE_PMOD0B_MISO  46
-set_io -nowarn ICE_PMOD0B_MOSI  48
-set_io -nowarn ICE_PMOD0B_CS    3
+set_io -nowarn ICE_PMOD_A_BOT_SCK   48
+set_io -nowarn ICE_PMOD_A_BOT_MISO  46
+set_io -nowarn ICE_PMOD_A_BOT_MOSI  44
+set_io -nowarn ICE_PMOD_A_BOT_CS    3
 # UART
-set_io -nowarn ICE_PMOD0B_RTS   44
-set_io -nowarn ICE_PMOD0B_RXD   46
-set_io -nowarn ICE_PMOD0B_TXD   48
-set_io -nowarn ICE_PMOD0B_CTS   3
+set_io -nowarn ICE_PMOD_A_BOT_RTS   48
+set_io -nowarn ICE_PMOD_A_BOT_RXD   46
+set_io -nowarn ICE_PMOD_A_BOT_TXD   44
+set_io -nowarn ICE_PMOD_A_BOT_CTS   3
 # HBridge
-set_io -nowarn ICE_PMOD0B_SB    44
-set_io -nowarn ICE_PMOD0B_SA    46
-set_io -nowarn ICE_PMOD0B_EN    48
-set_io -nowarn ICE_PMOD0B_DIR   3
+set_io -nowarn ICE_PMOD_A_BOT_SB    48
+set_io -nowarn ICE_PMOD_A_BOT_SA    46
+set_io -nowarn ICE_PMOD_A_BOT_EN    44
+set_io -nowarn ICE_PMOD_A_BOT_DIR   3
 
-# ICE_PMOD1A (near LED) top row
+# ICE_PMOD_B_TOP (near LED)
 # GPIO
-set_io -nowarn ICE_PMOD1A_IO4   31
-set_io -nowarn ICE_PMOD1A_IO3   34
-set_io -nowarn ICE_PMOD1A_IO2   38
-set_io -nowarn ICE_PMOD1A_IO1   43
+set_io -nowarn ICE_PMOD_B_TOP_IO4   31
+set_io -nowarn ICE_PMOD_B_TOP_IO3   34
+set_io -nowarn ICE_PMOD_B_TOP_IO2   38
+set_io -nowarn ICE_PMOD_B_TOP_IO1   43
 # I2C
-set_io -nowarn ICE_PMOD1A_SDA   31
-set_io -nowarn ICE_PMOD1A_SCL   34
-set_io -nowarn ICE_PMOD1A_RST   38
-set_io -nowarn ICE_PMOD1A_INT   43
+set_io -nowarn ICE_PMOD_B_TOP_SDA   31
+set_io -nowarn ICE_PMOD_B_TOP_SCL   34
+set_io -nowarn ICE_PMOD_B_TOP_RST   38
+set_io -nowarn ICE_PMOD_B_TOP_INT   43
 # I2S
-set_io -nowarn ICE_PMOD1A_BCLK  31
-set_io -nowarn ICE_PMOD1A_ADC   34
-set_io -nowarn ICE_PMOD1A_DAC   38
-set_io -nowarn ICE_PMOD1A_LRCLK 43
+set_io -nowarn ICE_PMOD_B_TOP_BCLK  31
+set_io -nowarn ICE_PMOD_B_TOP_ADC   34
+set_io -nowarn ICE_PMOD_B_TOP_DAC   38
+set_io -nowarn ICE_PMOD_B_TOP_LRCLK 43
 # SPI
-set_io -nowarn ICE_PMOD1A_SCK   31
-set_io -nowarn ICE_PMOD1A_MISO  34
-set_io -nowarn ICE_PMOD1A_MOSI  38
-set_io -nowarn ICE_PMOD1A_CS    43
+set_io -nowarn ICE_PMOD_B_TOP_SCK   31
+set_io -nowarn ICE_PMOD_B_TOP_MISO  34
+set_io -nowarn ICE_PMOD_B_TOP_MOSI  38
+set_io -nowarn ICE_PMOD_B_TOP_CS    43
 # UART
-set_io -nowarn ICE_PMOD1A_RTS   31
-set_io -nowarn ICE_PMOD1A_RXD   34
-set_io -nowarn ICE_PMOD1A_TXD   38
-set_io -nowarn ICE_PMOD1A_CTS   43
+set_io -nowarn ICE_PMOD_B_TOP_RTS   31
+set_io -nowarn ICE_PMOD_B_TOP_RXD   34
+set_io -nowarn ICE_PMOD_B_TOP_TXD   38
+set_io -nowarn ICE_PMOD_B_TOP_CTS   43
 # HBridge
-set_io -nowarn ICE_PMOD1A_SB    31
-set_io -nowarn ICE_PMOD1A_SA    34
-set_io -nowarn ICE_PMOD1A_EN    38
-set_io -nowarn ICE_PMOD1A_DIR   43
+set_io -nowarn ICE_PMOD_B_TOP_SB    31
+set_io -nowarn ICE_PMOD_B_TOP_SA    34
+set_io -nowarn ICE_PMOD_B_TOP_EN    38
+set_io -nowarn ICE_PMOD_B_TOP_DIR   43
 
-# ICE_PMOD1B (near LED) bottom row
+# ICE_PMOD_B_BOT (near LED)
 # GPIO
-set_io -nowarn ICE_PMOD1B_IO4   28
-set_io -nowarn ICE_PMOD1B_IO3   32
-set_io -nowarn ICE_PMOD1B_IO2   36
-set_io -nowarn ICE_PMOD1B_IO1   42
+set_io -nowarn ICE_PMOD_B_BOT_IO4   28
+set_io -nowarn ICE_PMOD_B_BOT_IO3   32
+set_io -nowarn ICE_PMOD_B_BOT_IO2   36
+set_io -nowarn ICE_PMOD_B_BOT_IO1   42
 # I2C
-set_io -nowarn ICE_PMOD1B_SDA   28
-set_io -nowarn ICE_PMOD1B_SCL   32
-set_io -nowarn ICE_PMOD1B_RST   36
-set_io -nowarn ICE_PMOD1B_INT   42
+set_io -nowarn ICE_PMOD_B_BOT_SDA   28
+set_io -nowarn ICE_PMOD_B_BOT_SCL   32
+set_io -nowarn ICE_PMOD_B_BOT_RST   36
+set_io -nowarn ICE_PMOD_B_BOT_INT   42
 # I2S
-set_io -nowarn ICE_PMOD1B_BCLK  28
-set_io -nowarn ICE_PMOD1B_ADC   32
-set_io -nowarn ICE_PMOD1B_DAC   36
-set_io -nowarn ICE_PMOD1B_LRCLK 42
+set_io -nowarn ICE_PMOD_B_BOT_BCLK  28
+set_io -nowarn ICE_PMOD_B_BOT_ADC   32
+set_io -nowarn ICE_PMOD_B_BOT_DAC   36
+set_io -nowarn ICE_PMOD_B_BOT_LRCLK 42
 # SPI
-set_io -nowarn ICE_PMOD1B_SCK   28
-set_io -nowarn ICE_PMOD1B_MISO  32
-set_io -nowarn ICE_PMOD1B_MOSI  36
-set_io -nowarn ICE_PMOD1B_CS    42
+set_io -nowarn ICE_PMOD_B_BOT_SCK   28
+set_io -nowarn ICE_PMOD_B_BOT_MISO  32
+set_io -nowarn ICE_PMOD_B_BOT_MOSI  36
+set_io -nowarn ICE_PMOD_B_BOT_CS    42
 # UART
-set_io -nowarn ICE_PMOD1B_RTS   28
-set_io -nowarn ICE_PMOD1B_RXD   32
-set_io -nowarn ICE_PMOD1B_TXD   36
-set_io -nowarn ICE_PMOD1B_CTS   42
+set_io -nowarn ICE_PMOD_B_BOT_RTS   28
+set_io -nowarn ICE_PMOD_B_BOT_RXD   32
+set_io -nowarn ICE_PMOD_B_BOT_TXD   36
+set_io -nowarn ICE_PMOD_B_BOT_CTS   42
 # HBridge
-set_io -nowarn ICE_PMOD1B_SB    28
-set_io -nowarn ICE_PMOD1B_SA    32
-set_io -nowarn ICE_PMOD1B_EN    36
-set_io -nowarn ICE_PMOD1B_DIR   42
+set_io -nowarn ICE_PMOD_B_BOT_SB    28
+set_io -nowarn ICE_PMOD_B_BOT_SA    32
+set_io -nowarn ICE_PMOD_B_BOT_EN    36
+set_io -nowarn ICE_PMOD_B_BOT_DIR   42
 
-# ICE_PMOD2A (near LED, shared with RP2040) top row
+# ICE_RP_PMOD_TOP (near LED, shared with RP2350)
 # GPIO
-set_io -nowarn ICE_PMOD2A_IO4   19
-set_io -nowarn ICE_PMOD2A_IO3   21
-set_io -nowarn ICE_PMOD2A_IO2   25
-set_io -nowarn ICE_PMOD2A_IO1   27
+set_io -nowarn ICE_RP_PMOD_TOP_IO4   21
+set_io -nowarn ICE_RP_PMOD_TOP_IO3   27
+set_io -nowarn ICE_RP_PMOD_TOP_IO2   19
+set_io -nowarn ICE_RP_PMOD_TOP_IO1   25
 # I2C
-set_io -nowarn ICE_PMOD2A_SDA   19
-set_io -nowarn ICE_PMOD2A_SCL   21
-set_io -nowarn ICE_PMOD2A_RST   25
-set_io -nowarn ICE_PMOD2A_INT   27
+set_io -nowarn ICE_RP_PMOD_TOP_SDA   21
+set_io -nowarn ICE_RP_PMOD_TOP_SCL   27
+set_io -nowarn ICE_RP_PMOD_TOP_RST   19
+set_io -nowarn ICE_RP_PMOD_TOP_INT   25
 # I2S
-set_io -nowarn ICE_PMOD2A_BCLK  19
-set_io -nowarn ICE_PMOD2A_ADC   21
-set_io -nowarn ICE_PMOD2A_DAC   25
-set_io -nowarn ICE_PMOD2A_LRCLK 27
+set_io -nowarn ICE_RP_PMOD_TOP_BCLK  21
+set_io -nowarn ICE_RP_PMOD_TOP_ADC   27
+set_io -nowarn ICE_RP_PMOD_TOP_DAC   19
+set_io -nowarn ICE_RP_PMOD_TOP_LRCLK 25
 # SPI
-set_io -nowarn ICE_PMOD2A_SCK   19
-set_io -nowarn ICE_PMOD2A_MISO  21
-set_io -nowarn ICE_PMOD2A_MOSI  25
-set_io -nowarn ICE_PMOD2A_CS    27
+set_io -nowarn ICE_RP_PMOD_TOP_SCK   21
+set_io -nowarn ICE_RP_PMOD_TOP_MISO  27
+set_io -nowarn ICE_RP_PMOD_TOP_MOSI  19
+set_io -nowarn ICE_RP_PMOD_TOP_CS    25
 # UART
-set_io -nowarn ICE_PMOD2A_RTS   19
-set_io -nowarn ICE_PMOD2A_RXD   21
-set_io -nowarn ICE_PMOD2A_TXD   25
-set_io -nowarn ICE_PMOD2A_CTS   27
+set_io -nowarn ICE_RP_PMOD_TOP_RTS   21
+set_io -nowarn ICE_RP_PMOD_TOP_RXD   27
+set_io -nowarn ICE_RP_PMOD_TOP_TXD   19
+set_io -nowarn ICE_RP_PMOD_TOP_CTS   25
 # HBridge
-set_io -nowarn ICE_PMOD2A_SB    19
-set_io -nowarn ICE_PMOD2A_SA    21
-set_io -nowarn ICE_PMOD2A_EN    25
-set_io -nowarn ICE_PMOD2A_DIR   27
+set_io -nowarn ICE_RP_PMOD_TOP_SB    21
+set_io -nowarn ICE_RP_PMOD_TOP_SA    27
+set_io -nowarn ICE_RP_PMOD_TOP_EN    19
+set_io -nowarn ICE_RP_PMOD_TOP_DIR   25
 
-# ICE_PMOD2B (near LED, shared with RP2040) bottom row
+# ICE_RP_PMOD_BOT (near LED, shared with RP2350)
 # GPIO
-set_io -nowarn ICE_PMOD2B_IO4   18
-set_io -nowarn ICE_PMOD2B_IO3   20
-set_io -nowarn ICE_PMOD2B_IO2   23
-set_io -nowarn ICE_PMOD2B_IO1   26
+set_io -nowarn ICE_RP_PMOD_BOT_IO4   20
+set_io -nowarn ICE_RP_PMOD_BOT_IO3   26
+set_io -nowarn ICE_RP_PMOD_BOT_IO2   18
+set_io -nowarn ICE_RP_PMOD_BOT_IO1   23
 # I2C
-set_io -nowarn ICE_PMOD2B_SDA   18
-set_io -nowarn ICE_PMOD2B_SCL   20
-set_io -nowarn ICE_PMOD2B_RST   23
-set_io -nowarn ICE_PMOD2B_INT   26
+set_io -nowarn ICE_RP_PMOD_BOT_SDA   20
+set_io -nowarn ICE_RP_PMOD_BOT_SCL   26
+set_io -nowarn ICE_RP_PMOD_BOT_RST   18
+set_io -nowarn ICE_RP_PMOD_BOT_INT   23
 # I2S
-set_io -nowarn ICE_PMOD2B_BCLK  18
-set_io -nowarn ICE_PMOD2B_ADC   20
-set_io -nowarn ICE_PMOD2B_DAC   23
-set_io -nowarn ICE_PMOD2B_LRCLK 26
+set_io -nowarn ICE_RP_PMOD_BOT_BCLK  20
+set_io -nowarn ICE_RP_PMOD_BOT_ADC   26
+set_io -nowarn ICE_RP_PMOD_BOT_DAC   18
+set_io -nowarn ICE_RP_PMOD_BOT_LRCLK 23
 # SPI
-set_io -nowarn ICE_PMOD2B_SCK   18
-set_io -nowarn ICE_PMOD2B_MISO  20
-set_io -nowarn ICE_PMOD2B_MOSI  23
-set_io -nowarn ICE_PMOD2B_CS    26
+set_io -nowarn ICE_RP_PMOD_BOT_SCK   20
+set_io -nowarn ICE_RP_PMOD_BOT_MISO  26
+set_io -nowarn ICE_RP_PMOD_BOT_MOSI  18
+set_io -nowarn ICE_RP_PMOD_BOT_CS    23
 # UART
-set_io -nowarn ICE_PMOD2B_RTS   18
-set_io -nowarn ICE_PMOD2B_RXD   20
-set_io -nowarn ICE_PMOD2B_TXD   23
-set_io -nowarn ICE_PMOD2B_CTS   26
+set_io -nowarn ICE_RP_PMOD_BOT_RTS   20
+set_io -nowarn ICE_RP_PMOD_BOT_RXD   26
+set_io -nowarn ICE_RP_PMOD_BOT_TXD   18
+set_io -nowarn ICE_RP_PMOD_BOT_CTS   23
 # HBridge
-set_io -nowarn ICE_PMOD2B_SB    18
-set_io -nowarn ICE_PMOD2B_SA    20
-set_io -nowarn ICE_PMOD2B_EN    23
-set_io -nowarn ICE_PMOD2B_DIR   26
+set_io -nowarn ICE_RP_PMOD_BOT_SB    20
+set_io -nowarn ICE_RP_PMOD_BOT_SA    26
+set_io -nowarn ICE_RP_PMOD_BOT_EN    18
+set_io -nowarn ICE_RP_PMOD_BOT_DIR   23

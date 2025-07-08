@@ -5,7 +5,7 @@
 # so that you can copy-paste them to build your own .pcf file out
 # of it. It is also possible, of course, to use custom names.
 #
-# See https://pico-ice.tinyvision.ai/pinout.html for the position
+# See https://pico-ice.tinyvision.ai/md_pinout.html for the position
 # of the pins on the board.
 
 # Reference for PMOD names:
