@@ -13,8 +13,14 @@
 
 # Signals used by the default firmware
 set_io -nowarn CLK              35
-set_io -nowarn UART_TX          25
-set_io -nowarn UART_RX          27
+
+# Signals used by the examples
+# I2C (conflicting with UART)
+set_io -nowarn DEFAULT_I2C_SDA  9
+set_io -nowarn DEFAULT_I2C_SCL  11
+# UART (conflicting with I2C)
+set_io -nowarn DEFAULT_UART_RX  9
+set_io -nowarn DEFAULT_UART_TX  11
 
 # Signals definition (as in the circuit diagram)
 set_io -nowarn ICE_2            2
