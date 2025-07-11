@@ -60,7 +60,7 @@ int main(void) {
     ice_cram_close();
 
     // Initialize the I2C bus
-    i2c_init(APP_I2C, 48000);
+    i2c_init(APP_I2C, 100000);
     gpio_set_function(APP_I2C_SDA_PIN, GPIO_FUNC_I2C);
     gpio_set_function(APP_I2C_SCL_PIN, GPIO_FUNC_I2C);
     gpio_pull_up(APP_I2C_SDA_PIN);
@@ -71,17 +71,17 @@ int main(void) {
         uint8_t buf[1] = {tx};
         printf("i2c scan:");
 
-        for (int i = 0; i < 0x7f; i++) {
+        for (int i = 0x00; i < 0x7f; i++) {
             ret = i2c_write_blocking(APP_I2C, i, buf, sizeof(buf), false);
             if (ret >= 0) {
                 printf(" 0x%02x", i);
             }
 
-            sleep_ms(1);
+            sleep_us(100);
         }
         printf("\n");
 
-        sleep_ms(100);
+        sleep_ms(1);
     }
 
     return 0;

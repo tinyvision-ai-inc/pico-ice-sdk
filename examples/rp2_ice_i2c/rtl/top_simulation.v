@@ -23,8 +23,14 @@ module top;
 
   always begin
     // Shift the test input data out once every clock cycles
-    i2c_sda_data = {i2c_sda_data[`DATA_SIZE-2:0], i2c_sda_data[`DATA_SIZE-1]};
+
+    // Simulate a slight skew between SDA and SCL
+    #5 clk = ~clk;
+    #5 clk = ~clk;
     i2c_scl_data = {i2c_scl_data[`DATA_SIZE-2:0], i2c_scl_data[`DATA_SIZE-1]};
+    i2c_sda_data = {i2c_sda_data[`DATA_SIZE-2:0], i2c_sda_data[`DATA_SIZE-1]};
+    #5 clk = ~clk;
+    #5 clk = ~clk;
 
     for (integer i = 0; i < 4 * 2; i = i + 1) begin
       #5 clk = ~clk;
@@ -48,10 +54,10 @@ module top;
     clk = 0;
     rst_n = 0;
 
-    #10
+    #30
     rst_n = 1;
 
-    #10000
+    #100000
     $finish();
 
   end

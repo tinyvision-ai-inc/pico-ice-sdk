@@ -1,4 +1,4 @@
-// I2C target core
+// I2C target
 
 `default_nettype none
 `timescale 10us/100ns
@@ -30,14 +30,14 @@ module i2c_target #(
   output wire i2c_transaction_stop_o
 );
   // I2C bus state machine
-  parameter I2C_STATE_INIT = 4'd0;
-  parameter I2C_STATE_TX_DATA = 4'd1;
-  parameter I2C_STATE_RX_DATA = 4'd2;
-  parameter I2C_STATE_WAIT_ACK = 4'd3;
-  parameter I2C_STATE_ADDR_MATCH = 4'd4;
-  parameter I2C_STATE_SKIP = 4'd5;
-  reg[4:0] i2c_state_q, i2c_state_d;
-  reg[4:0] i2c_next_state_q, i2c_next_state_d;
+  parameter I2C_STATE_INIT = 0;
+  parameter I2C_STATE_TX_DATA = 1;
+  parameter I2C_STATE_RX_DATA = 2;
+  parameter I2C_STATE_WAIT_ACK = 3;
+  parameter I2C_STATE_ADDR_MATCH = 4;
+  parameter I2C_STATE_SKIP = 5;
+  reg[2:0] i2c_state_q, i2c_state_d;
+  reg[2:0] i2c_next_state_q, i2c_next_state_d;
 
   // I2C bit-level I/O
   reg i2c_tx_bit_data;
@@ -48,8 +48,8 @@ module i2c_target #(
   reg i2c_rx_ack_d, i2c_rx_ack_q;
 
   // I2C byte-level I/O
-  reg[7:0] i2c_rx_byte_data_q, i2c_rx_byte_data_d;
-  reg i2c_rx_byte_valid_q, i2c_rx_byte_valid_d;
+  reg[7:0] i2c_rx_byte_data_d, i2c_rx_byte_data_q;
+  reg i2c_rx_byte_valid_d, i2c_rx_byte_valid_q;
   wire[6:0] i2c_address;
   wire i2c_rw_flag;
 
@@ -135,7 +135,9 @@ module i2c_target #(
       end
 
       I2C_STATE_TX_DATA: begin
-        // TODO
+        if (i2c_rx_bit_valid) begin
+          i2c_tx_bit_valid = 0;
+        end
       end
 
       I2C_STATE_ADDR_MATCH: begin

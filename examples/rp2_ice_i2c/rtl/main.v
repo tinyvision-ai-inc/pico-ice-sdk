@@ -50,7 +50,6 @@ module main (
     .i2c_tx_byte_valid_i(i2c_tx_byte_valid)
   );
 
-  // TODO replace by a 7-segment controller
   assign debug_o[0] = i2c_scl_i;
   assign debug_o[1] = i2c_sda_i;
   assign debug_o[7:2] = i2c_rx_byte_q[5:0];
