@@ -32,8 +32,8 @@ pico_add_extra_outputs(${CMAKE_PROJECT_NAME})
 #pico_enable_stdio_uart(${CMAKE_PROJECT_NAME} 0)
 
 set(VERILOG_COMMON_SRC
-    ${CMAKE_CURRENT_LIST_DIR}/rtl/i2c_target.v
-    ${CMAKE_CURRENT_LIST_DIR}/rtl/i2c_target_mac.v
+    ${PICO_ICE_SDK_PATH}/rtl/i2c_target.v
+    ${PICO_ICE_SDK_PATH}/rtl/i2c_target_mac.v
     ${CMAKE_CURRENT_LIST_DIR}/rtl/main.v
     )
 set(VERILOG_SIMULATION_SRC
