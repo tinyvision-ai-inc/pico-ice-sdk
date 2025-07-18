@@ -14,7 +14,7 @@ Provided you have the compilers setup.
 For riscv, you may add `-DPICO_GCC_TRIPLE=riscv64-unknown-elf` to the cmake command if your 'riscv64' compiler supports rp2350/rv32.
 
 - clone the repository
-- run `git submodules update --init`
+- run `git submodule update --init`
 - got into the folder of the example you wish to try
 - `mkdir build && cd build`
 - `cmake -DPICO_BOARD=pico_ice ..` or `cmake -DPICO_BOARD=pico2_ice ..` or `cmake -DPICO_BOARD=pico2_ice -DPICO_PLATFORM=rp2350-riscv ..`
