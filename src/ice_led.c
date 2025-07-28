@@ -56,17 +56,17 @@ void ice_led_red(bool state)
 void ice_led_green(bool state)
 {
     if (state) {
-        ice_hal_gpio_set_0(ICE_LED_RED_PIN);
+        ice_hal_gpio_set_0(ICE_LED_GREEN_PIN);
     } else {
-        ice_hal_gpio_set_high_z(ICE_LED_RED_PIN);
+        ice_hal_gpio_set_high_z(ICE_LED_GREEN_PIN);
     }
 }
 
 void ice_led_blue(bool state)
 {
     if (state) {
-        ice_hal_gpio_set_0(ICE_LED_RED_PIN);
+        ice_hal_gpio_set_0(ICE_LED_BLUE_PIN);
     } else {
-        ice_hal_gpio_set_high_z(ICE_LED_RED_PIN);
+        ice_hal_gpio_set_high_z(ICE_LED_BLUE_PIN);
     }
 }
