@@ -9,6 +9,9 @@ VERILATOR_INC = $(OSS_CAD_SUITE)/share/verilator/include
 VERILATOR_SRC = $(VERILATOR_INC)/verilated.cpp $(VERILATOR_INC)/verilated_vcd_c.cpp $(VERILATOR_INC)/verilated_threads.cpp
 CXX = c++ -I$(VERILATOR_INC) #-DNDEBUG
 
+DFU_ALT_FLASH = 0
+DFU_ALT_CRAM = 1
+
 RTL = top.sv
 
 all: gateware.bin verilator.vcd
@@ -17,7 +20,7 @@ clean:
 	$(RM) -r obj_dir *.json *.asc *.bin *.uf2 *.elf
 
 prog: gateware.bin
-	$(DFU_UTIL) -d 1209:b1c0 -a 1 -D gateware.bin -R
+	$(DFU_UTIL) -d 1209:b1c0 -a $(DFU_ALT_FLASH) -D gateware.bin -R
 
 gateware.bin: ice40.sv $(RTL)
 	$(YOSYS) -q -p "read_verilog -sv ice40.sv $(RTL); synth_ice40 -top ice40 -json $*.json"

@@ -4,6 +4,9 @@ ICEPACK = $(OSS_CAD_SUITE)/bin/icepack
 DFU_UTIL = $(OSS_CAD_SUITE)/bin/dfu-util
 BIN2UF2 = bin2uf2
 
+DFU_ALT_FLASH = 0
+DFU_ALT_CRAM = 1
+
 RTL = top.sv
 
 all: gateware.bin
@@ -12,7 +15,7 @@ clean:
 	$(RM) *.json *.asc *.bin *.uf2
 
 prog: gateware.bin
-	$(DFU_UTIL) -d 1209:b1c0 -a 1 -D gateware.bin -R
+	$(DFU_UTIL) -d 1209:b1c0 -a $(DFU_ALT_FLASH) -D gateware.bin -R
 
 gateware.bin: $(RTL)
 	$(YOSYS) -q -p "read_verilog -sv $(RTL); synth_ice40 -top top -json $*.json"
